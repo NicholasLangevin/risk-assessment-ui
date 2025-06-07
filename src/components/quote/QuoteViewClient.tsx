@@ -395,8 +395,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       case 'aiMonitor':
         return (
           <AiProcessingMonitorContent
-            steps={aiProcessingData?.processingSteps || []}
-            reasoning={aiProcessingData?.reasoning || "No reasoning data available."}
+            aiToolActions={aiProcessingData?.aiToolActions || []}
             submissionId={activeSheetItem.submissionId}
           />
         );
