@@ -171,6 +171,8 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     riskLevel: "Normal" as RiskLevel,
   })).slice(0, Math.floor(Math.random() * 3) + 3); // Show 3 to 5 coverages
 
+  const aiOverallRiskStatementText = `The AI assesses ${submission.insuredName}'s overall risk as moderate. Primary drivers include its operations in the ${submission.broker === 'Aon' || submission.broker === 'Gallagher' ? 'emerging tech' : 'established software'} sector, which inherently carries cyber and E&O exposures. Positive factors are the modern infrastructure and (assumed) adherence to standard compliance protocols. However, a detailed review of their specific cybersecurity measures, recent loss history, and any contractual liabilities (especially around data protection and service uptime) is essential. The recommended actions aim to clarify these points to enable a more precise risk quantification and appropriate pricing/terms.`;
+
 
   return {
     id: submission.id,
@@ -193,8 +195,9 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     managedInformationRequests,
     coveragesRequested,
     citations: mockCitations,
-    attachments: mockAttachments.slice(0, 3), // Simplified to always return the first 3 attachments
-    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${currentPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : s.markerText).join('')}`
+    attachments: mockAttachments.slice(0, 3), 
+    aiOverallRiskStatement: aiOverallRiskStatementText, // Added mock statement
+    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${currentPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}`
   };
 };
 

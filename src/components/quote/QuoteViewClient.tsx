@@ -22,7 +22,7 @@ import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flow
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2 } from 'lucide-react';
+import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
@@ -290,7 +290,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       insuredName: quoteDetails.insuredName,
       brokerName: quoteDetails.broker,
       ...(selectedDecision === 'OfferWithSubjectTos' && {
-        premium: quoteDetails.premiumSummary.recommendedPremium, // Use recommendedPremium
+        premium: quoteDetails.premiumSummary.recommendedPremium, 
         subjectToOffers: activeSubjectToOffers,
       }),
       ...(selectedDecision === 'InformationRequired' && {
@@ -425,13 +425,11 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       <div className="flex justify-between items-start mb-6">
-        {/* Left column for quote info and actions */}
-        <div>
+        <div> 
           <Button variant="outline" size="sm" asChild className="mb-2">
             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
           </Button>
-          {/* New container for Quote ID, Insured/Broker, and Decision controls */}
-          <div>
+          <div> {/* Container for Quote Info, Decision, and AI Risk Statement */}
             <h1 className="text-3xl font-bold font-headline mb-1">
               Quote: {quoteDetails.id}
             </h1>
@@ -461,9 +459,18 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
                 Confirm & Generate Email
               </Button>
             </div>
+            {quoteDetails.aiOverallRiskStatement && (
+              <div className="mt-4 p-3 border rounded-md bg-muted/30 shadow-sm">
+                <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
+                  <Info className="h-4 w-4 mr-2" />
+                  AI Risk Summary & Reasoning
+                </h4>
+                <p className="text-sm text-foreground/90 whitespace-pre-wrap">{quoteDetails.aiOverallRiskStatement}</p>
+              </div>
+            )}
           </div>
         </div>
-        {/* Right column for AI Monitor button */}
+        
         <div>
           <Button variant="outline" className="flex-shrink-0 h-9" onClick={handleShowAiMonitor}>
             <Activity className="mr-2 h-4 w-4" /> AI Monitor

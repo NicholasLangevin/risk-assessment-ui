@@ -109,7 +109,8 @@ export interface QuoteDetails {
   managedInformationRequests: ManagedInformationRequest[];
   coveragesRequested: CoverageItem[];
   citations: Citation[];
-  attachments: Attachment[]; // Added attachments
+  attachments: Attachment[];
+  aiOverallRiskStatement: string; // Added field for AI's overall risk statement
   rawSubmissionData: string;
 }
 
@@ -155,5 +156,5 @@ export type ActiveSheetItem =
   | { type: 'aiMonitor'; submissionId: string; }
   | { type: 'guideline'; data: Guideline }
   | { type: 'citation'; data: Citation }
-  | { type: 'attachment'; data: Attachment } // Added attachment type
+  | { type: 'attachment'; data: Attachment }
   | null;
