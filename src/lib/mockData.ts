@@ -193,7 +193,7 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     managedInformationRequests,
     coveragesRequested,
     citations: mockCitations,
-    attachments: mockAttachments.slice(0, Math.floor(Math.random() * (mockAttachments.length -1)) + 2), // Show 2 to all attachments
+    attachments: mockAttachments.slice(0, 3), // Simplified to always return the first 3 attachments
     rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${currentPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : s.markerText).join('')}`
   };
 };
@@ -234,3 +234,4 @@ export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'ALL-015', name: 'Supply Chain Risk Analysis' },
 ];
 
+    
