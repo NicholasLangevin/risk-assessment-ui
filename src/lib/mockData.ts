@@ -1,5 +1,5 @@
 
-import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest } from '@/types';
+import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel } from '@/types';
 
 const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group", "Apex Enterprises", "Momentum Industries"];
 const brokers = ["Marsh", "Aon", "Willis Towers Watson", "Gallagher", "HUB International"];
@@ -9,6 +9,14 @@ const guidelineNames = [
   "Financial Stability Check", "Regulatory Compliance", "Specific Industry Exclusions"
 ];
 const guidelineStatuses: Guideline['status'][] = ['Compliant', 'Needs Clarification', 'Issue Found', 'Not Applicable'];
+
+const mockCoverageTypes = [
+  { type: "Property", limits: "$5,000,000 Building / $2,000,000 Contents" },
+  { type: "General Liability", limits: "$2,000,000 Each Occurrence / $4,000,000 Aggregate" },
+  { type: "Equipment Breakdown", limits: "$1,000,000 Per Breakdown" },
+  { type: "Crime", limits: "$500,000 Employee Theft / $250,000 Forgery" },
+  { type: "Floaters (Inland Marine)", limits: "$150,000 Scheduled Equipment" }
+];
 
 export const mockSubmissions: Submission[] = Array.from({ length: 10 }, (_, i) => ({
   id: `SUB-${1001 + i}`,
@@ -41,7 +49,6 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     completedOperationsRisk: "Potential liability from data breaches post-service, software implementation errors leading to client business interruption, or failure of AI models causing financial loss."
   };
 
-  // Mock AI underwriting actions to get initial suggestions
   const mockAiActions: AiUnderwritingActions = {
     suggestedActions: ["Review loss control report", "Verify financial statements"],
     informationRequests: ["Latest audited financials for 3 years", "Details of current cybersecurity measures", "Loss runs for the past 5 years"],
@@ -68,6 +75,15 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     isEdited: false,
   }));
 
+  // Initial mock coverages - AI evaluation will be populated by the page component
+  const coveragesRequested: CoverageItem[] = mockCoverageTypes.map((cov, index) => ({
+    type: cov.type,
+    limits: cov.limits,
+    // These will be filled by the AI flow call in the page component
+    aiRiskEvaluation: "Awaiting AI evaluation...",
+    riskLevel: "Normal", // Default, to be updated by AI
+  })).slice(0, Math.floor(Math.random() * 3) + 2); // Show 2 to 4 coverages
+
 
   return {
     id: submission.id,
@@ -87,7 +103,8 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     businessSummary: businessSummary,
     underwritingGuidelines: guidelines,
     managedSubjectToOffers,
-    managedInformationRequests, // Initialized based on AI suggestions
+    managedInformationRequests,
+    coveragesRequested,
     rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${totalPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription}\nOperations: ${businessSummary.operationsDescription}\nProducts: ${businessSummary.productDescription}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk}`
   };
 };
@@ -128,4 +145,3 @@ export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'ALL-014', name: 'Professional Indemnity Requirements' },
   { id: 'ALL-015', name: 'Supply Chain Risk Analysis' },
 ];
-

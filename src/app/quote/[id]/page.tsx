@@ -1,9 +1,10 @@
 
 import { QuoteViewClient } from '@/components/quote/QuoteViewClient';
 import { getMockQuoteDetails, getMockAiProcessingSteps, getMockAiReasoning } from '@/lib/mockData';
-import type { QuoteDetails, AiProcessingData, AiUnderwritingActions } from '@/types';
+import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, CoverageItem, RiskLevel } from '@/types';
 import { suggestUnderwritingActions } from '@/ai/flows/suggest-underwriting-actions';
 import { monitorAiProcessing } from '@/ai/flows/monitor-ai-processing';
+import { evaluateCoverageRisk } from '@/ai/flows/evaluate-coverage-risk'; // Import new flow
 import { notFound } from 'next/navigation';
 
 interface QuotePageProps {
@@ -16,48 +17,73 @@ interface QuotePageProps {
 export default async function QuotePage({ params }: QuotePageProps) {
   const { id } = params;
 
-  const quoteDetails: QuoteDetails | null = getMockQuoteDetails(id);
+  const quoteDetailsData: QuoteDetails | null = getMockQuoteDetails(id);
 
-  if (!quoteDetails) {
-    notFound(); // Or handle as an error page
+  if (!quoteDetailsData) {
+    notFound();
   }
 
+  // Fetch AI underwriting actions (for subject-tos, info requests)
   let aiUnderwritingActions: AiUnderwritingActions | null = null;
   try {
-    aiUnderwritingActions = await suggestUnderwritingActions({ submissionData: quoteDetails.rawSubmissionData });
+    aiUnderwritingActions = await suggestUnderwritingActions({ submissionData: quoteDetailsData.rawSubmissionData });
   } catch (error) {
     console.error("Error fetching AI underwriting actions:", error);
-    // Optionally set a default or error state for aiUnderwritingActions
-    aiUnderwritingActions = { // Provide a default structure on error
+    aiUnderwritingActions = {
         suggestedActions: ["Error retrieving AI actions."],
         informationRequests: [],
         potentialSubjectToOffers: []
     };
   }
   
+  // Fetch AI processing data for monitor
   let aiProcessingData: AiProcessingData | null = null;
   try {
-    // Using dummy values for monitorAiProcessing as it's for "real-time view"
-    // In a real app, this might be a stream or fetched differently
     const monitorOutput = await monitorAiProcessing({ submissionId: id });
     aiProcessingData = {
       processingSteps: monitorOutput.processingSteps,
       reasoning: monitorOutput.reasoning,
     };
-
   } catch (error) {
     console.error("Error fetching AI processing data:", error);
-    // Fallback to mock if AI call fails or not fully implemented for this context
      aiProcessingData = {
       processingSteps: getMockAiProcessingSteps(id),
       reasoning: getMockAiReasoning(id)
     };
   }
 
+  // Enrich coveragesRequested with AI evaluations
+  const enrichedCoveragesRequested: CoverageItem[] = await Promise.all(
+    quoteDetailsData.coveragesRequested.map(async (coverage) => {
+      try {
+        const evaluationOutput = await evaluateCoverageRisk({
+          submissionData: quoteDetailsData.rawSubmissionData,
+          coverageType: coverage.type,
+        });
+        return {
+          ...coverage,
+          aiRiskEvaluation: evaluationOutput.aiRiskEvaluation,
+          riskLevel: evaluationOutput.riskLevel,
+        };
+      } catch (error) {
+        console.error(`Error evaluating risk for coverage ${coverage.type}:`, error);
+        return {
+          ...coverage,
+          aiRiskEvaluation: "AI evaluation failed. Please review manually.",
+          riskLevel: "Normal" as RiskLevel, // Default on error
+        };
+      }
+    })
+  );
+
+  const finalQuoteDetails: QuoteDetails = {
+    ...quoteDetailsData,
+    coveragesRequested: enrichedCoveragesRequested,
+  };
 
   return (
     <QuoteViewClient
-      quoteDetails={quoteDetails}
+      quoteDetails={finalQuoteDetails}
       aiProcessingData={aiProcessingData}
       aiUnderwritingActions={aiUnderwritingActions}
     />
@@ -65,8 +91,6 @@ export default async function QuotePage({ params }: QuotePageProps) {
 }
 
 export async function generateStaticParams() {
-  // In a real app, fetch all possible submission IDs
-  // For now, using mockSubmissions to pre-render some paths
   const { mockSubmissions } = await import('@/lib/mockData');
   return mockSubmissions.map((submission) => ({
     id: submission.id,

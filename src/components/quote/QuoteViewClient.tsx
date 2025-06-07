@@ -2,15 +2,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest } from '@/types';
+import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
-// import { RecommendedActionsCard } from './RecommendedActionsCard'; // Removed import
 import { CapacityCheckCard } from './CapacityCheckCard';
 import { BusinessSummaryCard } from './BusinessSummaryCard';
 import { GuidelineStatusList } from './GuidelineStatusList';
 import { AiProcessingMonitorContent } from './AiProcessingMonitorContent';
 import { SubjectToOffersCard } from './SubjectToOffersCard';
 import { InformationRequestsCard } from './InformationRequestsCard';
+import { CoverageRequestedCard } from './CoverageRequestedCard'; // New import
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Activity, ChevronLeft } from 'lucide-react';
@@ -40,7 +40,10 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           isEdited: false,
         }));
         updatedDetails.managedSubjectToOffers = initialManagedOffers;
+      } else if (!initialQuoteDetails.managedSubjectToOffers) {
+        updatedDetails.managedSubjectToOffers = []; // Ensure it's an array
       }
+
 
       if (!initialQuoteDetails.managedInformationRequests && aiUnderwritingActions?.informationRequests) {
         const initialManagedInfoRequests = aiUnderwritingActions.informationRequests.map((text, index) => ({
@@ -51,6 +54,8 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           isEdited: false,
         }));
         updatedDetails.managedInformationRequests = initialManagedInfoRequests;
+      } else if (!initialQuoteDetails.managedInformationRequests) {
+         updatedDetails.managedInformationRequests = []; // Ensure it's an array
       }
       setQuoteDetails(updatedDetails);
     }
@@ -291,6 +296,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         {/* Left Column / Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <BusinessSummaryCard summary={quoteDetails.businessSummary} />
+          <CoverageRequestedCard coverages={quoteDetails.coveragesRequested || []} />
           <GuidelineStatusList
             guidelines={quoteDetails.underwritingGuidelines}
             onAddGuideline={handleAddGuideline}
@@ -314,7 +320,6 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
             onToggleRemoveOffer={handleToggleRemoveSubjectToOffer}
             onAddSubjectToOffer={handleAddSubjectToOffer}
           />
-          {/* <RecommendedActionsCard actions={aiUnderwritingActions} /> Removed usage */}
         </div>
       </div>
     </div>

@@ -4,4 +4,5 @@ config();
 
 import '@/ai/flows/suggest-underwriting-actions.ts';
 import '@/ai/flows/monitor-ai-processing.ts';
-import '@/ai/flows/chat-underwriting-assistant.ts'; // Added new flow
+import '@/ai/flows/chat-underwriting-assistant.ts';
+import '@/ai/flows/evaluate-coverage-risk.ts'; // Added new flow

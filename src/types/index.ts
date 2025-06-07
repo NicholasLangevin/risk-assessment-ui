@@ -44,6 +44,15 @@ export interface ManagedInformationRequest {
   isEdited: boolean;
 }
 
+export type RiskLevel = 'Very Low' | 'Low' | 'Normal' | 'High' | 'Very High';
+
+export interface CoverageItem {
+  type: string; // e.g., Property, Liability
+  limits: string; // e.g., "$1M / $2M Aggregate"
+  aiRiskEvaluation: string; // Textual evaluation from AI
+  riskLevel: RiskLevel; // Categorical risk level from AI
+}
+
 export interface QuoteDetails {
   id: string;
   insuredName: string;
@@ -62,7 +71,8 @@ export interface QuoteDetails {
   businessSummary: BusinessSummaryDetails;
   underwritingGuidelines: Guideline[];
   managedSubjectToOffers: ManagedSubjectToOffer[];
-  managedInformationRequests: ManagedInformationRequest[]; // Added for user-managed information requests
+  managedInformationRequests: ManagedInformationRequest[];
+  coveragesRequested: CoverageItem[]; // Added for requested coverages
   // Data to be fed to the AI
   rawSubmissionData: string;
 }
@@ -85,4 +95,3 @@ export interface AiUnderwritingActions {
   informationRequests: string[]; // AI's initial suggestions
   potentialSubjectToOffers: string[]; // AI's initial suggestions
 }
-
