@@ -118,9 +118,20 @@ export async function chatWithUnderwritingAssistant(input: ChatUnderwritingAssis
   return chatWithUnderwritingAssistantFlow(input);
 }
 
+// Define an extended schema for the prompt's input, including boolean flags for chat history items
+const PromptInputSchema = ChatUnderwritingAssistantInputSchema.extend({
+  chatHistory: z.array(
+    ChatHistoryItemSchema.extend({
+      isUser: z.boolean().optional(),
+      isModel: z.boolean().optional(),
+    })
+  ).optional().describe('The history of the conversation so far, with added boolean flags for role.'),
+});
+
+
 const prompt = ai.definePrompt({
   name: 'chatWithUnderwritingAssistantPrompt',
-  input: {schema: ChatUnderwritingAssistantInputSchema},
+  input: {schema: PromptInputSchema}, // Use the extended schema for the prompt
   output: {schema: ChatUnderwritingAssistantOutputSchema},
   tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
   prompt: `You are an expert underwriting assistant for RiskPilot.
@@ -144,10 +155,10 @@ Your capabilities are:
 {{#if chatHistory}}
 Previous conversation:
 {{#each chatHistory}}
-  {{#if (eq role "user")}}
+  {{#if isUser}}
 User: {{#each parts}}{{text}}{{/each}}
   {{/if}}
-  {{#if (eq role "model")}}
+  {{#if isModel}}
 AI: {{#each parts}}{{text}}{{/each}}
   {{/if}}
 {{/each}}
@@ -165,14 +176,23 @@ Your response should be in the 'aiResponse' field.
 const chatWithUnderwritingAssistantFlow = ai.defineFlow(
   {
     name: 'chatWithUnderwritingAssistantFlow',
-    inputSchema: ChatUnderwritingAssistantInputSchema,
+    inputSchema: ChatUnderwritingAssistantInputSchema, // Flow's external input remains the same
     outputSchema: ChatUnderwritingAssistantOutputSchema,
   },
   async (input) => {
-    // Preprocess chatHistory if needed (already handled for user/model roles if using those directly in handlebars)
-    // No, the provided prompt already handles role checks, so direct pass-through is fine.
+    // Preprocess chatHistory to add boolean flags for Handlebars
+    const processedChatHistory = input.chatHistory?.map(item => ({
+      ...item,
+      isUser: item.role === 'user',
+      isModel: item.role === 'model',
+    }));
 
-    const {output} = await prompt(input); // Pass the full input including new fields and tools context
+    const promptInputPayload = {
+      ...input,
+      chatHistory: processedChatHistory,
+    };
+
+    const {output} = await prompt(promptInputPayload);
     if (!output) {
       return { aiResponse: "I'm sorry, I couldn't generate a response at this time. Please try again." };
     }
