@@ -28,7 +28,7 @@ export const mockSubmissions: Submission[] = Array.from({ length: 10 }, (_, i) =
   premium: Math.floor(Math.random() * 50000) + 5000,
 }));
 
-const mockAttachments: Attachment[] = [
+export const mockAttachments: Attachment[] = [
   {
     id: 'attach-001-pdf',
     fileName: 'Submission_Form_Completed.pdf',
@@ -269,3 +269,6 @@ export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'ALL-014', name: 'Professional Indemnity Requirements' },
   { id: 'ALL-015', name: 'Supply Chain Risk Analysis' },
 ];
+
+
+    
