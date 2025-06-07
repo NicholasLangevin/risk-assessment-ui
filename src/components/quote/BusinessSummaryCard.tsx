@@ -20,7 +20,7 @@ const RenderRichText = ({ segments, citations, onShowCitation }: { segments: Ric
   }
 
   return (
-    <p className="text-sm text-muted-foreground leading-relaxed">
+    <div className="text-sm text-muted-foreground leading-relaxed">
       {segments.map((segment, index) => {
         if (segment.type === 'text') {
           // Defensive rendering for segment.content
@@ -67,7 +67,7 @@ const RenderRichText = ({ segments, citations, onShowCitation }: { segments: Ric
         }
         return null;
       })}
-    </p>
+    </div>
   );
 };
 
