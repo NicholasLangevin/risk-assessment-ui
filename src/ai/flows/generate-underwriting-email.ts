@@ -39,7 +39,12 @@ export async function generateUnderwritingEmail(input: EmailGenerationInput): Pr
 
 const prompt = ai.definePrompt({
   name: 'generateUnderwritingEmailPrompt',
-  input: {schema: EmailGenerationInputSchema},
+  input: {schema: EmailGenerationInputSchema.extend({
+    // Add boolean flags for easier template logic
+    isOfferWithSubjectTos: z.boolean().optional(),
+    isInformationRequired: z.boolean().optional(),
+    isDecline: z.boolean().optional(),
+  })},
   output: {schema: EmailGenerationOutputSchema},
   prompt: `You are an expert underwriting support assistant for RiskPilot.
 Your task is to draft a professional email to the broker ({{brokerName}}) regarding quote ID {{quoteId}} for the insured ({{insuredName}}).
@@ -47,7 +52,7 @@ The decision made is: {{decision}}.
 
 Base the email content STRICTLY on the decision:
 
-{{#if (eq decision "OfferWithSubjectTos")}}
+{{#if isOfferWithSubjectTos}}
 Compose an email offering the quote.
 The total premium is \${{premium}}.
 The offer is subject to the following conditions:
@@ -58,7 +63,7 @@ Ensure the tone is positive and clear about the offer and its conditions.
 The subject line should be: "Offer for Quote {{quoteId}} - {{insuredName}}"
 {{/if}}
 
-{{#if (eq decision "InformationRequired")}}
+{{#if isInformationRequired}}
 Compose an email requesting further information.
 We require the following to proceed with the evaluation:
 {{#each informationRequests}}
@@ -68,7 +73,7 @@ Ensure the tone is polite and clearly lists the required items.
 The subject line should be: "Information Required for Quote {{quoteId}} - {{insuredName}}"
 {{/if}}
 
-{{#if (eq decision "Decline")}}
+{{#if isDecline}}
 Compose a polite email declining the quote.
 Provide a brief, general reason for the declination without going into excessive specifics (e.g., "After careful review, we are unable to offer terms for this risk at this time as it does not meet our current underwriting appetite.").
 Do not list specific guideline failures.
@@ -88,14 +93,14 @@ const generateUnderwritingEmailFlow = ai.defineFlow(
     outputSchema: EmailGenerationOutputSchema,
   },
   async (input) => {
-    // Helper for Handlebars `eq`
-    const handlebarsOptions = {
-      helpers: {
-        eq: (arg1: string, arg2: string) => arg1 === arg2,
-      }
+    const processedInput = {
+      ...input,
+      isOfferWithSubjectTos: input.decision === 'OfferWithSubjectTos',
+      isInformationRequired: input.decision === 'InformationRequired',
+      isDecline: input.decision === 'Decline',
     };
 
-    const {output} = await prompt(input, handlebarsOptions);
+    const {output} = await prompt(processedInput);
     if (!output) {
       // Fallback in case AI fails
       return {
@@ -106,3 +111,4 @@ const generateUnderwritingEmailFlow = ai.defineFlow(
     return output;
   }
 );
+
