@@ -16,10 +16,10 @@ export function PremiumSummaryCard({ summary }: PremiumSummaryCardProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Premium Recommendation</CardTitle>
-          <DollarSign className="h-5 w-5 text-muted-foreground" />
-        </div>
+        <CardTitle className="flex items-center text-primary">
+          <DollarSign className="h-5 w-5 mr-2" />
+          Premium Recommendation
+        </CardTitle>
         <CardDescription>Details from Contact2.0 policy system.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -53,3 +53,4 @@ export function PremiumSummaryCard({ summary }: PremiumSummaryCardProps) {
     </Card>
   );
 }
+
