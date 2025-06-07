@@ -4,13 +4,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
-import { RecommendedActionsCard } from './RecommendedActionsCard';
+// import { RecommendedActionsCard } from './RecommendedActionsCard'; // Removed import
 import { CapacityCheckCard } from './CapacityCheckCard';
 import { BusinessSummaryCard } from './BusinessSummaryCard';
 import { GuidelineStatusList } from './GuidelineStatusList';
 import { AiProcessingMonitorContent } from './AiProcessingMonitorContent';
 import { SubjectToOffersCard } from './SubjectToOffersCard';
-import { InformationRequestsCard } from './InformationRequestsCard'; // New Card
+import { InformationRequestsCard } from './InformationRequestsCard';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Activity, ChevronLeft } from 'lucide-react';
@@ -171,10 +171,10 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       if (!prevDetails) return null;
       const newOffer: ManagedSubjectToOffer = {
         id: `sto-custom-${Date.now()}`,
-        originalText: `User-added: ${newOfferText}`, // Mark as user-added if needed
+        originalText: `User-added: ${newOfferText}`, 
         currentText: newOfferText,
         isRemoved: false,
-        isEdited: true, // Mark as edited since it's newly added by user
+        isEdited: true, 
       };
       const updatedOffers = [...(prevDetails.managedSubjectToOffers || []), newOffer];
       setTimeout(() => {
@@ -314,10 +314,9 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
             onToggleRemoveOffer={handleToggleRemoveSubjectToOffer}
             onAddSubjectToOffer={handleAddSubjectToOffer}
           />
-          <RecommendedActionsCard actions={aiUnderwritingActions} />
+          {/* <RecommendedActionsCard actions={aiUnderwritingActions} /> Removed usage */}
         </div>
       </div>
     </div>
   );
 }
-
