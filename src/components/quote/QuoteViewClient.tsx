@@ -489,7 +489,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           <div className="mt-4 p-3 border rounded-md bg-muted/30 shadow-sm">
             <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
               <AiSparkleIcon className="h-4 w-4 mr-2" />
-              AI Risk Summary & Reasoning
+              AI Risk Assessment
             </h4>
             <p className="text-sm text-foreground/90 whitespace-pre-wrap">{quoteDetails.aiOverallRiskStatement}</p>
           </div>
