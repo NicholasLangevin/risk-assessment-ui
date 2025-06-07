@@ -10,7 +10,7 @@ body {
   :root {
     --background: 0 0% 100%; /* White */
     --foreground: 220 10% 25%; /* Darker gray for text on white background */
-    --card: 220 20% 95%; /* Light gray cards */
+    --card: 220 8% 88%; /* Light gray cards */
     --card-foreground: 220 10% 25%; /* Darker gray for text on cards */
     --popover: 220 20% 95%; /* Light gray popovers, matching cards */
     --popover-foreground: 220 10% 25%;
