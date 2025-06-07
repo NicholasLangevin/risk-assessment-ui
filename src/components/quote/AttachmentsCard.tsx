@@ -36,7 +36,7 @@ export function AttachmentsCard({ attachments, onViewAttachment }: AttachmentsCa
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Paperclip className="h-5 w-5 mr-2 text-primary" />
+          <Paperclip className="h-5 w-5 mr-2" />
           Attachments
         </CardTitle>
         <CardDescription>Documents attached to this submission. Click to view details.</CardDescription>
