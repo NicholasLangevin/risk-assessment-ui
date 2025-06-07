@@ -36,6 +36,14 @@ export interface ManagedSubjectToOffer {
   isEdited: boolean;
 }
 
+export interface ManagedInformationRequest {
+  id: string;
+  originalText: string;
+  currentText: string;
+  isRemoved: boolean;
+  isEdited: boolean;
+}
+
 export interface QuoteDetails {
   id: string;
   insuredName: string;
@@ -53,7 +61,8 @@ export interface QuoteDetails {
   };
   businessSummary: BusinessSummaryDetails;
   underwritingGuidelines: Guideline[];
-  managedSubjectToOffers: ManagedSubjectToOffer[]; // Added for user-managed subject-tos
+  managedSubjectToOffers: ManagedSubjectToOffer[];
+  managedInformationRequests: ManagedInformationRequest[]; // Added for user-managed information requests
   // Data to be fed to the AI
   rawSubmissionData: string;
 }
@@ -73,6 +82,7 @@ export interface AiProcessingData {
 
 export interface AiUnderwritingActions {
   suggestedActions: string[];
-  informationRequests: string[];
+  informationRequests: string[]; // AI's initial suggestions
   potentialSubjectToOffers: string[]; // AI's initial suggestions
 }
+

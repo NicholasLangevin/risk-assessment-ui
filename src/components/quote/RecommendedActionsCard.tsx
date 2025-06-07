@@ -2,7 +2,7 @@
 import type { AiUnderwritingActions } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Lightbulb, AlertTriangle, FileQuestion, Bot } from 'lucide-react';
+import { Lightbulb, AlertTriangle, Bot } from 'lucide-react'; // Removed FileQuestion, CheckSquare
 
 interface RecommendedActionsCardProps {
   actions: AiUnderwritingActions | null;
@@ -26,42 +26,30 @@ export function RecommendedActionsCard({ actions }: RecommendedActionsCardProps)
     );
   }
 
-  // Filter out "Potential Subject-To Offers" as they are now in a separate card
-  const hasInformationRequests = actions.informationRequests.length > 0;
+  // Filter out specific action types handled elsewhere (Information Requests, Subject-To Offers)
   const hasOtherActions = actions.suggestedActions.filter(action => !action.toLowerCase().includes('decline')).length > 0;
   const hasDeclineAction = actions.suggestedActions.some(action => action.toLowerCase().includes('decline'));
 
-  const noActionsToShow = !hasInformationRequests && !hasOtherActions && !hasDeclineAction;
+  const noActionsToShow = !hasOtherActions && !hasDeclineAction;
 
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>AI Recommended Actions</CardTitle>
+          <CardTitle>AI Recommended Next Steps</CardTitle>
           <Lightbulb className="h-5 w-5 text-muted-foreground" />
         </div>
-        <CardDescription>Suggestions from the AI underwriting assistant (excluding Subject-Tos).</CardDescription>
+        <CardDescription>General next steps suggested by the AI assistant.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {noActionsToShow && (
-            <p className="text-muted-foreground">No specific actions (other than subject-tos) recommended by AI at this time.</p>
-        )}
-
-        {hasInformationRequests && (
-          <div className="p-3 border rounded-md bg-card shadow-sm">
-            <h3 className="text-sm font-semibold mb-2 flex items-center"><FileQuestion className="h-4 w-4 mr-2 text-primary" />Information Requests:</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
-              {actions.informationRequests.map((req, index) => (
-                <li key={`info-${index}`}>{req}</li>
-              ))}
-            </ul>
-          </div>
+            <p className="text-muted-foreground">No specific next steps recommended by AI at this time.</p>
         )}
         
         {hasOtherActions && (
           <div className="p-3 border rounded-md bg-card shadow-sm">
-            <h3 className="text-sm font-semibold mb-2 flex items-center"><Bot className="h-4 w-4 mr-2 text-primary"/>Other Suggested Actions:</h3>
+            <h3 className="text-sm font-semibold mb-2 flex items-center"><Bot className="h-4 w-4 mr-2 text-primary"/>Suggested Actions:</h3>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
               {actions.suggestedActions.filter(action => !action.toLowerCase().includes('decline')).map((action, index) => (
                 <li key={`action-${index}`}>{action}</li>
