@@ -19,7 +19,7 @@ const mockCoverageTypes = [
 ];
 
 export const mockSubmissions: Submission[] = Array.from({ length: 10 }, (_, i) => ({
-  id: `Q${String(Math.floor(1000000 + Math.random() * 9000000))}`, // Updated ID format
+  id: `Q${String(1000000 + i).padStart(7, '0')}`, // Deterministic ID generation
   insuredName: insuredNames[i % insuredNames.length],
   broker: brokers[i % brokers.length],
   status: statuses[i % statuses.length],
