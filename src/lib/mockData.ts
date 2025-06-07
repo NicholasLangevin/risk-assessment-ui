@@ -5,7 +5,7 @@ const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group",
 const brokers = ["Marsh", "Aon", "Willis Towers Watson", "Gallagher", "HUB International"];
 const statuses: Submission['status'][] = ['New', 'Pending Review', 'Information Requested', 'Quoted', 'Bound', 'Declined'];
 const guidelineNames = [
-  "Exposure Limits", "Geographical Restrictions", "Claims History Review", 
+  "Exposure Limits", "Geographical Restrictions", "Claims History Review",
   "Financial Stability Check", "Regulatory Compliance", "Specific Industry Exclusions"
 ];
 const guidelineStatuses: Guideline['status'][] = ['Compliant', 'Needs Clarification', 'Issue Found', 'Not Applicable'];
@@ -79,3 +79,22 @@ export const getMockAiProcessingSteps = (submissionId: string): string[] => {
 export const getMockAiReasoning = (submissionId: string): string => {
   return `For submission ${submissionId}, the primary risk factors identified are related to cyber exposure given the industry. The recommendation to request further information on security protocols is based on standard underwriting practice for tech companies. Capacity is available. Subject-to offers considered but not prioritized over information gathering at this stage.`;
 };
+
+// List of all possible guidelines that can be added
+export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
+  { id: 'ALL-001', name: 'Exposure Limits' },
+  { id: 'ALL-002', name: 'Geographical Restrictions' },
+  { id: 'ALL-003', name: 'Claims History Review' },
+  { id: 'ALL-004', name: 'Financial Stability Check' },
+  { id: 'ALL-005', name: 'Regulatory Compliance' },
+  { id: 'ALL-006', name: 'Specific Industry Exclusions' },
+  { id: 'ALL-007', name: 'Property Valuation Standards' },
+  { id: 'ALL-008', name: 'Liability Coverage Minimums' },
+  { id: 'ALL-009', name: 'Cybersecurity Protocols' },
+  { id: 'ALL-010', name: 'Environmental Impact Assessment' },
+  { id: 'ALL-011', name: 'Business Continuity Plan Review' },
+  { id: 'ALL-012', name: 'Employee Safety Standards' },
+  { id: 'ALL-013', name: 'Product Liability Assessment' },
+  { id: 'ALL-014', name: 'Professional Indemnity Requirements' },
+  { id: 'ALL-015', name: 'Supply Chain Risk Analysis' },
+];

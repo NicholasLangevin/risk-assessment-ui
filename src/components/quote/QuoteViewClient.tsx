@@ -1,7 +1,8 @@
 
 'use client';
 
-import type { QuoteDetails, AiProcessingData, AiUnderwritingActions } from '@/types';
+import React, { useState, useEffect } from 'react';
+import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { RecommendedActionsCard } from './RecommendedActionsCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
@@ -19,7 +20,16 @@ interface QuoteViewClientProps {
   aiUnderwritingActions: AiUnderwritingActions | null;
 }
 
-export function QuoteViewClient({ quoteDetails, aiProcessingData, aiUnderwritingActions }: QuoteViewClientProps) {
+export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessingData, aiUnderwritingActions }: QuoteViewClientProps) {
+  const [quoteDetails, setQuoteDetails] = useState<QuoteDetails | null>(initialQuoteDetails);
+  
+  // Effect to update state if initialQuoteDetails changes (e.g., due to re-fetch or prop update)
+  // This might not be strictly necessary if initialQuoteDetails is stable after first load for this page.
+  useEffect(() => {
+    setQuoteDetails(initialQuoteDetails);
+  }, [initialQuoteDetails]);
+
+
   if (!quoteDetails) {
     return (
       <div className="container mx-auto py-8 text-center">
@@ -31,6 +41,30 @@ export function QuoteViewClient({ quoteDetails, aiProcessingData, aiUnderwriting
       </div>
     );
   }
+  
+  const handleAddGuideline = (guidelineInfo: { id: string; name: string }) => {
+    setQuoteDetails(prevDetails => {
+      if (!prevDetails) return null;
+
+      const newGuideline: Guideline = {
+        id: guidelineInfo.id,
+        name: guidelineInfo.name,
+        status: 'Needs Clarification', // Default status for newly added guidelines
+        details: 'Manually added for evaluation.',
+      };
+
+      // Prevent adding duplicates based on ID
+      if (prevDetails.underwritingGuidelines.some(g => g.id === newGuideline.id)) {
+        return prevDetails; // Return current state if guideline already exists
+      }
+
+      return {
+        ...prevDetails,
+        underwritingGuidelines: [...prevDetails.underwritingGuidelines, newGuideline],
+      };
+    });
+  };
+
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
@@ -72,7 +106,10 @@ export function QuoteViewClient({ quoteDetails, aiProcessingData, aiUnderwriting
         {/* Left Column / Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <BusinessSummaryCard summary={quoteDetails.businessSummary} /> 
-          <GuidelineStatusList guidelines={quoteDetails.underwritingGuidelines} />
+          <GuidelineStatusList 
+            guidelines={quoteDetails.underwritingGuidelines} 
+            onAddGuideline={handleAddGuideline} 
+          />
         </div>
 
         {/* Right Column / Summaries */}
