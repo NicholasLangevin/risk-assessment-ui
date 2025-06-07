@@ -2,7 +2,7 @@
 import type { QuoteDetails } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, ExternalLink, CheckCircle } from 'lucide-react';
+import { AlertTriangle, ExternalLink, CheckCircle, DollarSign } from 'lucide-react';
 
 interface PremiumSummaryCardProps {
   summary: QuoteDetails['premiumSummary'];
@@ -17,7 +17,7 @@ export function PremiumSummaryCard({ summary }: PremiumSummaryCardProps) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <img width="24" height="24" src="https://img.icons8.com/material-outlined/24/us-dollar--v1.png" alt="us-dollar--v1" className="mr-2"/>
+          <DollarSign className="h-6 w-6 mr-2" />
           Premium Recommendation
         </CardTitle>
         <CardDescription>Details from Contact2.0 policy system.</CardDescription>
