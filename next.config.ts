@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         hostname: 'logotyp.us',
         port: '',
         pathname: '/file/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.icons8.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
