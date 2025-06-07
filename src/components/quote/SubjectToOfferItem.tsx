@@ -48,6 +48,13 @@ export function SubjectToOfferItem({ offer, onUpdateOffer, onToggleRemoveOffer }
       return <span className="line-through text-muted-foreground">{offer.currentText}</span>;
     }
 
+    const isNewlyAdded = offer.originalText.startsWith("User-added:");
+
+    if (isNewlyAdded && offer.isEdited) {
+      // For newly added items, style the entire currentText green
+      return <span className="text-green-600 dark:text-green-500 font-semibold bg-green-50 dark:bg-green-900/20 px-0.5 rounded-sm">{offer.currentText}</span>;
+    }
+
     if (offer.isEdited && offer.currentText !== offer.originalText) {
       const diffResult = diffWords(offer.originalText, offer.currentText);
       return (
@@ -75,6 +82,7 @@ export function SubjectToOfferItem({ offer, onUpdateOffer, onToggleRemoveOffer }
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
             className="flex-grow h-8 text-sm"
+            aria-label="Edit subject-to offer"
           />
           <Button variant="ghost" size="icon" onClick={handleSave} className="h-8 w-8 text-green-600 hover:text-green-700">
             <Check className="h-4 w-4" />

@@ -48,6 +48,13 @@ export function InformationRequestItem({ request, onUpdateInfoRequest, onToggleR
       return <span className="line-through text-muted-foreground">{request.currentText}</span>;
     }
 
+    const isNewlyAdded = request.originalText.startsWith("User-added:");
+
+    if (isNewlyAdded && request.isEdited) {
+      // For newly added items, style the entire currentText green
+      return <span className="text-green-600 dark:text-green-500 font-semibold bg-green-50 dark:bg-green-900/20 px-0.5 rounded-sm">{request.currentText}</span>;
+    }
+
     if (request.isEdited && request.currentText !== request.originalText) {
       const diffResult = diffWords(request.originalText, request.currentText);
       return (
