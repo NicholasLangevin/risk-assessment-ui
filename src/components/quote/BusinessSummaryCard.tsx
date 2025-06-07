@@ -23,6 +23,19 @@ const PdfIcon = () => (
   </svg>
 );
 
+// Define AiSparkleIcon locally or import if it becomes a shared component
+const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 30 30" // Updated viewBox
+    fill="currentColor" // Changed to fill
+    {...props}
+  >
+    {/* Updated path data */}
+    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714-6.31,13.408-13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
+  </svg>
+);
+
 const RenderRichText = ({ segments, citations, onShowCitation }: { segments: RichTextSegment[], citations: Citation[], onShowCitation: (citation: Citation) => void }) => {
   if (!segments || segments.length === 0) {
     return <div className="text-sm text-muted-foreground leading-relaxed">Not available.</div>;
@@ -99,10 +112,13 @@ export function BusinessSummaryCard({ summary, citations, onShowCitation }: Busi
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Business Summary</CardTitle>
+          <CardTitle className="flex items-center">
+            <AiSparkleIcon className="h-5 w-5 mr-2 text-primary" />
+            Business Summary
+          </CardTitle>
           <Briefcase className="h-5 w-5 text-muted-foreground" />
         </div>
-        <CardDescription>Key risk components of the insured's business with citations.</CardDescription>
+        <CardDescription>AI-augmented risk components of the insured's business with citations.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
