@@ -28,6 +28,14 @@ export interface BusinessSummaryDetails {
   completedOperationsRisk: string;
 }
 
+export interface ManagedSubjectToOffer {
+  id: string;
+  originalText: string;
+  currentText: string;
+  isRemoved: boolean;
+  isEdited: boolean;
+}
+
 export interface QuoteDetails {
   id: string;
   insuredName: string;
@@ -43,10 +51,11 @@ export interface QuoteDetails {
     percentageUsed: number; // 0-100
     notes?: string;
   };
-  businessSummary: BusinessSummaryDetails; // Updated from businessOverview
+  businessSummary: BusinessSummaryDetails;
   underwritingGuidelines: Guideline[];
+  managedSubjectToOffers: ManagedSubjectToOffer[]; // Added for user-managed subject-tos
   // Data to be fed to the AI
-  rawSubmissionData: string; 
+  rawSubmissionData: string;
 }
 
 export interface AiProcessingStep {
@@ -65,5 +74,5 @@ export interface AiProcessingData {
 export interface AiUnderwritingActions {
   suggestedActions: string[];
   informationRequests: string[];
-  potentialSubjectToOffers: string[];
+  potentialSubjectToOffers: string[]; // AI's initial suggestions
 }

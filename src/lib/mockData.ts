@@ -1,5 +1,5 @@
 
-import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails } from '@/types';
+import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions } from '@/types';
 
 const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group", "Apex Enterprises", "Momentum Industries"];
 const brokers = ["Marsh", "Aon", "Willis Towers Watson", "Gallagher", "HUB International"];
@@ -41,6 +41,26 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     completedOperationsRisk: "Potential liability from data breaches post-service, software implementation errors leading to client business interruption, or failure of AI models causing financial loss."
   };
 
+  // Mock AI underwriting actions to get initial subject-to offers
+  const mockAiActions: AiUnderwritingActions = {
+    suggestedActions: ["Review loss control report", "Verify financial statements"],
+    informationRequests: ["Latest audited financials", "Details of cybersecurity measures"],
+    potentialSubjectToOffers: [
+      "Subject to satisfactory building inspection.",
+      "Subject to exclusion for prior acts.",
+      "Subject to $10,000 deductible for water damage."
+    ]
+  };
+
+  const managedSubjectToOffers: ManagedSubjectToOffer[] = mockAiActions.potentialSubjectToOffers.map((offer, index) => ({
+    id: `sto-${index}-${Date.now()}`, // More unique ID
+    originalText: offer,
+    currentText: offer,
+    isRemoved: false,
+    isEdited: false,
+  }));
+
+
   return {
     id: submission.id,
     insuredName: submission.insuredName,
@@ -56,8 +76,9 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
       percentageUsed: Math.floor(Math.random() * 100),
       notes: Math.random() > 0.8 ? "Approaching aggregate limit for this sector." : undefined,
     },
-    businessSummary: businessSummary, // Updated from businessOverview
+    businessSummary: businessSummary,
     underwritingGuidelines: guidelines,
+    managedSubjectToOffers, // Initialized based on AI suggestions
     rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${totalPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription}\nOperations: ${businessSummary.operationsDescription}\nProducts: ${businessSummary.productDescription}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk}`
   };
 };

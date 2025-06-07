@@ -2,7 +2,7 @@
 import type { AiUnderwritingActions } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Lightbulb, AlertTriangle, CheckSquare, FileQuestion, Bot } from 'lucide-react'; // Added Bot icon
+import { Lightbulb, AlertTriangle, FileQuestion, Bot } from 'lucide-react';
 
 interface RecommendedActionsCardProps {
   actions: AiUnderwritingActions | null;
@@ -26,6 +26,14 @@ export function RecommendedActionsCard({ actions }: RecommendedActionsCardProps)
     );
   }
 
+  // Filter out "Potential Subject-To Offers" as they are now in a separate card
+  const hasInformationRequests = actions.informationRequests.length > 0;
+  const hasOtherActions = actions.suggestedActions.filter(action => !action.toLowerCase().includes('decline')).length > 0;
+  const hasDeclineAction = actions.suggestedActions.some(action => action.toLowerCase().includes('decline'));
+
+  const noActionsToShow = !hasInformationRequests && !hasOtherActions && !hasDeclineAction;
+
+
   return (
     <Card>
       <CardHeader>
@@ -33,17 +41,14 @@ export function RecommendedActionsCard({ actions }: RecommendedActionsCardProps)
           <CardTitle>AI Recommended Actions</CardTitle>
           <Lightbulb className="h-5 w-5 text-muted-foreground" />
         </div>
-        <CardDescription>Suggestions from the AI underwriting assistant.</CardDescription>
+        <CardDescription>Suggestions from the AI underwriting assistant (excluding Subject-Tos).</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {(actions.informationRequests.length === 0 &&
-          actions.potentialSubjectToOffers.length === 0 &&
-          actions.suggestedActions.filter(action => !action.toLowerCase().includes('decline')).length === 0 &&
-          !actions.suggestedActions.some(action => action.toLowerCase().includes('decline'))) && (
-            <p className="text-muted-foreground">No specific actions recommended by AI at this time.</p>
+        {noActionsToShow && (
+            <p className="text-muted-foreground">No specific actions (other than subject-tos) recommended by AI at this time.</p>
         )}
 
-        {actions.informationRequests.length > 0 && (
+        {hasInformationRequests && (
           <div className="p-3 border rounded-md bg-card shadow-sm">
             <h3 className="text-sm font-semibold mb-2 flex items-center"><FileQuestion className="h-4 w-4 mr-2 text-primary" />Information Requests:</h3>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
@@ -53,19 +58,8 @@ export function RecommendedActionsCard({ actions }: RecommendedActionsCardProps)
             </ul>
           </div>
         )}
-
-        {actions.potentialSubjectToOffers.length > 0 && (
-           <div className="p-3 border rounded-md bg-card shadow-sm">
-            <h3 className="text-sm font-semibold mb-2 flex items-center"><CheckSquare className="h-4 w-4 mr-2 text-primary"/>Potential Subject-To Offers:</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
-              {actions.potentialSubjectToOffers.map((offer, index) => (
-                <li key={`offer-${index}`}>{offer}</li>
-              ))}
-            </ul>
-          </div>
-        )}
         
-        {actions.suggestedActions.filter(action => !action.toLowerCase().includes('decline')).length > 0 && (
+        {hasOtherActions && (
           <div className="p-3 border rounded-md bg-card shadow-sm">
             <h3 className="text-sm font-semibold mb-2 flex items-center"><Bot className="h-4 w-4 mr-2 text-primary"/>Other Suggested Actions:</h3>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
@@ -76,7 +70,7 @@ export function RecommendedActionsCard({ actions }: RecommendedActionsCardProps)
           </div>
         )}
 
-        {actions.suggestedActions.some(action => action.toLowerCase().includes('decline')) && (
+        {hasDeclineAction && (
           <Alert variant="destructive" className="mt-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Critical Recommendation: Decline</AlertTitle>

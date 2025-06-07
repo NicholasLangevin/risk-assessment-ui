@@ -1,14 +1,15 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline } from '@/types';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { RecommendedActionsCard } from './RecommendedActionsCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
-import { BusinessSummaryCard } from './BusinessSummaryCard'; // Renamed from BusinessOverviewCard
+import { BusinessSummaryCard } from './BusinessSummaryCard';
 import { GuidelineStatusList } from './GuidelineStatusList';
 import { AiProcessingMonitorContent } from './AiProcessingMonitorContent';
+import { SubjectToOffersCard } from './SubjectToOffersCard'; // New Card
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Activity, ChevronLeft } from 'lucide-react';
@@ -24,10 +25,22 @@ interface QuoteViewClientProps {
 export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessingData, aiUnderwritingActions }: QuoteViewClientProps) {
   const [quoteDetails, setQuoteDetails] = useState<QuoteDetails | null>(initialQuoteDetails);
   const { toast } = useToast();
-  
+
+  // Initialize managedSubjectToOffers from aiUnderwritingActions or quoteDetails
   useEffect(() => {
-    setQuoteDetails(initialQuoteDetails);
-  }, [initialQuoteDetails]);
+    if (initialQuoteDetails && !initialQuoteDetails.managedSubjectToOffers && aiUnderwritingActions?.potentialSubjectToOffers) {
+      const initialManagedOffers = aiUnderwritingActions.potentialSubjectToOffers.map((text, index) => ({
+        id: `sto-${index}-${Date.now()}`,
+        originalText: text,
+        currentText: text,
+        isRemoved: false,
+        isEdited: false,
+      }));
+      setQuoteDetails(prev => prev ? { ...prev, managedSubjectToOffers: initialManagedOffers } : null);
+    } else if (initialQuoteDetails && initialQuoteDetails.managedSubjectToOffers) {
+       setQuoteDetails(initialQuoteDetails);
+    }
+  }, [initialQuoteDetails, aiUnderwritingActions]);
 
 
   if (!quoteDetails) {
@@ -41,7 +54,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       </div>
     );
   }
-  
+
   const handleAddGuideline = (guidelineInfo: { id: string; name: string }) => {
     setQuoteDetails(prevDetails => {
       if (!prevDetails) return null;
@@ -49,7 +62,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       const newGuideline: Guideline = {
         id: guidelineInfo.id,
         name: guidelineInfo.name,
-        status: 'Needs Clarification', // Default status for newly added guidelines
+        status: 'Needs Clarification',
         details: 'Manually added for evaluation. Please provide details.',
       };
 
@@ -58,7 +71,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           toast({
             title: "Guideline Exists",
             description: `"${newGuideline.name}" is already in the list.`,
-            variant: "default" 
+            variant: "default"
           });
         }, 0);
         return prevDetails;
@@ -81,10 +94,10 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
   const handleUpdateGuideline = (id: string, status: Guideline['status'], details?: string) => {
     setQuoteDetails(prevDetails => {
       if (!prevDetails) return null;
-      const updatedGuidelines = prevDetails.underwritingGuidelines.map(g => 
+      const updatedGuidelines = prevDetails.underwritingGuidelines.map(g =>
         g.id === id ? { ...g, status, details: details !== undefined ? details : g.details } : g
       );
-      
+
       const updatedGuideline = updatedGuidelines.find(g => g.id === id);
       if (updatedGuideline) {
         setTimeout(() => {
@@ -93,13 +106,77 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
             description: `Status for "${updatedGuideline.name}" changed to ${status}.`,
             variant: "default"
           });
-        }, 0);
+        },0);
       }
 
       return {
         ...prevDetails,
         underwritingGuidelines: updatedGuidelines,
       };
+    });
+  };
+
+  const handleUpdateSubjectToOffer = (id: string, newText: string) => {
+    setQuoteDetails(prevDetails => {
+      if (!prevDetails || !prevDetails.managedSubjectToOffers) return prevDetails;
+      const updatedOffers = prevDetails.managedSubjectToOffers.map(offer =>
+        offer.id === id ? { ...offer, currentText: newText, isEdited: true, isRemoved: false } : offer // Un-remove if edited
+      );
+       setTimeout(() => {
+        toast({
+          title: "Subject-To Offer Updated",
+          description: `Offer "${newText.substring(0,30)}..." has been modified.`,
+          variant: "default"
+        });
+      },0);
+      return { ...prevDetails, managedSubjectToOffers: updatedOffers };
+    });
+  };
+
+  const handleToggleRemoveSubjectToOffer = (id: string) => {
+    setQuoteDetails(prevDetails => {
+      if (!prevDetails || !prevDetails.managedSubjectToOffers) return prevDetails;
+      let offerText = "";
+      let isNowRemoved = false;
+      const updatedOffers = prevDetails.managedSubjectToOffers.map(offer => {
+        if (offer.id === id) {
+          offerText = offer.currentText;
+          isNowRemoved = !offer.isRemoved;
+          return { ...offer, isRemoved: !offer.isRemoved };
+        }
+        return offer;
+      });
+      setTimeout(() => {
+        toast({
+          title: `Subject-To Offer ${isNowRemoved ? 'Removed' : 'Restored'}`,
+          description: `Offer "${offerText.substring(0,30)}..." has been ${isNowRemoved ? 'marked as removed' : 'restored'}.`,
+          variant: "default"
+        });
+      },0);
+      return { ...prevDetails, managedSubjectToOffers: updatedOffers };
+    });
+  };
+
+  // Placeholder for adding a new subject-to offer from scratch
+   const handleAddSubjectToOffer = (newOfferText: string) => {
+    setQuoteDetails(prevDetails => {
+      if (!prevDetails) return null;
+      const newOffer: ManagedSubjectToOffer = {
+        id: `sto-custom-${Date.now()}`,
+        originalText: `User-added: ${newOfferText}`, // Distinguish user-added
+        currentText: newOfferText,
+        isRemoved: false,
+        isEdited: true, // Mark as edited since it's custom
+      };
+      const updatedOffers = [...(prevDetails.managedSubjectToOffers || []), newOffer];
+      setTimeout(() => {
+        toast({
+          title: "Subject-To Offer Added",
+          description: `New offer "${newOfferText.substring(0,30)}..." added.`,
+          variant: "default"
+        });
+      }, 0);
+      return { ...prevDetails, managedSubjectToOffers: updatedOffers };
     });
   };
 
@@ -143,9 +220,9 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column / Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          <BusinessSummaryCard summary={quoteDetails.businessSummary} /> 
-          <GuidelineStatusList 
-            guidelines={quoteDetails.underwritingGuidelines} 
+          <BusinessSummaryCard summary={quoteDetails.businessSummary} />
+          <GuidelineStatusList
+            guidelines={quoteDetails.underwritingGuidelines}
             onAddGuideline={handleAddGuideline}
             onUpdateGuideline={handleUpdateGuideline}
           />
@@ -155,6 +232,12 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         <div className="lg:col-span-1 space-y-6">
           <PremiumSummaryCard summary={quoteDetails.premiumSummary} />
           <CapacityCheckCard capacity={quoteDetails.capacityCheck} />
+          <SubjectToOffersCard
+            offers={quoteDetails.managedSubjectToOffers || []}
+            onUpdateOffer={handleUpdateSubjectToOffer}
+            onToggleRemoveOffer={handleToggleRemoveSubjectToOffer}
+            onAddSubjectToOffer={handleAddSubjectToOffer} // Pass if "Add New" button is used
+          />
           <RecommendedActionsCard actions={aiUnderwritingActions} />
         </div>
       </div>
