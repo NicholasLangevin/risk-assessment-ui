@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Edit3, Trash2, Check, X, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import * as Diff from 'diff';
+import { diffWords } from 'diff';
 
 interface SubjectToOfferItemProps {
   offer: ManagedSubjectToOffer;
@@ -38,7 +38,7 @@ export function SubjectToOfferItem({ offer, onUpdateOffer, onToggleRemoveOffer }
   
   const handleEditClick = () => {
     if (offer.isRemoved) {
-        onToggleRemoveOffer(offer.id);
+        onToggleRemoveOffer(offer.id); // Restore if it was removed before editing
     }
     setIsEditing(true);
   }
@@ -49,7 +49,7 @@ export function SubjectToOfferItem({ offer, onUpdateOffer, onToggleRemoveOffer }
     }
 
     if (offer.isEdited && offer.currentText !== offer.originalText) {
-      const diffResult = Diff.diffWords(offer.originalText, offer.currentText);
+      const diffResult = diffWords(offer.originalText, offer.currentText);
       return (
         <>
           {diffResult.map((part, index) => {
