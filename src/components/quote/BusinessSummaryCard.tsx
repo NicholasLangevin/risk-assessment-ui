@@ -59,7 +59,7 @@ const RenderRichText = ({ segments, citations, onShowCitation }: { segments: Ric
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs text-center">
-                  <p className="text-xs">{citation.quickDescription}</p>
+                  <div className="text-xs">{citation.quickDescription}</div>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
