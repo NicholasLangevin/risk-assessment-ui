@@ -19,7 +19,7 @@ const mockCoverageTypes = [
 ];
 
 export const mockSubmissions: Submission[] = Array.from({ length: 10 }, (_, i) => ({
-  id: `SUB-${1001 + i}`,
+  id: `Q${String(Math.floor(1000000 + Math.random() * 9000000))}`, // Updated ID format
   insuredName: insuredNames[i % insuredNames.length],
   broker: brokers[i % brokers.length],
   status: statuses[i % statuses.length],
@@ -145,3 +145,4 @@ export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'ALL-014', name: 'Professional Indemnity Requirements' },
   { id: 'ALL-015', name: 'Supply Chain Risk Analysis' },
 ];
+
