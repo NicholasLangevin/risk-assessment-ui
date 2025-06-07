@@ -6,27 +6,28 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GuidelineItem } from './GuidelineItem';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ListChecks, PlusCircle } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { mockAllPossibleGuidelines } from '@/lib/mockData'; // Source of all guidelines
+import { mockAllPossibleGuidelines } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
 
 interface GuidelineStatusListProps {
   guidelines: Guideline[];
   onAddGuideline: (guidelineInfo: { id: string; name: string }) => void;
   onUpdateGuideline: (id: string, status: Guideline['status'], details?: string) => void;
+  onViewGuidelineDetails: (guideline: Guideline) => void; // New prop
 }
 
-export function GuidelineStatusList({ guidelines, onAddGuideline, onUpdateGuideline }: GuidelineStatusListProps) {
+export function GuidelineStatusList({ guidelines, onAddGuideline, onUpdateGuideline, onViewGuidelineDetails }: GuidelineStatusListProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredSuggestions, setFilteredSuggestions] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     if (!isAddDialogOpen) {
-      setSearchTerm(''); // Reset search term when dialog closes
+      setSearchTerm('');
     }
   }, [isAddDialogOpen]);
   
@@ -40,7 +41,7 @@ export function GuidelineStatusList({ guidelines, onAddGuideline, onUpdateGuidel
     const currentGuidelineIds = new Set(guidelines.map(g => g.id));
 
     const suggestions = mockAllPossibleGuidelines
-      .filter(g => !currentGuidelineIds.has(g.id)) // Exclude already added guidelines
+      .filter(g => !currentGuidelineIds.has(g.id))
       .filter(g => g.name.toLowerCase().includes(lowerCaseSearchTerm));
     
     setFilteredSuggestions(suggestions);
@@ -48,8 +49,8 @@ export function GuidelineStatusList({ guidelines, onAddGuideline, onUpdateGuidel
 
   const handleSelectGuideline = (suggestion: { id: string; name: string }) => {
     onAddGuideline(suggestion);
-    setIsAddDialogOpen(false); // Close dialog after selection
-    setSearchTerm(''); // Reset search term
+    setIsAddDialogOpen(false);
+    setSearchTerm('');
   };
 
   return (
@@ -58,7 +59,7 @@ export function GuidelineStatusList({ guidelines, onAddGuideline, onUpdateGuidel
         <div className="flex items-center justify-between">
           <div className="flex-grow">
             <CardTitle>Guideline Status</CardTitle>
-            <CardDescription>Compliance status of underwriting guidelines. Click item to view details, use menu to change status.</CardDescription>
+            <CardDescription>Compliance status. Click item to view details, use menu to change status.</CardDescription>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -119,7 +120,12 @@ export function GuidelineStatusList({ guidelines, onAddGuideline, onUpdateGuidel
           <ScrollArea className="h-[300px] w-full">
             <div className="divide-y divide-border">
               {guidelines.map((guideline) => (
-                <GuidelineItem key={guideline.id} guideline={guideline} onUpdateGuideline={onUpdateGuideline} />
+                <GuidelineItem 
+                  key={guideline.id} 
+                  guideline={guideline} 
+                  onUpdateGuideline={onUpdateGuideline}
+                  onViewDetails={onViewGuidelineDetails} // Pass down the new prop
+                />
               ))}
             </div>
           </ScrollArea>

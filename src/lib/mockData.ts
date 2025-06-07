@@ -1,5 +1,5 @@
 
-import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel } from '@/types';
+import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel, Citation, RichTextSegment } from '@/types';
 
 const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group", "Apex Enterprises", "Momentum Industries"];
 const brokers = ["Marsh", "Aon", "Willis Towers Watson", "Gallagher", "HUB International"];
@@ -19,7 +19,7 @@ const mockCoverageTypes = [
 ];
 
 export const mockSubmissions: Submission[] = Array.from({ length: 10 }, (_, i) => ({
-  id: `Q${String(1000000 + i).padStart(7, '0')}`, // Deterministic ID generation
+  id: `Q${String(1000000 + i).padStart(7, '0')}`,
   insuredName: insuredNames[i % insuredNames.length],
   broker: brokers[i % brokers.length],
   status: statuses[i % statuses.length],
@@ -42,11 +42,56 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     details: guidelineStatuses[index % guidelineStatuses.length] === 'Issue Found' ? 'Requires underwriter attention for XYZ reason.' : (guidelineStatuses[index % guidelineStatuses.length] === 'Needs Clarification' ? 'Please provide document ABC.' : undefined)
   }));
 
+  const mockCitations: Citation[] = [
+    {
+      id: 'building-spec-2015',
+      sourceType: 'attachment',
+      quickDescription: 'Building Specifications (PDF, 2015)',
+      sourceNameOrUrl: 'building_specs_final_2015.pdf',
+      attachmentMockContent: 'Mock PDF Content: This document contains detailed architectural and engineering specifications for the office complex completed in 2015. It includes materials used, safety compliance certificates, and floor plans.'
+    },
+    {
+      id: 'nfpa-13',
+      sourceType: 'web',
+      quickDescription: 'NFPA 13 Sprinkler Standards',
+      sourceNameOrUrl: 'https://www.nfpa.org/codes-and-standards/all-codes-and-standards/list-of-codes-and-standards/detail?code=13',
+    },
+    {
+      id: 'cybersecurity-policy-v3',
+      sourceType: 'attachment',
+      quickDescription: 'Internal Cybersecurity Policy v3.0 (DOCX)',
+      sourceNameOrUrl: 'cyber_policy_v3_internal.docx',
+      attachmentMockContent: 'Mock DOCX Content: Our company\'s comprehensive cybersecurity policy, version 3.0. Covers data handling, access control, incident response, and employee training.'
+    },
+    {
+      id: 'gdpr-compliance-overview',
+      sourceType: 'web',
+      quickDescription: 'GDPR Overview (Official EU Site)',
+      sourceNameOrUrl: 'https://gdpr-info.eu/',
+    }
+  ];
+
   const businessSummary: BusinessSummaryDetails = {
-    buildingsDescription: "Modern office complex with 3 buildings, steel frame construction, built in 2015. Fully sprinklered with central station alarm.",
-    operationsDescription: "Software development, cloud hosting services, and 24/7 customer support. Includes management of sensitive client data.",
-    productDescription: "Suite of SaaS products for enterprise resource planning and data analytics. Also offers custom AI model development for B2B clients.",
-    completedOperationsRisk: "Potential liability from data breaches post-service, software implementation errors leading to client business interruption, or failure of AI models causing financial loss."
+    buildingsDescription: [
+      { type: 'text', content: 'Modern office complex with 3 buildings, steel frame construction, built in 2015 ' },
+      { type: 'citationLink', citationId: 'building-spec-2015', markerText: '[1]' },
+      { type: 'text', content: '. Fully sprinklered to ' },
+      { type: 'citationLink', citationId: 'nfpa-13', markerText: '[2]' },
+      { type: 'text', content: ' standards with central station alarm.' }
+    ],
+    operationsDescription: [
+      { type: 'text', content: 'Software development, cloud hosting services, and 24/7 customer support. Includes management of sensitive client data as per internal '},
+      { type: 'citationLink', citationId: 'cybersecurity-policy-v3', markerText: '[3]'},
+      { type: 'text', content: ' and relevant regulations like GDPR '},
+      { type: 'citationLink', citationId: 'gdpr-compliance-overview', markerText: '[4]'},
+      { type: 'text', content: '.'}
+    ],
+    productDescription: [
+      { type: 'text', content: "Suite of SaaS products for enterprise resource planning and data analytics. Also offers custom AI model development for B2B clients." }
+    ],
+    completedOperationsRisk: [
+      { type: 'text', content: "Potential liability from data breaches post-service, software implementation errors leading to client business interruption, or failure of AI models causing financial loss. All service agreements include liability caps." }
+    ]
   };
 
   const mockAiActions: AiUnderwritingActions = {
@@ -75,14 +120,12 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     isEdited: false,
   }));
 
-  // Initial mock coverages - AI evaluation will be populated by the page component
-  const coveragesRequested: CoverageItem[] = mockCoverageTypes.map((cov, index) => ({
+  const coveragesRequested: CoverageItem[] = mockCoverageTypes.map((cov) => ({
     type: cov.type,
     limits: cov.limits,
-    // These will be filled by the AI flow call in the page component
     aiRiskEvaluation: "Awaiting AI evaluation...",
-    riskLevel: "Normal", // Default, to be updated by AI
-  })).slice(0, Math.floor(Math.random() * 3) + 2); // Show 2 to 4 coverages
+    riskLevel: "Normal" as RiskLevel,
+  })).slice(0, Math.floor(Math.random() * 3) + 3); // Show 3 to 5 coverages
 
 
   return {
@@ -105,7 +148,8 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     managedSubjectToOffers,
     managedInformationRequests,
     coveragesRequested,
-    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${totalPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription}\nOperations: ${businessSummary.operationsDescription}\nProducts: ${businessSummary.productDescription}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk}`
+    citations: mockCitations, // Added citations
+    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${totalPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : s.markerText).join('')}`
   };
 };
 
@@ -120,14 +164,13 @@ export const getMockAiProcessingSteps = (submissionId: string): string[] => {
     "Confidence score calculated.",
     "Generating detailed reasoning report.",
     "Process completed."
-  ].slice(0, Math.floor(Math.random() * 8) + 2); // Return a variable number of steps
+  ].slice(0, Math.floor(Math.random() * 8) + 2);
 };
 
 export const getMockAiReasoning = (submissionId: string): string => {
   return `For submission ${submissionId}, the primary risk factors identified are related to cyber exposure given the industry. The recommendation to request further information on security protocols is based on standard underwriting practice for tech companies. Capacity is available. Subject-to offers considered but not prioritized over information gathering at this stage.`;
 };
 
-// List of all possible guidelines that can be added
 export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'ALL-001', name: 'Exposure Limits' },
   { id: 'ALL-002', name: 'Geographical Restrictions' },
@@ -145,4 +188,3 @@ export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'ALL-014', name: 'Professional Indemnity Requirements' },
   { id: 'ALL-015', name: 'Supply Chain Risk Analysis' },
 ];
-

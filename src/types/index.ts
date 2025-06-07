@@ -21,12 +21,37 @@ export interface AiRecommendedAction {
   priority?: 'High' | 'Medium' | 'Low';
 }
 
-export interface BusinessSummaryDetails {
-  buildingsDescription: string;
-  operationsDescription: string;
-  productDescription: string;
-  completedOperationsRisk: string;
+// --- Citation Feature Types ---
+export type CitationSourceType = 'attachment' | 'web';
+
+export interface Citation {
+  id: string; // Unique ID for the citation, e.g., "financials-2023-report"
+  sourceType: CitationSourceType;
+  quickDescription: string; // Short text for tooltip, e.g., "Financial Report 2023 (PDF)" or "Industry Stats - statista.com"
+  sourceNameOrUrl: string; // Filename for 'attachment', URL for 'web'
+  attachmentMockContent?: string; // For 'attachment', simplified content to display in sheet
 }
+
+export interface TextSegment {
+  type: 'text';
+  content: string;
+}
+
+export interface CitationLinkSegment {
+  type: 'citationLink';
+  citationId: string; // Corresponds to Citation.id
+  markerText: string; // The text to display for the link, e.g., "[1]", "[Source A]"
+}
+
+export type RichTextSegment = TextSegment | CitationLinkSegment;
+
+export interface BusinessSummaryDetails {
+  buildingsDescription: RichTextSegment[];
+  operationsDescription: RichTextSegment[];
+  productDescription: RichTextSegment[];
+  completedOperationsRisk: RichTextSegment[];
+}
+// --- End Citation Feature Types ---
 
 export interface ManagedSubjectToOffer {
   id: string;
@@ -68,11 +93,12 @@ export interface QuoteDetails {
     percentageUsed: number; // 0-100
     notes?: string;
   };
-  businessSummary: BusinessSummaryDetails;
+  businessSummary: BusinessSummaryDetails; // Updated type
   underwritingGuidelines: Guideline[];
   managedSubjectToOffers: ManagedSubjectToOffer[];
   managedInformationRequests: ManagedInformationRequest[];
   coveragesRequested: CoverageItem[];
+  citations: Citation[]; // Added
   rawSubmissionData: string;
 }
 
@@ -112,3 +138,10 @@ export interface EmailGenerationOutput {
   emailSubject: string;
   emailBody: string;
 }
+
+// For QuoteViewClient state to manage the active sheet content
+export type ActiveSheetItem =
+  | { type: 'aiMonitor'; submissionId: string; }
+  | { type: 'guideline'; data: Guideline }
+  | { type: 'citation'; data: Citation }
+  | null;

@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput } from '@/types';
+import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput, Citation, ActiveSheetItem } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
 import { BusinessSummaryCard } from './BusinessSummaryCard';
@@ -13,12 +13,13 @@ import { SubjectToOffersCard } from './SubjectToOffersCard';
 import { InformationRequestsCard } from './InformationRequestsCard';
 import { CoverageRequestedCard } from './CoverageRequestedCard';
 import { EmailPreviewDialog } from './EmailPreviewDialog';
+import { GuidelineDetailsContent } from './GuidelineDetailsContent';
+import { CitationViewerContent } from './CitationViewerContent'; 
 import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flows/generate-underwriting-email';
 
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +44,8 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
   } | null>(null);
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  
+  const [activeSheetItem, setActiveSheetItem] = useState<ActiveSheetItem>(null);
 
 
   useEffect(() => {
@@ -327,8 +330,22 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
     setIsSendingEmail(false);
     setIsEmailDialogOpen(false);
     setEmailState(null);
-    setSelectedDecision(null); // Reset decision
+    setSelectedDecision(null);
     router.push('/');
+  };
+
+  const handleShowGuidelineDetails = (guideline: Guideline) => {
+    setActiveSheetItem({ type: 'guideline', data: guideline });
+  };
+
+  const handleShowCitation = (citation: Citation) => {
+    setActiveSheetItem({ type: 'citation', data: citation });
+  };
+  
+  const handleShowAiMonitor = () => {
+     if (quoteDetails) {
+        setActiveSheetItem({ type: 'aiMonitor', submissionId: quoteDetails.id });
+     }
   };
 
 
@@ -351,21 +368,59 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
     { value: 'Decline', label: 'Decline Quote' },
   ];
 
+  const renderSheetContent = () => {
+    if (!activeSheetItem) return null;
+    switch (activeSheetItem.type) {
+      case 'aiMonitor':
+        return (
+          <AiProcessingMonitorContent
+            steps={aiProcessingData?.processingSteps || []}
+            reasoning={aiProcessingData?.reasoning || "No reasoning data available."}
+            submissionId={activeSheetItem.submissionId}
+          />
+        );
+      case 'guideline':
+        return <GuidelineDetailsContent guideline={activeSheetItem.data} />;
+      case 'citation':
+        return <CitationViewerContent citation={activeSheetItem.data} />;
+      default:
+        return null;
+    }
+  };
+
+  const getSheetTitle = () => {
+    if (!activeSheetItem) return "";
+    switch (activeSheetItem.type) {
+      case 'aiMonitor': return "AI Processing Monitor";
+      case 'guideline': return `Guideline: ${activeSheetItem.data.name}`;
+      case 'citation': return `Citation: ${activeSheetItem.data.quickDescription}`;
+      default: return "";
+    }
+  };
+
+   const getSheetDescription = () => {
+    if (!activeSheetItem || !quoteDetails) return "";
+    switch (activeSheetItem.type) {
+      case 'aiMonitor': return `Real-time view of AI processing for submission ${quoteDetails.id}.`;
+      case 'guideline': return `Detailed information for guideline "${activeSheetItem.data.name}". Current status: ${activeSheetItem.data.status}.`;
+      case 'citation': return `Details for citation: ${activeSheetItem.data.sourceType === 'web' ? activeSheetItem.data.sourceNameOrUrl : activeSheetItem.data.sourceNameOrUrl }`;
+      default: return "";
+    }
+  };
+
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
-      <div className="flex justify-between items-start mb-6"> {/* Main header container */}
-        {/* Left Column for Back button, Quote info, Decision controls */}
+      <div className="flex justify-between items-start mb-6">
         <div>
           <Button variant="outline" size="sm" asChild className="mb-2">
             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
           </Button>
-
           <h1 className="text-3xl font-bold font-headline mb-1">
             Quote: {quoteDetails.id}
           </h1>
           <p className="text-muted-foreground mb-4">Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}</p>
-
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 mt-4">
             <Select
               value={selectedDecision || ""}
               onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
@@ -379,7 +434,6 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
                 ))}
               </SelectContent>
             </Select>
-
             <Button
               onClick={handleConfirmAndGenerateEmail}
               disabled={!selectedDecision || isGeneratingEmail}
@@ -391,42 +445,26 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
             </Button>
           </div>
         </div>
-
-        {/* Right Column for AI Monitor Button */}
         <div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="flex-shrink-0 h-9">
-                <Activity className="mr-2 h-4 w-4" /> AI Monitor
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl p-0 flex flex-col">
-              <SheetHeader className="p-6 border-b flex-shrink-0">
-                <SheetTitle>AI Processing Monitor</SheetTitle>
-                <SheetDescription>
-                  Real-time view of AI processing for submission {quoteDetails.id}.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="flex-grow overflow-y-auto">
-                <AiProcessingMonitorContent
-                  steps={aiProcessingData?.processingSteps || []}
-                  reasoning={aiProcessingData?.reasoning || "No reasoning data available."}
-                  submissionId={quoteDetails.id}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
+          <Button variant="outline" className="flex-shrink-0 h-9" onClick={handleShowAiMonitor}>
+            <Activity className="mr-2 h-4 w-4" /> AI Monitor
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <BusinessSummaryCard summary={quoteDetails.businessSummary} />
+          <BusinessSummaryCard 
+            summary={quoteDetails.businessSummary} 
+            citations={quoteDetails.citations}
+            onShowCitation={handleShowCitation}
+          />
           <CoverageRequestedCard coverages={quoteDetails.coveragesRequested || []} />
           <GuidelineStatusList
             guidelines={quoteDetails.underwritingGuidelines}
             onAddGuideline={handleAddGuideline}
             onUpdateGuideline={handleUpdateGuideline}
+            onViewGuidelineDetails={handleShowGuidelineDetails}
           />
         </div>
 
@@ -447,6 +485,18 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           />
         </div>
       </div>
+
+      <Sheet open={activeSheetItem !== null} onOpenChange={(isOpen) => !isOpen && setActiveSheetItem(null)}>
+        <SheetContent side="right" className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl p-0 flex flex-col">
+          <SheetHeader className="p-6 border-b flex-shrink-0">
+            <SheetTitle>{getSheetTitle()}</SheetTitle>
+            <SheetDescription>{getSheetDescription()}</SheetDescription>
+          </SheetHeader>
+          <div className="flex-grow overflow-y-auto">
+            {renderSheetContent()}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {emailState && (
         <EmailPreviewDialog
