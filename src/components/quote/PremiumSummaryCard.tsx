@@ -16,8 +16,8 @@ export function PremiumSummaryCard({ summary }: PremiumSummaryCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center text-primary">
-          <DollarSign className="h-5 w-5 mr-2" />
+        <CardTitle className="flex items-center"> {/* Removed text-primary */}
+          <DollarSign className="h-5 w-5 mr-2" /> {/* Icon will inherit color */}
           Premium Recommendation
         </CardTitle>
         <CardDescription>Details from Contact2.0 policy system.</CardDescription>
