@@ -5,7 +5,7 @@ import type { BusinessSummaryDetails, Citation, RichTextSegment, TextSegment } f
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Briefcase, FileText, Globe } from 'lucide-react'; // Changed ExternalLink to Globe
+import { Briefcase, FileText, Globe } from 'lucide-react';
 import React from 'react';
 
 interface BusinessSummaryCardProps {
@@ -13,6 +13,15 @@ interface BusinessSummaryCardProps {
   citations: Citation[];
   onShowCitation: (citation: Citation) => void;
 }
+
+// Custom PDF Icon SVG
+const PdfIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" opacity="0.3"/>
+    <path d="M13 2V9H20" opacity="0.3"/>
+    <text x="50%" y="60%" dominantBaseline="middle" textAnchor="middle" fontSize="7px" fontWeight="bold" fill="currentColor">PDF</text>
+  </svg>
+);
 
 const RenderRichText = ({ segments, citations, onShowCitation }: { segments: RichTextSegment[], citations: Citation[], onShowCitation: (citation: Citation) => void }) => {
   if (!segments || segments.length === 0) {
@@ -24,13 +33,10 @@ const RenderRichText = ({ segments, citations, onShowCitation }: { segments: Ric
       {segments.map((segment, index) => {
         if (segment.type === 'text') {
           let contentToRender = segment.content;
-          // Defensive check in case segment.content is an object
           if (typeof segment.content === 'object' && segment.content !== null && 'type' in segment.content && 'content' in segment.content) {
             contentToRender = (segment.content as TextSegment).content;
           }
-          
           if (typeof contentToRender !== 'string') {
-            // Fallback for invalid content, though type safety should prevent this
             return <span key={index} className="text-destructive">[Invalid Content]</span>;
           }
           return <React.Fragment key={index}>{contentToRender}</React.Fragment>;
@@ -42,10 +48,19 @@ const RenderRichText = ({ segments, citations, onShowCitation }: { segments: Ric
           }
 
           let IconComponent;
+          let tooltipText = citation.quickDescription;
+
           if (citation.sourceType === 'attachment') {
-            IconComponent = <FileText className="h-3.5 w-3.5" />; // Document icon (e.g., PDF proxy)
+            if (citation.sourceNameOrUrl.toLowerCase().endsWith('.pdf')) {
+              IconComponent = <PdfIcon />;
+              tooltipText = `PDF: ${citation.quickDescription}`;
+            } else {
+              IconComponent = <FileText className="h-3.5 w-3.5" />;
+              tooltipText = `Attachment: ${citation.quickDescription}`;
+            }
           } else { // 'web'
-            IconComponent = <Globe className="h-3.5 w-3.5" />; // Web icon
+            IconComponent = <Globe className="h-3.5 w-3.5" />;
+            tooltipText = `Web: ${citation.quickDescription}`;
           }
 
           return (
@@ -57,16 +72,16 @@ const RenderRichText = ({ segments, citations, onShowCitation }: { segments: Ric
                     size="sm"
                     className="p-0.5 h-auto text-xs align-middle inline-flex items-center justify-center mx-0.5 text-primary hover:text-primary/80 focus:outline-none focus:ring-1 focus:ring-ring rounded-sm"
                     onClick={() => onShowCitation(citation)}
-                    aria-label={`View citation ${segment.markerText}: ${citation.quickDescription}`}
+                    aria-label={`View citation: ${citation.quickDescription}`}
                   >
                     {IconComponent}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs text-center">
                   <div className="text-xs">
-                    {segment.markerText}: {citation.quickDescription}
-                    {citation.sourceType === 'attachment' && ` (Attachment: ${citation.sourceNameOrUrl})`}
-                    {citation.sourceType === 'web' && ` (Web: ${new URL(citation.sourceNameOrUrl).hostname})`}
+                    {segment.markerText ? `${segment.markerText}: ` : ''}{tooltipText}
+                    {citation.sourceType === 'attachment' && ` (${citation.sourceNameOrUrl})`}
+                    {citation.sourceType === 'web' && ` (${new URL(citation.sourceNameOrUrl).hostname})`}
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -110,4 +125,3 @@ export function BusinessSummaryCard({ summary, citations, onShowCitation }: Busi
     </Card>
   );
 }
-
