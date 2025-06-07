@@ -425,40 +425,51 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       <div className="flex justify-between items-start mb-6">
-        <div> 
+        {/* Left Column: Back Button and Main Info Container */}
+        <div className="flex-grow mr-4"> {/* Added flex-grow and mr-4 for spacing */}
           <Button variant="outline" size="sm" asChild className="mb-2">
             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
           </Button>
-          <div> {/* Container for Quote Info, Decision, and AI Risk Statement */}
-            <h1 className="text-3xl font-bold font-headline mb-1">
-              Quote: {quoteDetails.id}
-            </h1>
-            <p className="text-muted-foreground mb-4">Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}</p>
-            
-            <div className="flex items-center space-x-2">
-              <Select
-                value={selectedDecision || ""}
-                onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
-              >
-                <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
-                  <SelectValue placeholder="Select decision..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {decisionOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleConfirmAndGenerateEmail}
-                disabled={!selectedDecision || isGeneratingEmail}
-                size="sm"
-                className="h-9"
-              >
-                {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
-                Confirm & Generate Email
-              </Button>
+          
+          {/* New "Wide Card" Container */}
+          <div className="mt-4 bg-background p-4 rounded-lg shadow-sm">
+            {/* Top section: Quote Info (left) vs Decision/Confirm (right) */}
+            <div className="flex justify-between items-start mb-4">
+              <div> {/* Left part of top section */}
+                <h1 className="text-3xl font-bold font-headline mb-1">
+                  Quote: {quoteDetails.id}
+                </h1>
+                <p className="text-muted-foreground">
+                  Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2 flex-shrink-0"> {/* Right part of top section */}
+                <Select
+                  value={selectedDecision || ""}
+                  onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
+                >
+                  <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
+                    <SelectValue placeholder="Select decision..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {decisionOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleConfirmAndGenerateEmail}
+                  disabled={!selectedDecision || isGeneratingEmail}
+                  size="sm"
+                  className="h-9"
+                >
+                  {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
+                  Confirm & Generate Email
+                </Button>
+              </div>
             </div>
+
+            {/* AI Risk Summary - below the top section */}
             {quoteDetails.aiOverallRiskStatement && (
               <div className="mt-4 p-3 border rounded-md bg-muted/30 shadow-sm">
                 <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
@@ -471,6 +482,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           </div>
         </div>
         
+        {/* Right Column: AI Monitor Button */}
         <div>
           <Button variant="outline" className="flex-shrink-0 h-9" onClick={handleShowAiMonitor}>
             <Activity className="mr-2 h-4 w-4" /> AI Monitor
