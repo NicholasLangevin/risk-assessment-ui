@@ -8,10 +8,22 @@ import { GuidelineItem } from './GuidelineItem';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { ListChecks, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react'; // Removed ListChecks
 import React, { useState, useEffect } from 'react';
 import { mockAllPossibleGuidelines } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
+
+// Define AiSparkleIcon locally
+const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 30 30"
+    fill="currentColor"
+    {...props}
+  >
+    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714-6.31,13.408-13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
+  </svg>
+);
 
 interface GuidelineStatusListProps {
   guidelines: Guideline[];
@@ -58,8 +70,11 @@ export function GuidelineStatusList({ guidelines, onAddGuideline, onUpdateGuidel
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex-grow">
-            <CardTitle>Guideline Status</CardTitle>
-            <CardDescription>Compliance status. Click item to view details, use menu to change status.</CardDescription>
+            <CardTitle className="flex items-center text-primary">
+              <AiSparkleIcon className="h-5 w-5 mr-2" />
+              AI Guideline Evaluation
+            </CardTitle>
+            <CardDescription>AI-assisted compliance status. Click item to view details, use menu to change status.</CardDescription>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -134,3 +149,4 @@ export function GuidelineStatusList({ guidelines, onAddGuideline, onUpdateGuidel
     </Card>
   );
 }
+
