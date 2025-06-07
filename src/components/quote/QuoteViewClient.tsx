@@ -54,19 +54,23 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       };
 
       if (prevDetails.underwritingGuidelines.some(g => g.id === newGuideline.id)) {
-        toast({
-          title: "Guideline Exists",
-          description: `"${newGuideline.name}" is already in the list.`,
-          variant: "default" 
-        });
+        setTimeout(() => {
+          toast({
+            title: "Guideline Exists",
+            description: `"${newGuideline.name}" is already in the list.`,
+            variant: "default" 
+          });
+        }, 0);
         return prevDetails;
       }
 
-      toast({
-        title: "Guideline Added",
-        description: `"${newGuideline.name}" has been added. Please update its status and details.`,
-        variant: "default"
-      });
+      setTimeout(() => {
+        toast({
+          title: "Guideline Added",
+          description: `"${newGuideline.name}" has been added. Please update its status and details.`,
+          variant: "default"
+        });
+      }, 0);
       return {
         ...prevDetails,
         underwritingGuidelines: [...prevDetails.underwritingGuidelines, newGuideline],
@@ -83,11 +87,13 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       
       const updatedGuideline = updatedGuidelines.find(g => g.id === id);
       if (updatedGuideline) {
-        toast({
-          title: "Guideline Updated",
-          description: `Status for "${updatedGuideline.name}" changed to ${status}.`,
-          variant: "default"
-        });
+        setTimeout(() => {
+          toast({
+            title: "Guideline Updated",
+            description: `Status for "${updatedGuideline.name}" changed to ${status}.`,
+            variant: "default"
+          });
+        }, 0);
       }
 
       return {
