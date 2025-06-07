@@ -8,15 +8,15 @@ body {
 
 @layer base {
   :root {
-    --background: 220 6% 83%; /* Light gray #D3D5D8 */
-    --foreground: 220 10% 25%; /* Darker gray for text on light gray background */
-    --card: 0 0% 100%; /* White cards */
+    --background: 0 0% 100%; /* White */
+    --foreground: 220 10% 25%; /* Darker gray for text on white background */
+    --card: 220 20% 95%; /* Light gray cards */
     --card-foreground: 220 10% 25%; /* Darker gray for text on cards */
-    --popover: 0 0% 100%;
+    --popover: 220 20% 95%; /* Light gray popovers, matching cards */
     --popover-foreground: 220 10% 25%;
     --primary: 183 100% 37%; /* #00aebd */
     --primary-foreground: 0 0% 100%; /* White text on primary */
-    --secondary: 220 10% 92%; /* Slightly lighter gray than background */
+    --secondary: 220 10% 92%; /* Slightly lighter gray than card background */
     --secondary-foreground: 183 80% 30%; /* Darker primary for text on secondary */
     --muted: 220 8% 88%; /* Muted gray */
     --muted-foreground: 220 8% 45%; /* Text for muted */
@@ -33,7 +33,7 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 100%; /* White sidebar, like cards */
+    --sidebar-background: 220 20% 95%; /* Light gray sidebar, matching cards */
     --sidebar-foreground: 220 10% 25%; /* Dark text for sidebar */
     --sidebar-primary: 183 100% 37%;
     --sidebar-primary-foreground: 0 0% 100%;
