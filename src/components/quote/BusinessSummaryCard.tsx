@@ -1,11 +1,11 @@
 
 'use client';
 
-import type { BusinessSummaryDetails, Citation, RichTextSegment } from '@/types';
+import type { BusinessSummaryDetails, Citation, RichTextSegment, TextSegment } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Briefcase, Link as LinkIcon } from 'lucide-react'; // Changed Link to LinkIcon
+import { Briefcase, Link as LinkIcon } from 'lucide-react'; 
 import React from 'react';
 
 interface BusinessSummaryCardProps {
@@ -23,7 +23,21 @@ const RenderRichText = ({ segments, citations, onShowCitation }: { segments: Ric
     <p className="text-sm text-muted-foreground leading-relaxed">
       {segments.map((segment, index) => {
         if (segment.type === 'text') {
-          return <React.Fragment key={index}>{segment.content}</React.Fragment>;
+          // Defensive rendering for segment.content
+          let contentToRender = segment.content;
+          if (typeof segment.content === 'object' && segment.content !== null && 'type' in segment.content && 'content' in segment.content) {
+            // If segment.content is itself an object {type, content}, extract its content string
+            // This guards against unexpected data nesting.
+            // console.warn("Detected nested TextSegment-like object in content property:", segment.content);
+            contentToRender = (segment.content as TextSegment).content;
+          }
+          
+          if (typeof contentToRender !== 'string') {
+            // If, after checks, it's still not a string, provide a fallback.
+            // console.error("Final contentToRender is not a string:", contentToRender);
+            return <span key={index} className="text-destructive">[Invalid Content]</span>;
+          }
+          return <React.Fragment key={index}>{contentToRender}</React.Fragment>;
         }
         if (segment.type === 'citationLink') {
           const citation = citations.find(c => c.id === segment.citationId);
@@ -88,3 +102,4 @@ export function BusinessSummaryCard({ summary, citations, onShowCitation }: Busi
     </Card>
   );
 }
+
