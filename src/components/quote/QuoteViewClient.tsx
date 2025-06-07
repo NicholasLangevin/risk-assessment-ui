@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
-import { BusinessSummaryCard } from './BusinessSummaryCard';
+import { BusinessSummaryCard } from './BusinessSummaryCard'; // Corrected import
 import { GuidelineStatusList } from './GuidelineStatusList';
 import { AiProcessingMonitorContent } from './AiProcessingMonitorContent';
 import { SubjectToOffersCard } from './SubjectToOffersCard';
@@ -354,7 +354,8 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       <div className="flex justify-between items-start mb-6"> {/* Main header container */}
-        <div className="flex-grow"> {/* Left part of the header */}
+        {/* Left Column for Back button, Quote ID, Decision, Confirm, Insured/Broker */}
+        <div>
           <Button variant="outline" size="sm" asChild className="mb-2">
             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
           </Button>
@@ -363,8 +364,8 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
             <h1 className="text-3xl font-bold font-headline">
               Quote: {quoteDetails.id}
             </h1>
-
-            <div className="flex items-center space-x-2"> {/* Group for all right-aligned controls */}
+            {/* Group for Decision Dropdown and Confirm Button - Pushed to the right */}
+            <div className="flex items-center space-x-2 ml-4"> {/* Added ml-4 for spacing from Quote ID */}
               <Select
                 value={selectedDecision || ""}
                 onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
@@ -388,35 +389,37 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
                 {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
                 Confirm & Generate Email
               </Button>
-
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="flex-shrink-0 h-9">
-                    <Activity className="mr-2 h-4 w-4" /> AI Monitor
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl p-0 flex flex-col">
-                  <SheetHeader className="p-6 border-b flex-shrink-0">
-                    <SheetTitle>AI Processing Monitor</SheetTitle>
-                    <SheetDescription>
-                      Real-time view of AI processing for submission {quoteDetails.id}.
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="flex-grow overflow-y-auto">
-                    <AiProcessingMonitorContent
-                      steps={aiProcessingData?.processingSteps || []}
-                      reasoning={aiProcessingData?.reasoning || "No reasoning data available."}
-                      submissionId={quoteDetails.id}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
             </div>
           </div>
           
           <p className="text-muted-foreground">Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}</p>
         </div>
-        {/* AI Monitor button was moved into the flex group above */}
+
+        {/* Right Column for AI Monitor Button */}
+        <div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="flex-shrink-0 h-9"> {/* Adjusted height to h-9 */}
+                <Activity className="mr-2 h-4 w-4" /> AI Monitor
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl p-0 flex flex-col">
+              <SheetHeader className="p-6 border-b flex-shrink-0">
+                <SheetTitle>AI Processing Monitor</SheetTitle>
+                <SheetDescription>
+                  Real-time view of AI processing for submission {quoteDetails.id}.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="flex-grow overflow-y-auto">
+                <AiProcessingMonitorContent
+                  steps={aiProcessingData?.processingSteps || []}
+                  reasoning={aiProcessingData?.reasoning || "No reasoning data available."}
+                  submissionId={quoteDetails.id}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -461,3 +464,4 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
     </div>
   );
 }
+
