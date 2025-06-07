@@ -1,5 +1,5 @@
 
-import type { Submission, QuoteDetails, Guideline, AiProcessingStep } from '@/types';
+import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails } from '@/types';
 
 const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group", "Apex Enterprises", "Momentum Industries"];
 const brokers = ["Marsh", "Aon", "Willis Towers Watson", "Gallagher", "HUB International"];
@@ -34,6 +34,13 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     details: guidelineStatuses[index % guidelineStatuses.length] === 'Issue Found' ? 'Requires underwriter attention for XYZ reason.' : (guidelineStatuses[index % guidelineStatuses.length] === 'Needs Clarification' ? 'Please provide document ABC.' : undefined)
   }));
 
+  const businessSummary: BusinessSummaryDetails = {
+    buildingsDescription: "Modern office complex with 3 buildings, steel frame construction, built in 2015. Fully sprinklered with central station alarm.",
+    operationsDescription: "Software development, cloud hosting services, and 24/7 customer support. Includes management of sensitive client data.",
+    productDescription: "Suite of SaaS products for enterprise resource planning and data analytics. Also offers custom AI model development for B2B clients.",
+    completedOperationsRisk: "Potential liability from data breaches post-service, software implementation errors leading to client business interruption, or failure of AI models causing financial loss."
+  };
+
   return {
     id: submission.id,
     insuredName: submission.insuredName,
@@ -49,14 +56,9 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
       percentageUsed: Math.floor(Math.random() * 100),
       notes: Math.random() > 0.8 ? "Approaching aggregate limit for this sector." : undefined,
     },
-    businessOverview: {
-      buildingsDescription: "Modern office complex with 3 buildings, steel frame construction, built in 2015. Fully sprinklered with central station alarm.",
-      operationsDescription: "Software development, cloud hosting services, and 24/7 customer support. Includes management of sensitive client data.",
-      productDescription: "Suite of SaaS products for enterprise resource planning and data analytics. Also offers custom AI model development for B2B clients.",
-      completedOperationsRisk: "Potential liability from data breaches post-service, software implementation errors leading to client business interruption, or failure of AI models causing financial loss."
-    },
+    businessSummary: businessSummary, // Updated from businessOverview
     underwritingGuidelines: guidelines,
-    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${totalPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: Modern office complex, steel frame, 2015.\nOperations: Software dev, cloud hosting.\nProducts: SaaS for ERP, AI models.`
+    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${totalPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription}\nOperations: ${businessSummary.operationsDescription}\nProducts: ${businessSummary.productDescription}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk}`
   };
 };
 

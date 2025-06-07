@@ -1,3 +1,4 @@
+
 import { QuoteViewClient } from '@/components/quote/QuoteViewClient';
 import { getMockQuoteDetails, getMockAiProcessingSteps, getMockAiReasoning } from '@/lib/mockData';
 import type { QuoteDetails, AiProcessingData, AiUnderwritingActions } from '@/types';
@@ -27,6 +28,11 @@ export default async function QuotePage({ params }: QuotePageProps) {
   } catch (error) {
     console.error("Error fetching AI underwriting actions:", error);
     // Optionally set a default or error state for aiUnderwritingActions
+    aiUnderwritingActions = { // Provide a default structure on error
+        suggestedActions: ["Error retrieving AI actions."],
+        informationRequests: [],
+        potentialSubjectToOffers: []
+    };
   }
   
   let aiProcessingData: AiProcessingData | null = null;

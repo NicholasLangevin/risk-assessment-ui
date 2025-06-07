@@ -21,6 +21,13 @@ export interface AiRecommendedAction {
   priority?: 'High' | 'Medium' | 'Low';
 }
 
+export interface BusinessSummaryDetails {
+  buildingsDescription: string;
+  operationsDescription: string;
+  productDescription: string;
+  completedOperationsRisk: string;
+}
+
 export interface QuoteDetails {
   id: string;
   insuredName: string;
@@ -36,12 +43,7 @@ export interface QuoteDetails {
     percentageUsed: number; // 0-100
     notes?: string;
   };
-  businessOverview: {
-    buildingsDescription: string;
-    operationsDescription: string;
-    productDescription: string;
-    completedOperationsRisk: string;
-  };
+  businessSummary: BusinessSummaryDetails; // Updated from businessOverview
   underwritingGuidelines: Guideline[];
   // Data to be fed to the AI
   rawSubmissionData: string; 
