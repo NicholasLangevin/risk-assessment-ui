@@ -5,7 +5,7 @@ import type { ManagedInformationRequest } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { InformationRequestItem } from './InformationRequestItem';
-import { FileQuestion, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react'; // Removed FileQuestion
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,6 +18,18 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import React, { useState } from 'react';
+
+// Define AiSparkleIcon locally
+const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 30 30"
+    fill="currentColor"
+    {...props}
+  >
+    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714-6.31,13.408-13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
+  </svg>
+);
 
 interface InformationRequestsCardProps {
   requests: ManagedInformationRequest[];
@@ -47,9 +59,9 @@ export function InformationRequestsCard({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center">
-            <FileQuestion className="h-5 w-5 mr-2 text-primary" />
-            Information Requests
+          <CardTitle className="flex items-center text-primary">
+            <AiSparkleIcon className="h-5 w-5 mr-2" /> {/* Replaced FileQuestion with AiSparkleIcon and added text-primary */}
+            AI Information Requests
           </CardTitle>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
