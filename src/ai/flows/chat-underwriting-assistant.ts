@@ -20,6 +20,7 @@ const ChatHistoryItemSchema = z.object({
   parts: z.array(MessagePartSchema),
 });
 
+// These are not exported to avoid "use server" issues with non-async exports.
 const ChatUnderwritingAssistantInputSchema = z.object({
   submissionId: z.string().describe('The ID of the submission being discussed.'),
   userQuery: z.string().describe('The user’s current question or message.'),
@@ -45,10 +46,10 @@ const prompt = ai.definePrompt({
 {{#if chatHistory}}
 Previous conversation:
 {{#each chatHistory}}
-{{#if (eq role "user")}}{{!-- User's turn --}}
+{{#if isUser}}{{!-- User's turn --}}
 User: {{#each parts}}{{text}}{{/each}}
 {{/if}}
-{{#if (eq role "model")}}{{!-- Model's turn --}}
+{{#if isModel}}{{!-- Model's turn --}}
 AI: {{#each parts}}{{text}}{{/each}}
 {{/if}}
 {{/each}}
@@ -72,7 +73,17 @@ const chatWithUnderwritingAssistantFlow = ai.defineFlow(
     outputSchema: ChatUnderwritingAssistantOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
+    // Preprocess chatHistory to add boolean flags for Handlebars
+    const processedInput = {
+      ...input,
+      chatHistory: input.chatHistory?.map(item => ({
+        ...item, // Spread original item properties (like 'parts')
+        isUser: item.role === 'user',
+        isModel: item.role === 'model',
+      })),
+    };
+
+    const {output} = await prompt(processedInput);
     if (!output) {
       return { aiResponse: "I'm sorry, I couldn't generate a response at this time." };
     }
