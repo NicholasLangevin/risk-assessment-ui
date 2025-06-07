@@ -20,7 +20,7 @@ export type MonitorAiProcessingInput = z.infer<typeof MonitorAiProcessingInputSc
 
 const AiToolActionDetailsSchema = z.object({
   targetName: z.string().optional().describe("The name of the item being interacted with (e.g., attachment filename, guideline name, or text of a subject-to)."),
-  url: z.string().url().optional().describe("The URL, if the action involves a web resource."),
+  url: z.string().optional().describe("The URL, if the action involves a web resource."), // Changed from z.string().url().optional()
   query: z.string().optional().describe("The search query used, if the action is a web search."),
   actionSummary: z.string().optional().describe("A brief summary if the action is of a generic 'PerformingAction' type.")
 }).describe("Specific details related to the action type.");
