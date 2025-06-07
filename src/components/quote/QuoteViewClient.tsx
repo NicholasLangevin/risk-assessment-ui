@@ -22,7 +22,7 @@ import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flow
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Bot } from 'lucide-react'; // Changed Info to Bot
+import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,6 +31,23 @@ interface QuoteViewClientProps {
   aiProcessingData: AiProcessingData | null;
   aiUnderwritingActions: AiUnderwritingActions | null;
 }
+
+const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 50 50"
+    fill="none"
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeMiterlimit="10"
+    strokeWidth="2"
+    {...props}
+  >
+    <path d="M47.918,24.957c-12.425-0.49-22.385-10.45-22.875-22.875L25,1l-0.043,1.082c-0.49,12.425-10.45,22.385-22.875,22.875L1,25	l1.082,0.043c12.425,0.49,22.385,10.45,22.875,22.875L25,49l0.043-1.082c0.49-12.425,10.45-22.385,22.875-22.875L49,25	L47.918,24.957z" />
+  </svg>
+);
+
 
 export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessingData, aiUnderwritingActions }: QuoteViewClientProps) {
   const [quoteDetails, setQuoteDetails] = useState<QuoteDetails | null>(initialQuoteDetails);
@@ -476,7 +493,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         {quoteDetails.aiOverallRiskStatement && (
           <div className="mt-4 p-3 border rounded-md bg-muted/30 shadow-sm">
             <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
-              <Bot className="h-4 w-4 mr-2" />
+              <AiSparkleIcon className="h-4 w-4 mr-2" />
               AI Risk Summary & Reasoning
             </h4>
             <p className="text-sm text-foreground/90 whitespace-pre-wrap">{quoteDetails.aiOverallRiskStatement}</p>
