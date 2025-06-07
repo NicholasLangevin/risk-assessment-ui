@@ -45,6 +45,8 @@ export function SubjectToOfferItem({ offer, onUpdateOffer, onToggleRemoveOffer }
     setIsEditing(true);
   }
 
+  const hasActualModification = offer.isEdited && offer.currentText !== offer.originalText;
+
   return (
     <div className="py-2 border-b border-border/50 last:border-b-0">
       {isEditing ? (
@@ -70,7 +72,7 @@ export function SubjectToOfferItem({ offer, onUpdateOffer, onToggleRemoveOffer }
             className={cn(
               "text-sm flex-grow",
               offer.isRemoved && "line-through text-muted-foreground",
-              !offer.isRemoved && offer.isEdited && "text-green-600 dark:text-green-500"
+              !offer.isRemoved && hasActualModification && "text-green-600 dark:text-green-500"
             )}
           >
             {offer.currentText}
