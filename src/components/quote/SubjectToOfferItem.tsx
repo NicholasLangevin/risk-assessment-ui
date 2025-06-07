@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Edit3, Trash2, Check, X, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import * as Diff from 'diff';
 
 interface SubjectToOfferItemProps {
   offer: ManagedSubjectToOffer;
@@ -29,7 +30,6 @@ export function SubjectToOfferItem({ offer, onUpdateOffer, onToggleRemoveOffer }
   };
 
   const handleToggleRemove = () => {
-    // If currently editing, cancel edit before toggling removal
     if (isEditing) {
       handleCancel();
     }
@@ -37,15 +37,34 @@ export function SubjectToOfferItem({ offer, onUpdateOffer, onToggleRemoveOffer }
   };
   
   const handleEditClick = () => {
-    // If removed, un-remove it first before enabling edit.
-    // This simplifies state, as editing a "removed" item is counter-intuitive.
     if (offer.isRemoved) {
         onToggleRemoveOffer(offer.id);
     }
     setIsEditing(true);
   }
 
-  const hasActualModification = offer.isEdited && offer.currentText !== offer.originalText;
+  const renderOfferText = () => {
+    if (offer.isRemoved) {
+      return <span className="line-through text-muted-foreground">{offer.currentText}</span>;
+    }
+
+    if (offer.isEdited && offer.currentText !== offer.originalText) {
+      const diffResult = Diff.diffWords(offer.originalText, offer.currentText);
+      return (
+        <>
+          {diffResult.map((part, index) => {
+            if (part.added) {
+              return <span key={index} className="text-green-600 dark:text-green-500 font-semibold bg-green-50 dark:bg-green-900/20 px-0.5 rounded-sm">{part.value}</span>;
+            } else if (!part.removed) { // Common parts
+              return <span key={index}>{part.value}</span>;
+            }
+            return null; // Don't render removed parts from originalText to show currentText
+          })}
+        </>
+      );
+    }
+    return <span>{offer.currentText}</span>;
+  };
 
   return (
     <div className="py-2 border-b border-border/50 last:border-b-0">
@@ -68,14 +87,8 @@ export function SubjectToOfferItem({ offer, onUpdateOffer, onToggleRemoveOffer }
         </div>
       ) : (
         <div className="flex items-center justify-between space-x-2">
-          <p
-            className={cn(
-              "text-sm flex-grow",
-              offer.isRemoved && "line-through text-muted-foreground",
-              !offer.isRemoved && hasActualModification && "text-green-600 dark:text-green-500"
-            )}
-          >
-            {offer.currentText}
+          <p className="text-sm flex-grow">
+            {renderOfferText()}
           </p>
           <div className="flex items-center space-x-1 flex-shrink-0">
             {!offer.isRemoved && (
