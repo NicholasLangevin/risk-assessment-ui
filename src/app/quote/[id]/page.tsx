@@ -1,10 +1,10 @@
 
 import { QuoteViewClient } from '@/components/quote/QuoteViewClient';
-import { getMockQuoteDetails, getMockAiProcessingSteps, getMockAiReasoning } from '@/lib/mockData';
+import { getMockQuoteDetails, getMockAiToolActions } from '@/lib/mockData'; // Updated import
 import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, CoverageItem, RiskLevel } from '@/types';
 import { suggestUnderwritingActions } from '@/ai/flows/suggest-underwriting-actions';
 import { monitorAiProcessing } from '@/ai/flows/monitor-ai-processing';
-import { evaluateCoverageRisk } from '@/ai/flows/evaluate-coverage-risk'; // Import new flow
+import { evaluateCoverageRisk } from '@/ai/flows/evaluate-coverage-risk';
 import { notFound } from 'next/navigation';
 
 interface QuotePageProps {
@@ -41,14 +41,12 @@ export default async function QuotePage({ params }: QuotePageProps) {
   try {
     const monitorOutput = await monitorAiProcessing({ submissionId: id });
     aiProcessingData = {
-      processingSteps: monitorOutput.processingSteps,
-      reasoning: monitorOutput.reasoning,
+      aiToolActions: monitorOutput.aiToolActions || [], // Ensure aiToolActions is always an array
     };
   } catch (error) {
     console.error("Error fetching AI processing data:", error);
      aiProcessingData = {
-      processingSteps: getMockAiProcessingSteps(id),
-      reasoning: getMockAiReasoning(id)
+      aiToolActions: getMockAiToolActions(id), // Use new mock data structure
     };
   }
 

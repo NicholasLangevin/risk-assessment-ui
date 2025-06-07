@@ -6,9 +6,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bot, Milestone, User, Send, Loader2 } from 'lucide-react';
+import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon } from 'lucide-react';
 import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput } from '@/ai/flows/chat-underwriting-assistant';
 import { cn } from '@/lib/utils';
+import type { AiToolAction, AiToolActionType } from '@/types';
+import { formatDistanceToNowStrict } from 'date-fns';
 
 interface ChatMessage {
   id: string;
@@ -17,12 +19,26 @@ interface ChatMessage {
 }
 
 interface AiProcessingMonitorContentProps {
-  steps: string[];
-  reasoning: string;
+  aiToolActions: AiToolAction[];
   submissionId: string;
 }
 
-export function AiProcessingMonitorContent({ steps, reasoning, submissionId }: AiProcessingMonitorContentProps) {
+const getActionIcon = (type: AiToolActionType) => {
+  switch (type) {
+    case 'ReadingAttachment':
+      return <FileText className="h-5 w-5 text-primary flex-shrink-0" />;
+    case 'SearchingWeb':
+      return <Search className="h-5 w-5 text-primary flex-shrink-0" />;
+    case 'PerformingAction':
+      return <Zap className="h-5 w-5 text-primary flex-shrink-0" />;
+    case 'ReadingGuideline':
+      return <ListChecks className="h-5 w-5 text-primary flex-shrink-0" />;
+    default:
+      return <Zap className="h-5 w-5 text-muted-foreground flex-shrink-0" />;
+  }
+};
+
+export function AiProcessingMonitorContent({ aiToolActions, submissionId }: AiProcessingMonitorContentProps) {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -52,7 +68,6 @@ export function AiProcessingMonitorContent({ steps, reasoning, submissionId }: A
         parts: [{ text: msg.text }],
       }));
       
-      // Add the current user message to the history being sent for context
       genkitChatHistory.push({
         role: 'user',
         parts: [{text: newUserMessage.text}]
@@ -83,21 +98,57 @@ export function AiProcessingMonitorContent({ steps, reasoning, submissionId }: A
     }
   };
 
+  const formatTimestamp = (isoTimestamp: string) => {
+    try {
+      return formatDistanceToNowStrict(new Date(isoTimestamp), { addSuffix: true });
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <h3 className="text-lg font-semibold mb-2 flex items-center px-1 pt-4">
-        <Milestone className="mr-2 h-5 w-5 text-primary" />
-        Processing Steps
+      <h3 className="text-lg font-semibold mb-3 flex items-center px-1 pt-4">
+        <Bot className="mr-2 h-5 w-5 text-primary" />
+        AI Agent Activity
       </h3>
-      <ScrollArea className="h-[150px] mb-1 pr-1 border rounded-md p-2 mx-1">
-        {steps.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No processing steps available.</p>
+      <ScrollArea className="h-[250px] mb-2 pr-1 border rounded-md p-1 mx-1">
+        {aiToolActions.length === 0 ? (
+          <p className="text-sm text-muted-foreground p-3 text-center">No AI agent activity logged yet.</p>
         ) : (
-          <ul className="space-y-2 text-sm">
-            {steps.map((step, index) => (
-              <li key={index} className="flex items-start">
-                <span className="text-primary font-medium mr-2">{index + 1}.</span>
-                <span>{step}</span>
+          <ul className="space-y-1">
+            {aiToolActions.map((action) => (
+              <li key={action.id} className="p-2.5 border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+                <div className="flex items-start space-x-3">
+                  {getActionIcon(action.type)}
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground/90">{action.description}</p>
+                    {action.details.targetName && (
+                       <p className="text-xs text-muted-foreground break-all">
+                        Target: <span className="font-medium text-foreground/70">{action.details.targetName}</span>
+                       </p>
+                    )}
+                    {action.details.url && (
+                       <p className="text-xs text-muted-foreground break-all">
+                        URL: <a href={action.details.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{action.details.url}</a>
+                       </p>
+                    )}
+                     {action.details.query && (
+                       <p className="text-xs text-muted-foreground">
+                        Query: "{action.details.query}"
+                       </p>
+                    )}
+                    {action.type === 'PerformingAction' && action.details.actionSummary && (
+                       <p className="text-xs text-muted-foreground">
+                         Summary: {action.details.actionSummary}
+                       </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-end text-xs text-muted-foreground mt-1.5">
+                  <ClockIcon className="h-3 w-3 mr-1" />
+                  <span>{formatTimestamp(action.timestamp)}</span>
+                </div>
               </li>
             ))}
           </ul>
@@ -105,26 +156,12 @@ export function AiProcessingMonitorContent({ steps, reasoning, submissionId }: A
       </ScrollArea>
       
       <Separator className="my-3 mx-1" />
-      
-      <h3 className="text-lg font-semibold mb-2 flex items-center px-1">
-        <Bot className="mr-2 h-5 w-5 text-primary" />
-        AI Reasoning
-      </h3>
-      <ScrollArea className="h-[150px] pr-1 border rounded-md p-2 mx-1">
-        {reasoning ? (
-          <p className="text-sm whitespace-pre-wrap">{reasoning}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground">No reasoning details available.</p>
-        )}
-      </ScrollArea>
-
-      <Separator className="my-3 mx-1" />
 
       <h3 className="text-lg font-semibold mb-2 flex items-center px-1">
         <Bot className="mr-2 h-5 w-5 text-primary" />
         Chat with AI Assistant
       </h3>
-      <ScrollArea className="flex-grow border rounded-md p-3 space-y-3 mx-1 bg-background/30">
+      <ScrollArea className="flex-grow border rounded-md p-3 space-y-3 mx-1 bg-background/30 min-h-[200px]">
         {chatMessages.map((msg) => (
           <div
             key={msg.id}

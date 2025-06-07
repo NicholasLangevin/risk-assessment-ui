@@ -114,18 +114,29 @@ export interface QuoteDetails {
   rawSubmissionData: string;
 }
 
-export interface AiProcessingStep {
-  id: string;
-  name: string;
-  status: 'Pending' | 'In Progress' | 'Completed' | 'Error';
-  timestamp: string; // ISO string date
-  details?: string;
+// --- AI Processing Monitor Types ---
+export type AiToolActionType = 'ReadingAttachment' | 'SearchingWeb' | 'PerformingAction' | 'ReadingGuideline';
+
+export interface AiToolActionDetails {
+  targetName?: string; // For attachment name, guideline name, subject-to text, or general action description
+  url?: string; // For web URL
+  query?: string; // For web search query
+  actionSummary?: string; // More specific summary for 'PerformingAction', if applicable
+}
+
+export interface AiToolAction {
+  id: string; // Unique ID for the action step
+  type: AiToolActionType;
+  timestamp: string; // ISO string for date and time
+  description: string; // A human-readable description of what the AI tool did
+  details: AiToolActionDetails; // Structured details about the action
 }
 
 export interface AiProcessingData {
-  processingSteps: string[];
-  reasoning: string;
+  aiToolActions: AiToolAction[]; // Changed from processingSteps and reasoning
 }
+// --- End AI Processing Monitor Types ---
+
 
 export interface AiUnderwritingActions {
   suggestedActions: string[];

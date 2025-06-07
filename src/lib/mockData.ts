@@ -1,5 +1,6 @@
 
-import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel, Citation, RichTextSegment, Attachment } from '@/types';
+import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel, Citation, RichTextSegment, Attachment, AiToolAction } from '@/types';
+import { addMinutes, formatISO } from 'date-fns';
 
 const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group", "Apex Enterprises", "Momentum Industries"];
 const brokers = ["Marsh", "Aon", "Willis Towers Watson", "Gallagher", "HUB International"];
@@ -195,29 +196,61 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     managedInformationRequests,
     coveragesRequested,
     citations: mockCitations,
-    attachments: mockAttachments.slice(0, 3), 
+    attachments: mockAttachments.slice(0, Math.floor(Math.random() * (mockAttachments.length -1)) + 2), // show 2 to all attachments
     aiOverallRiskStatement: aiOverallRiskStatementText, // Added mock statement
     rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${currentPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}`
   };
 };
 
-export const getMockAiProcessingSteps = (submissionId: string): string[] => {
-  return [
-    `Initialized for submission ${submissionId}`,
-    "Data ingestion and parsing completed.",
-    "Risk factor analysis in progress...",
-    "Cross-referencing with internal guidelines.",
-    "External data source lookup (credit, sanctions).",
-    "Preliminary recommendation formulated.",
-    "Confidence score calculated.",
-    "Generating detailed reasoning report.",
-    "Process completed."
-  ].slice(0, Math.floor(Math.random() * 8) + 2);
+export const getMockAiToolActions = (submissionId: string): AiToolAction[] => {
+  const baseTime = new Date();
+  const actions: AiToolAction[] = [
+    {
+      id: 'step-1',
+      type: 'ReadingAttachment',
+      timestamp: formatISO(addMinutes(baseTime, 0)),
+      description: "AI analyzed the 'Submission_Form_Completed.pdf' for initial risk factors.",
+      details: { targetName: "Submission_Form_Completed.pdf" }
+    },
+    {
+      id: 'step-2',
+      type: 'SearchingWeb',
+      timestamp: formatISO(addMinutes(baseTime, 2)),
+      description: `AI searched for recent news and financial health of '${insuredNames[Math.floor(Math.random()*insuredNames.length)]}'.`,
+      details: { url: "https://financialnews.example.com/search?q=Innovate+Corp+financials", query: `${insuredNames[Math.floor(Math.random()*insuredNames.length)]} financial health news`, targetName: "financialnews.example.com" }
+    },
+    {
+      id: 'step-3',
+      type: 'ReadingGuideline',
+      timestamp: formatISO(addMinutes(baseTime, 5)),
+      description: "AI consulted the 'Financial Stability Check' underwriting guideline.",
+      details: { targetName: "Guideline: Financial Stability Check" }
+    },
+    {
+      id: 'step-4',
+      type: 'PerformingAction',
+      timestamp: formatISO(addMinutes(baseTime, 8)),
+      description: "AI proposed a subject-to offer regarding a satisfactory loss control report.",
+      details: { actionSummary: "Proposed Subject-To: Satisfactory loss control inspection.", targetName: "Subject-To: Satisfactory loss control inspection." }
+    },
+    {
+      id: 'step-5',
+      type: 'ReadingAttachment',
+      timestamp: formatISO(addMinutes(baseTime, 10)),
+      description: "AI reviewed 'Loss_Control_Report_Q1_2024.docx'.",
+      details: { targetName: "Loss_Control_Report_Q1_2024.docx" }
+    },
+     {
+      id: 'step-6',
+      type: 'SearchingWeb',
+      timestamp: formatISO(addMinutes(baseTime, 12)),
+      description: "AI performed a sanctions check on the insured entity.",
+      details: { url: "https://sanctionschecker.example.gov/check", query: "Innovate Corp sanctions", targetName: "sanctionschecker.example.gov" }
+    },
+  ];
+  return actions.slice(0, Math.floor(Math.random() * 3) + 3); // Return 3 to 5 actions
 };
 
-export const getMockAiReasoning = (submissionId: string): string => {
-  return `For submission ${submissionId}, the primary risk factors identified are related to cyber exposure given the industry. The recommendation to request further information on security protocols is based on standard underwriting practice for tech companies. Capacity is available. Subject-to offers considered but not prioritized over information gathering at this stage.`;
-};
 
 export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'ALL-001', name: 'Exposure Limits' },
@@ -236,5 +269,3 @@ export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'ALL-014', name: 'Professional Indemnity Requirements' },
   { id: 'ALL-015', name: 'Supply Chain Risk Analysis' },
 ];
-
-    
