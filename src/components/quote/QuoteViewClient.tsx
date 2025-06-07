@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput, Citation, ActiveSheetItem } from '@/types';
+import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput, Citation, ActiveSheetItem, Attachment } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
 import { BusinessSummaryCard } from './BusinessSummaryCard';
@@ -14,7 +14,9 @@ import { InformationRequestsCard } from './InformationRequestsCard';
 import { CoverageRequestedCard } from './CoverageRequestedCard';
 import { EmailPreviewDialog } from './EmailPreviewDialog';
 import { GuidelineDetailsContent } from './GuidelineDetailsContent';
-import { CitationViewerContent } from './CitationViewerContent'; 
+import { CitationViewerContent } from './CitationViewerContent';
+import { AttachmentsCard } from './AttachmentsCard';
+import { AttachmentViewerContent } from './AttachmentViewerContent';
 import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flows/generate-underwriting-email';
 
 import { Button } from '@/components/ui/button';
@@ -77,6 +79,9 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         updatedDetails.managedInformationRequests = initialManagedInfoRequests;
       } else if (!initialQuoteDetails.managedInformationRequests) {
          updatedDetails.managedInformationRequests = [];
+      }
+      if (!initialQuoteDetails.attachments) { // Ensure attachments array exists
+        updatedDetails.attachments = [];
       }
       setQuoteDetails(updatedDetails);
     }
@@ -285,7 +290,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       insuredName: quoteDetails.insuredName,
       brokerName: quoteDetails.broker,
       ...(selectedDecision === 'OfferWithSubjectTos' && {
-        premium: quoteDetails.premiumSummary.totalPremium,
+        premium: quoteDetails.premiumSummary.recommendedPremium, // Use recommendedPremium
         subjectToOffers: activeSubjectToOffers,
       }),
       ...(selectedDecision === 'InformationRequired' && {
@@ -348,6 +353,10 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
      }
   };
 
+  const handleShowAttachment = (attachment: Attachment) => {
+    setActiveSheetItem({ type: 'attachment', data: attachment });
+  };
+
 
   if (!quoteDetails) {
     return (
@@ -383,6 +392,8 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         return <GuidelineDetailsContent guideline={activeSheetItem.data} />;
       case 'citation':
         return <CitationViewerContent citation={activeSheetItem.data} />;
+      case 'attachment':
+        return <AttachmentViewerContent attachment={activeSheetItem.data} />;
       default:
         return null;
     }
@@ -394,6 +405,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       case 'aiMonitor': return "AI Processing Monitor";
       case 'guideline': return `Guideline: ${activeSheetItem.data.name}`;
       case 'citation': return `Citation: ${activeSheetItem.data.quickDescription}`;
+      case 'attachment': return `Attachment: ${activeSheetItem.data.fileName}`;
       default: return "";
     }
   };
@@ -404,6 +416,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       case 'aiMonitor': return `Real-time view of AI processing for submission ${quoteDetails.id}.`;
       case 'guideline': return `Detailed information for guideline "${activeSheetItem.data.name}". Current status: ${activeSheetItem.data.status}.`;
       case 'citation': return `Details for citation: ${activeSheetItem.data.sourceType === 'web' ? activeSheetItem.data.sourceNameOrUrl : activeSheetItem.data.sourceNameOrUrl }`;
+      case 'attachment': return `Details for attachment "${activeSheetItem.data.fileName}". Type: ${activeSheetItem.data.fileType.toUpperCase()}, Size: ${activeSheetItem.data.fileSize}`;
       default: return "";
     }
   };
@@ -420,6 +433,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
             Quote: {quoteDetails.id}
           </h1>
           <p className="text-muted-foreground mb-4">Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}</p>
+          
           <div className="flex items-center space-x-2 mt-4">
             <Select
               value={selectedDecision || ""}
@@ -471,6 +485,10 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         <div className="lg:col-span-1 space-y-6">
           <PremiumSummaryCard summary={quoteDetails.premiumSummary} />
           <CapacityCheckCard capacity={quoteDetails.capacityCheck} />
+           <AttachmentsCard
+            attachments={quoteDetails.attachments || []}
+            onViewAttachment={handleShowAttachment}
+          />
           <InformationRequestsCard
             requests={quoteDetails.managedInformationRequests || []}
             onUpdateInfoRequest={handleUpdateInformationRequest}

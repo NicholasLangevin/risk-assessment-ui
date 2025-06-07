@@ -78,6 +78,16 @@ export interface CoverageItem {
   riskLevel: RiskLevel; // Categorical risk level from AI
 }
 
+// --- Attachment Feature Types ---
+export interface Attachment {
+  id: string;
+  fileName: string;
+  fileType: 'pdf' | 'docx' | 'txt' | 'xlsx' | 'jpg' | 'zip';
+  fileSize: string; // e.g., "2.1MB", "128KB"
+  mockContent: string;
+}
+// --- End Attachment Feature Types ---
+
 export interface QuoteDetails {
   id: string;
   insuredName: string;
@@ -98,7 +108,8 @@ export interface QuoteDetails {
   managedSubjectToOffers: ManagedSubjectToOffer[];
   managedInformationRequests: ManagedInformationRequest[];
   coveragesRequested: CoverageItem[];
-  citations: Citation[]; // Added
+  citations: Citation[];
+  attachments: Attachment[]; // Added attachments
   rawSubmissionData: string;
 }
 
@@ -144,4 +155,5 @@ export type ActiveSheetItem =
   | { type: 'aiMonitor'; submissionId: string; }
   | { type: 'guideline'; data: Guideline }
   | { type: 'citation'; data: Citation }
+  | { type: 'attachment'; data: Attachment } // Added attachment type
   | null;

@@ -1,5 +1,5 @@
 
-import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel, Citation, RichTextSegment } from '@/types';
+import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel, Citation, RichTextSegment, Attachment } from '@/types';
 
 const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group", "Apex Enterprises", "Momentum Industries"];
 const brokers = ["Marsh", "Aon", "Willis Towers Watson", "Gallagher", "HUB International"];
@@ -26,6 +26,52 @@ export const mockSubmissions: Submission[] = Array.from({ length: 10 }, (_, i) =
   receivedDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
   premium: Math.floor(Math.random() * 50000) + 5000,
 }));
+
+const mockAttachments: Attachment[] = [
+  {
+    id: 'attach-001-pdf',
+    fileName: 'Submission_Form_Completed.pdf',
+    fileType: 'pdf',
+    fileSize: '1.2MB',
+    mockContent: 'This is the mock content for the completed submission form PDF. It contains all the initial details provided by the broker regarding the insured and the requested coverages. Section A: Insured Information. Section B: Coverage Details. Section C: Loss History...',
+  },
+  {
+    id: 'attach-002-xlsx',
+    fileName: 'Business_Financials_FY2023.xlsx',
+    fileType: 'xlsx',
+    fileSize: '780KB',
+    mockContent: 'Mock Excel Content: Financial statements for Fiscal Year 2023. Includes Balance Sheet, Income Statement, and Cash Flow Statement. Revenue: $XXX, Net Profit: $YYY. Assets: $ZZZ.',
+  },
+  {
+    id: 'attach-003-docx',
+    fileName: 'Loss_Control_Report_Q1_2024.docx',
+    fileType: 'docx',
+    fileSize: '2.5MB',
+    mockContent: 'Mock Word Document Content: Loss Control Inspection Report from Q1 2024. Inspector: John Doe. Findings: Premises in good condition. Recommendations: Update fire extinguishers in warehouse section. Overall risk: Low.',
+  },
+  {
+    id: 'attach-004-jpg',
+    fileName: 'Site_Overview_Main_Building.jpg',
+    fileType: 'jpg',
+    fileSize: '4.1MB',
+    mockContent: 'Mock Image Content: This is a photo of the main building at the insureds primary location. Shows a modern, well-maintained structure. (Imagine an image here)',
+  },
+   {
+    id: 'attach-005-zip',
+    fileName: 'Property_Inspection_Photos.zip',
+    fileType: 'zip',
+    fileSize: '15.3MB',
+    mockContent: 'This is a ZIP archive containing multiple JPEG images of the insured property. (Mock viewer would typically show "Cannot preview ZIP content directly" or list files if advanced)',
+  },
+  {
+    id: 'attach-006-txt',
+    fileName: 'Additional_Notes.txt',
+    fileType: 'txt',
+    fileSize: '5KB',
+    mockContent: 'Additional notes from the broker:\n- Insured is planning an expansion in Q3.\n- Interested in discussing cyber liability limits further.\n- Please expedite review if possible.',
+  },
+];
+
 
 export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
   const submission = mockSubmissions.find(s => s.id === id);
@@ -146,7 +192,8 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     managedSubjectToOffers,
     managedInformationRequests,
     coveragesRequested,
-    citations: mockCitations, // Added citations
+    citations: mockCitations,
+    attachments: mockAttachments.slice(0, Math.floor(Math.random() * (mockAttachments.length -1)) + 2), // Show 2 to all attachments
     rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${currentPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : s.markerText).join('')}`
   };
 };
@@ -186,3 +233,4 @@ export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'ALL-014', name: 'Professional Indemnity Requirements' },
   { id: 'ALL-015', name: 'Supply Chain Risk Analysis' },
 ];
+
