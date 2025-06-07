@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Activity, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 interface QuoteViewClientProps {
   quoteDetails: QuoteDetails | null;
@@ -22,9 +23,8 @@ interface QuoteViewClientProps {
 
 export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessingData, aiUnderwritingActions }: QuoteViewClientProps) {
   const [quoteDetails, setQuoteDetails] = useState<QuoteDetails | null>(initialQuoteDetails);
+  const { toast } = useToast();
   
-  // Effect to update state if initialQuoteDetails changes (e.g., due to re-fetch or prop update)
-  // This might not be strictly necessary if initialQuoteDetails is stable after first load for this page.
   useEffect(() => {
     setQuoteDetails(initialQuoteDetails);
   }, [initialQuoteDetails]);
@@ -50,14 +50,23 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         id: guidelineInfo.id,
         name: guidelineInfo.name,
         status: 'Needs Clarification', // Default status for newly added guidelines
-        details: 'Manually added for evaluation.',
+        details: 'Manually added for evaluation. Please provide details.',
       };
 
-      // Prevent adding duplicates based on ID
       if (prevDetails.underwritingGuidelines.some(g => g.id === newGuideline.id)) {
-        return prevDetails; // Return current state if guideline already exists
+        toast({
+          title: "Guideline Exists",
+          description: `"${newGuideline.name}" is already in the list.`,
+          variant: "default" 
+        });
+        return prevDetails;
       }
 
+      toast({
+        title: "Guideline Added",
+        description: `"${newGuideline.name}" has been added. Please update its status and details.`,
+        variant: "default"
+      });
       return {
         ...prevDetails,
         underwritingGuidelines: [...prevDetails.underwritingGuidelines, newGuideline],
@@ -65,11 +74,34 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
     });
   };
 
+  const handleUpdateGuideline = (id: string, status: Guideline['status'], details?: string) => {
+    setQuoteDetails(prevDetails => {
+      if (!prevDetails) return null;
+      const updatedGuidelines = prevDetails.underwritingGuidelines.map(g => 
+        g.id === id ? { ...g, status, details: details !== undefined ? details : g.details } : g
+      );
+      
+      const updatedGuideline = updatedGuidelines.find(g => g.id === id);
+      if (updatedGuideline) {
+        toast({
+          title: "Guideline Updated",
+          description: `Status for "${updatedGuideline.name}" changed to ${status}.`,
+          variant: "default"
+        });
+      }
+
+      return {
+        ...prevDetails,
+        underwritingGuidelines: updatedGuidelines,
+      };
+    });
+  };
+
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
-      <div className="flex justify-between items-start mb-6"> {/* items-start for better alignment with multiline titles */}
-        <div className="flex-grow"> {/* Allow title area to take space */}
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex-grow">
           <Button variant="outline" size="sm" asChild className="mb-2">
             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
           </Button>
@@ -80,7 +112,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         </div>
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" className="ml-4 flex-shrink-0"> {/* Add ml-4 for spacing and flex-shrink-0 */}
+            <Button variant="outline" className="ml-4 flex-shrink-0">
               <Activity className="mr-2 h-4 w-4" /> AI Monitor
             </Button>
           </SheetTrigger>
@@ -91,7 +123,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
                 Real-time view of AI processing for submission {quoteDetails.id}.
               </SheetDescription>
             </SheetHeader>
-            <div className="flex-grow overflow-y-auto"> {/* Allow content to scroll if it overflows */}
+            <div className="flex-grow overflow-y-auto">
               <AiProcessingMonitorContent
                 steps={aiProcessingData?.processingSteps || []}
                 reasoning={aiProcessingData?.reasoning || "No reasoning data available."}
@@ -108,7 +140,8 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           <BusinessSummaryCard summary={quoteDetails.businessSummary} /> 
           <GuidelineStatusList 
             guidelines={quoteDetails.underwritingGuidelines} 
-            onAddGuideline={handleAddGuideline} 
+            onAddGuideline={handleAddGuideline}
+            onUpdateGuideline={handleUpdateGuideline}
           />
         </div>
 

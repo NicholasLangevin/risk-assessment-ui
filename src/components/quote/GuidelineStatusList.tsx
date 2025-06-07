@@ -16,18 +16,19 @@ import { cn } from '@/lib/utils';
 interface GuidelineStatusListProps {
   guidelines: Guideline[];
   onAddGuideline: (guidelineInfo: { id: string; name: string }) => void;
+  onUpdateGuideline: (id: string, status: Guideline['status'], details?: string) => void;
 }
 
-export function GuidelineStatusList({ guidelines, onAddGuideline }: GuidelineStatusListProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+export function GuidelineStatusList({ guidelines, onAddGuideline, onUpdateGuideline }: GuidelineStatusListProps) {
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredSuggestions, setFilteredSuggestions] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
-    if (!isDialogOpen) {
+    if (!isAddDialogOpen) {
       setSearchTerm(''); // Reset search term when dialog closes
     }
-  }, [isDialogOpen]);
+  }, [isAddDialogOpen]);
   
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -47,7 +48,7 @@ export function GuidelineStatusList({ guidelines, onAddGuideline }: GuidelineSta
 
   const handleSelectGuideline = (suggestion: { id: string; name: string }) => {
     onAddGuideline(suggestion);
-    setIsDialogOpen(false); // Close dialog after selection
+    setIsAddDialogOpen(false); // Close dialog after selection
     setSearchTerm(''); // Reset search term
   };
 
@@ -57,9 +58,9 @@ export function GuidelineStatusList({ guidelines, onAddGuideline }: GuidelineSta
         <div className="flex items-center justify-between">
           <div className="flex-grow">
             <CardTitle>Guideline Status</CardTitle>
-            <CardDescription>Compliance status of underwriting guidelines.</CardDescription>
+            <CardDescription>Compliance status of underwriting guidelines. Click item to view details, use menu to change status.</CardDescription>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -107,22 +108,18 @@ export function GuidelineStatusList({ guidelines, onAddGuideline }: GuidelineSta
                     </p>
                  )}
               </div>
-              {/* Optional: Footer for close button if needed */}
-              {/* <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button>
-              </DialogFooter> */}
             </DialogContent>
           </Dialog>
         </div>
       </CardHeader>
       <CardContent className="p-0">
         {guidelines.length === 0 ? (
-          <p className="p-6 text-muted-foreground">No guidelines evaluated for this submission.</p>
+          <p className="p-6 text-muted-foreground">No guidelines evaluated for this submission. Click "Add Guideline" to start.</p>
         ) : (
           <ScrollArea className="h-[300px] w-full">
             <div className="divide-y divide-border">
               {guidelines.map((guideline) => (
-                <GuidelineItem key={guideline.id} guideline={guideline} />
+                <GuidelineItem key={guideline.id} guideline={guideline} onUpdateGuideline={onUpdateGuideline} />
               ))}
             </div>
           </ScrollArea>
