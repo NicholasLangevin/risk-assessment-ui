@@ -171,10 +171,10 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       if (!prevDetails) return null;
       const newOffer: ManagedSubjectToOffer = {
         id: `sto-custom-${Date.now()}`,
-        originalText: `User-added: ${newOfferText}`,
+        originalText: `User-added: ${newOfferText}`, // Mark as user-added if needed
         currentText: newOfferText,
         isRemoved: false,
-        isEdited: true,
+        isEdited: true, // Mark as edited since it's newly added by user
       };
       const updatedOffers = [...(prevDetails.managedSubjectToOffers || []), newOffer];
       setTimeout(() => {
@@ -320,3 +320,4 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
     </div>
   );
 }
+
