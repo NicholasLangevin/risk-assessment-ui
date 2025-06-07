@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { QuoteDetails, AiProcessingData, AiUnderwritingActions } from '@/types';
@@ -69,7 +70,7 @@ export function QuoteViewClient({ quoteDetails, aiProcessingData, aiUnderwriting
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column / Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          <RecommendedActionsCard actions={aiUnderwritingActions} />
+          <BusinessOverviewCard overview={quoteDetails.businessOverview} />
           <GuidelineStatusList guidelines={quoteDetails.underwritingGuidelines} />
         </div>
 
@@ -77,7 +78,7 @@ export function QuoteViewClient({ quoteDetails, aiProcessingData, aiUnderwriting
         <div className="lg:col-span-1 space-y-6">
           <PremiumSummaryCard summary={quoteDetails.premiumSummary} />
           <CapacityCheckCard capacity={quoteDetails.capacityCheck} />
-          <BusinessOverviewCard overview={quoteDetails.businessOverview} />
+          <RecommendedActionsCard actions={aiUnderwritingActions} />
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 import type { Submission, QuoteDetails, Guideline, AiProcessingStep } from '@/types';
 
 const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group", "Apex Enterprises", "Momentum Industries"];
@@ -49,13 +50,13 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
       notes: Math.random() > 0.8 ? "Approaching aggregate limit for this sector." : undefined,
     },
     businessOverview: {
-      industry: "Technology Services",
-      yearsInBusiness: Math.floor(Math.random() * 20) + 1,
-      description: `A ${submission.insuredName} is a leading provider of innovative tech solutions, specializing in cloud computing and AI development.`,
-      location: "San Francisco, CA",
+      buildingsDescription: "Modern office complex with 3 buildings, steel frame construction, built in 2015. Fully sprinklered with central station alarm.",
+      operationsDescription: "Software development, cloud hosting services, and 24/7 customer support. Includes management of sensitive client data.",
+      productDescription: "Suite of SaaS products for enterprise resource planning and data analytics. Also offers custom AI model development for B2B clients.",
+      completedOperationsRisk: "Potential liability from data breaches post-service, software implementation errors leading to client business interruption, or failure of AI models causing financial loss."
     },
     underwritingGuidelines: guidelines,
-    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${totalPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.`
+    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${totalPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: Modern office complex, steel frame, 2015.\nOperations: Software dev, cloud hosting.\nProducts: SaaS for ERP, AI models.`
   };
 };
 

@@ -1,3 +1,4 @@
+
 export interface Submission {
   id: string;
   insuredName: string;
@@ -36,10 +37,10 @@ export interface QuoteDetails {
     notes?: string;
   };
   businessOverview: {
-    industry: string;
-    yearsInBusiness: number;
-    description: string;
-    location: string;
+    buildingsDescription: string;
+    operationsDescription: string;
+    productDescription: string;
+    completedOperationsRisk: string;
   };
   underwritingGuidelines: Guideline[];
   // Data to be fed to the AI
