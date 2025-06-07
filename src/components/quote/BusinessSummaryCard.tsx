@@ -5,7 +5,7 @@ import type { BusinessSummaryDetails, Citation, RichTextSegment, TextSegment } f
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Briefcase, FileText, ExternalLink } from 'lucide-react';
+import { Briefcase, FileText, Globe } from 'lucide-react'; // Changed ExternalLink to Globe
 import React from 'react';
 
 interface BusinessSummaryCardProps {
@@ -24,11 +24,13 @@ const RenderRichText = ({ segments, citations, onShowCitation }: { segments: Ric
       {segments.map((segment, index) => {
         if (segment.type === 'text') {
           let contentToRender = segment.content;
+          // Defensive check in case segment.content is an object
           if (typeof segment.content === 'object' && segment.content !== null && 'type' in segment.content && 'content' in segment.content) {
             contentToRender = (segment.content as TextSegment).content;
           }
           
           if (typeof contentToRender !== 'string') {
+            // Fallback for invalid content, though type safety should prevent this
             return <span key={index} className="text-destructive">[Invalid Content]</span>;
           }
           return <React.Fragment key={index}>{contentToRender}</React.Fragment>;
@@ -41,9 +43,9 @@ const RenderRichText = ({ segments, citations, onShowCitation }: { segments: Ric
 
           let IconComponent;
           if (citation.sourceType === 'attachment') {
-            IconComponent = <FileText className="h-3.5 w-3.5" />;
+            IconComponent = <FileText className="h-3.5 w-3.5" />; // Document icon (e.g., PDF proxy)
           } else { // 'web'
-            IconComponent = <ExternalLink className="h-3.5 w-3.5" />;
+            IconComponent = <Globe className="h-3.5 w-3.5" />; // Web icon
           }
 
           return (
@@ -108,3 +110,4 @@ export function BusinessSummaryCard({ summary, citations, onShowCitation }: Busi
     </Card>
   );
 }
+
