@@ -20,14 +20,14 @@ const ChatHistoryItemSchema = z.object({
   parts: z.array(MessagePartSchema),
 });
 
-export const ChatUnderwritingAssistantInputSchema = z.object({
+const ChatUnderwritingAssistantInputSchema = z.object({
   submissionId: z.string().describe('The ID of the submission being discussed.'),
   userQuery: z.string().describe('The user’s current question or message.'),
   chatHistory: z.array(ChatHistoryItemSchema).optional().describe('The history of the conversation so far.')
 });
 export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
 
-export const ChatUnderwritingAssistantOutputSchema = z.object({
+const ChatUnderwritingAssistantOutputSchema = z.object({
   aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),
 });
 export type ChatUnderwritingAssistantOutput = z.infer<typeof ChatUnderwritingAssistantOutputSchema>;
@@ -79,3 +79,4 @@ const chatWithUnderwritingAssistantFlow = ai.defineFlow(
     return output;
   }
 );
+
