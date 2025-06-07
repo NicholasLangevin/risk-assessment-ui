@@ -84,9 +84,9 @@ export interface QuoteDetails {
   broker: string;
   submissionDate: string; // ISO string date
   premiumSummary: {
-    totalPremium: number;
-    taxesAndFees: number;
-    netPremium: number;
+    recommendedPremium: number;
+    status: 'Pass' | 'Missing Information from Contact2.0';
+    contactSystemLink: string;
   };
   capacityCheck: {
     status: 'Available' | 'Limited' | 'Exceeded';

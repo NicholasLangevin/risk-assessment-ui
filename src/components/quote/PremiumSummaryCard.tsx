@@ -1,6 +1,8 @@
+
 import type { QuoteDetails } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DollarSign } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DollarSign, AlertTriangle, ExternalLink, CheckCircle } from 'lucide-react';
 
 interface PremiumSummaryCardProps {
   summary: QuoteDetails['premiumSummary'];
@@ -15,25 +17,38 @@ export function PremiumSummaryCard({ summary }: PremiumSummaryCardProps) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Premium Summary</CardTitle>
+          <CardTitle>Premium Recommendation</CardTitle>
           <DollarSign className="h-5 w-5 text-muted-foreground" />
         </div>
-        <CardDescription>Breakdown of the quote premium.</CardDescription>
+        <CardDescription>Details from Contact2.0 policy system.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Net Premium:</span>
-          <span className="font-medium">{formatCurrency(summary.netPremium)}</span>
+      <CardContent className="space-y-3">
+        <div>
+          <span className="text-sm font-medium text-muted-foreground">Status:</span>
+          {summary.status === 'Pass' ? (
+            <span className="font-semibold text-green-600 ml-2 flex items-center">
+              <CheckCircle className="h-4 w-4 mr-1" />
+              Pass
+            </span>
+          ) : (
+            <span className="font-semibold text-yellow-600 dark:text-yellow-500 ml-2 flex items-center">
+              <AlertTriangle className="h-4 w-4 mr-1" />
+              Missing Information from Contact2.0
+            </span>
+          )}
         </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Taxes & Fees:</span>
-          <span className="font-medium">{formatCurrency(summary.taxesAndFees)}</span>
+        
+        <div className="pt-1">
+          <p className="text-sm text-muted-foreground mb-0.5">Recommended Premium:</p>
+          <p className="text-2xl font-bold">{formatCurrency(summary.recommendedPremium)}</p>
         </div>
-        <hr className="my-2 border-border" />
-        <div className="flex justify-between text-lg font-bold">
-          <span>Total Premium:</span>
-          <span>{formatCurrency(summary.totalPremium)}</span>
-        </div>
+
+        <Button variant="link" asChild className="p-0 h-auto text-sm !mt-3">
+          <a href={summary.contactSystemLink} target="_blank" rel="noopener noreferrer">
+            View in Contact2.0
+            <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+          </a>
+        </Button>
       </CardContent>
     </Card>
   );

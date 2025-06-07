@@ -31,9 +31,7 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
   const submission = mockSubmissions.find(s => s.id === id);
   if (!submission) return null;
 
-  const totalPremium = submission.premium || Math.floor(Math.random() * (100000 - 10000 + 1)) + 10000;
-  const taxesAndFees = totalPremium * 0.1; // 10%
-  const netPremium = totalPremium - taxesAndFees;
+  const currentPremium = submission.premium || Math.floor(Math.random() * (100000 - 10000 + 1)) + 10000;
 
   const guidelines: Guideline[] = guidelineNames.map((name, index) => ({
     id: `GUIDE-${100 + index}`,
@@ -134,9 +132,9 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     broker: submission.broker,
     submissionDate: submission.receivedDate,
     premiumSummary: {
-      totalPremium,
-      taxesAndFees,
-      netPremium,
+      recommendedPremium: currentPremium,
+      status: Math.random() < 0.7 ? 'Pass' : 'Missing Information from Contact2.0',
+      contactSystemLink: `https://mock.contact2.system.com/policy/${submission.id}`,
     },
     capacityCheck: {
       status: Math.random() > 0.7 ? 'Limited' : (Math.random() > 0.9 ? 'Exceeded' : 'Available'),
@@ -149,7 +147,7 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     managedInformationRequests,
     coveragesRequested,
     citations: mockCitations, // Added citations
-    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${totalPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : s.markerText).join('')}`
+    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${currentPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : s.markerText).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : s.markerText).join('')}`
   };
 };
 
