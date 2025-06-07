@@ -12,14 +12,13 @@ import { AiProcessingMonitorContent } from './AiProcessingMonitorContent';
 import { SubjectToOffersCard } from './SubjectToOffersCard';
 import { InformationRequestsCard } from './InformationRequestsCard';
 import { CoverageRequestedCard } from './CoverageRequestedCard';
-import { EmailPreviewDialog } from './EmailPreviewDialog'; // New import
-import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flows/generate-underwriting-email'; // New import
+import { EmailPreviewDialog } from './EmailPreviewDialog';
+import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flows/generate-underwriting-email';
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -281,7 +280,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       decision: selectedDecision,
       quoteId: quoteDetails.id,
       insuredName: quoteDetails.insuredName,
-      brokerName: quoteDetails.broker, // Assuming broker name is stored here
+      brokerName: quoteDetails.broker, 
       ...(selectedDecision === 'OfferWithSubjectTos' && {
         premium: quoteDetails.premiumSummary.totalPremium,
         subjectToOffers: activeSubjectToOffers,
@@ -318,7 +317,6 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
   const handleSendEmail = async () => {
     if (!emailState) return;
     setIsSendingEmail(true);
-    // Simulate sending email
     await new Promise(resolve => setTimeout(resolve, 1500)); 
 
     toast({
@@ -329,6 +327,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
     setIsSendingEmail(false);
     setIsEmailDialogOpen(false);
     setEmailState(null);
+    setSelectedDecision(null); // Reset decision
     router.push('/');
   };
 
@@ -359,9 +358,39 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           <Button variant="outline" size="sm" asChild className="mb-2">
             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
           </Button>
-          <h1 className="text-3xl font-bold font-headline">
-            Quote: {quoteDetails.id}
-          </h1>
+          
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-1">
+            <h1 className="text-3xl font-bold font-headline">
+              Quote: {quoteDetails.id}
+            </h1>
+
+            <div className="flex items-center space-x-2">
+              <Select
+                value={selectedDecision || ""}
+                onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
+              >
+                <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
+                  <SelectValue placeholder="Select decision..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {decisionOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleConfirmAndGenerateEmail}
+              disabled={!selectedDecision || isGeneratingEmail}
+              size="sm"
+              className="h-9"
+            >
+              {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
+              Confirm & Generate Email
+            </Button>
+          </div>
+          
           <p className="text-muted-foreground">Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}</p>
         </div>
         <Sheet>
@@ -387,42 +416,8 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           </SheetContent>
         </Sheet>
       </div>
-      
-      {/* Decision Making Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Underwriting Decision</CardTitle>
-          <CardDescription>Select the final decision for this quote and confirm to generate communication.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <RadioGroup
-            value={selectedDecision || ""}
-            onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
-            className="flex flex-col sm:flex-row gap-4"
-          >
-            {decisionOptions.map(option => (
-              <div key={option.value} className="flex items-center space-x-2">
-                <RadioGroupItem value={option.value} id={`decision-${option.value}`} />
-                <Label htmlFor={`decision-${option.value}`} className="font-normal cursor-pointer">
-                  {option.label}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-          <Button 
-            onClick={handleConfirmAndGenerateEmail} 
-            disabled={!selectedDecision || isGeneratingEmail}
-            className="w-full sm:w-auto"
-          >
-            {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
-            Confirm & Generate Email
-          </Button>
-        </CardContent>
-      </Card>
-
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column / Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <BusinessSummaryCard summary={quoteDetails.businessSummary} />
           <CoverageRequestedCard coverages={quoteDetails.coveragesRequested || []} />
@@ -433,7 +428,6 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           />
         </div>
 
-        {/* Right Column / Summaries */}
         <div className="lg:col-span-1 space-y-6">
           <PremiumSummaryCard summary={quoteDetails.premiumSummary} />
           <CapacityCheckCard capacity={quoteDetails.capacityCheck} />
