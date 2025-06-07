@@ -1,3 +1,4 @@
+
 import type { QuoteDetails } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -18,10 +19,10 @@ export function CapacityCheckCard({ capacity }: CapacityCheckCardProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Capacity Check</CardTitle>
-          <Gauge className="h-5 w-5 text-muted-foreground" />
-        </div>
+        <CardTitle className="flex items-center">
+          <Gauge className="h-5 w-5 mr-2 text-muted-foreground" />
+          Capacity Check
+        </CardTitle>
         <CardDescription>Current underwriting capacity status.</CardDescription>
       </CardHeader>
       <CardContent>
