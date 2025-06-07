@@ -41,7 +41,7 @@ export function EmailPreviewDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90vh]">
+      <DialogContent className="sm:max-w-2xl md:max-w-4xl flex flex-col max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Email Preview & Edit</DialogTitle>
           <DialogDescription>
@@ -49,21 +49,23 @@ export function EmailPreviewDialog({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4 flex-grow min-h-0">
-          <div className="grid gap-2 flex-grow flex flex-col">
+        <div className="flex flex-col md:flex-row gap-4 py-4 flex-grow min-h-0">
+          {/* Email Body Section */}
+          <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-h-0">
             <Label htmlFor="email-body">Email Body</Label>
             <Textarea
               id="email-body"
               value={emailContent.currentBody}
               onChange={(e) => onEmailBodyChange(e.target.value)}
-              className="flex-grow min-h-[200px] resize-none"
+              className="flex-grow resize-none"
               placeholder="Enter email content..."
             />
           </div>
           
-          <div className="grid gap-2 mt-2">
+          {/* Changes Preview Section */}
+          <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-h-0">
             <Label>Changes Preview (from AI original)</Label>
-            <ScrollArea className="h-[150px] border rounded-md p-3 text-sm bg-muted/30">
+            <ScrollArea className="flex-grow border rounded-md p-3 text-sm bg-muted/30">
               <DiffDisplay originalText={emailContent.originalBody} currentText={emailContent.currentBody} />
             </ScrollArea>
           </div>
