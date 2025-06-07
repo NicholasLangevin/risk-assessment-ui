@@ -2,7 +2,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem } from '@/types';
+import { useRouter } from 'next/navigation';
+import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
 import { BusinessSummaryCard } from './BusinessSummaryCard';
@@ -10,10 +11,16 @@ import { GuidelineStatusList } from './GuidelineStatusList';
 import { AiProcessingMonitorContent } from './AiProcessingMonitorContent';
 import { SubjectToOffersCard } from './SubjectToOffersCard';
 import { InformationRequestsCard } from './InformationRequestsCard';
-import { CoverageRequestedCard } from './CoverageRequestedCard'; // New import
+import { CoverageRequestedCard } from './CoverageRequestedCard';
+import { EmailPreviewDialog } from './EmailPreviewDialog'; // New import
+import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flows/generate-underwriting-email'; // New import
+
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Activity, ChevronLeft } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,6 +33,18 @@ interface QuoteViewClientProps {
 export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessingData, aiUnderwritingActions }: QuoteViewClientProps) {
   const [quoteDetails, setQuoteDetails] = useState<QuoteDetails | null>(initialQuoteDetails);
   const { toast } = useToast();
+  const router = useRouter();
+
+  const [selectedDecision, setSelectedDecision] = useState<UnderwritingDecision | null>(null);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailState, setEmailState] = useState<{
+    subject: string;
+    originalBody: string;
+    currentBody: string;
+  } | null>(null);
+  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
 
   useEffect(() => {
     if (initialQuoteDetails) {
@@ -41,7 +60,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         }));
         updatedDetails.managedSubjectToOffers = initialManagedOffers;
       } else if (!initialQuoteDetails.managedSubjectToOffers) {
-        updatedDetails.managedSubjectToOffers = []; // Ensure it's an array
+        updatedDetails.managedSubjectToOffers = [];
       }
 
 
@@ -55,24 +74,12 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         }));
         updatedDetails.managedInformationRequests = initialManagedInfoRequests;
       } else if (!initialQuoteDetails.managedInformationRequests) {
-         updatedDetails.managedInformationRequests = []; // Ensure it's an array
+         updatedDetails.managedInformationRequests = [];
       }
       setQuoteDetails(updatedDetails);
     }
   }, [initialQuoteDetails, aiUnderwritingActions]);
 
-
-  if (!quoteDetails) {
-    return (
-      <div className="container mx-auto py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">Quote Not Found</h1>
-        <p className="text-muted-foreground">The requested quote could not be found.</p>
-        <Button asChild className="mt-4">
-          <Link href="/">Back to Dashboard</Link>
-        </Button>
-      </div>
-    );
-  }
 
   const handleAddGuideline = (guidelineInfo: { id: string; name: string }) => {
     setQuoteDetails(prevDetails => {
@@ -256,6 +263,95 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
     });
   };
 
+  const handleConfirmAndGenerateEmail = async () => {
+    if (!selectedDecision || !quoteDetails) return;
+
+    setIsGeneratingEmail(true);
+    setEmailState(null);
+
+    const activeInformationRequests = quoteDetails.managedInformationRequests
+      .filter(req => !req.isRemoved)
+      .map(req => req.currentText);
+
+    const activeSubjectToOffers = quoteDetails.managedSubjectToOffers
+      .filter(offer => !offer.isRemoved)
+      .map(offer => offer.currentText);
+
+    const emailInput: EmailGenerationInput = {
+      decision: selectedDecision,
+      quoteId: quoteDetails.id,
+      insuredName: quoteDetails.insuredName,
+      brokerName: quoteDetails.broker, // Assuming broker name is stored here
+      ...(selectedDecision === 'OfferWithSubjectTos' && {
+        premium: quoteDetails.premiumSummary.totalPremium,
+        subjectToOffers: activeSubjectToOffers,
+      }),
+      ...(selectedDecision === 'InformationRequired' && {
+        informationRequests: activeInformationRequests,
+      }),
+    };
+
+    try {
+      const result = await generateUnderwritingEmail(emailInput);
+      setEmailState({
+        subject: result.emailSubject,
+        originalBody: result.emailBody,
+        currentBody: result.emailBody,
+      });
+      setIsEmailDialogOpen(true);
+    } catch (error) {
+      console.error("Error generating email:", error);
+      toast({
+        title: "Email Generation Failed",
+        description: "Could not generate the email. Please try again or draft manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingEmail(false);
+    }
+  };
+  
+  const handleEmailBodyChange = (newBody: string) => {
+    setEmailState(prev => prev ? { ...prev, currentBody: newBody } : null);
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailState) return;
+    setIsSendingEmail(true);
+    // Simulate sending email
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+    toast({
+      title: "Email Sent (Simulated)",
+      description: `Email regarding quote ${quoteDetails?.id} has been 'sent' to ${quoteDetails?.broker}.`,
+      variant: "default",
+    });
+    setIsSendingEmail(false);
+    setIsEmailDialogOpen(false);
+    setEmailState(null);
+    router.push('/');
+  };
+
+
+  if (!quoteDetails) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+         <AlertTriangle className="h-16 w-16 text-destructive mb-6 mx-auto" />
+        <h1 className="text-2xl font-bold mb-4">Quote Not Found</h1>
+        <p className="text-muted-foreground">The requested quote could not be found.</p>
+        <Button asChild className="mt-4">
+          <Link href="/">Back to Dashboard</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const decisionOptions: { value: UnderwritingDecision; label: string }[] = [
+    { value: 'OfferWithSubjectTos', label: 'Offer with Subject-Tos' },
+    { value: 'InformationRequired', label: 'Request Information' },
+    { value: 'Decline', label: 'Decline Quote' },
+  ];
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       <div className="flex justify-between items-start mb-6">
@@ -291,6 +387,39 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           </SheetContent>
         </Sheet>
       </div>
+      
+      {/* Decision Making Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Underwriting Decision</CardTitle>
+          <CardDescription>Select the final decision for this quote and confirm to generate communication.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <RadioGroup
+            value={selectedDecision || ""}
+            onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
+            className="flex flex-col sm:flex-row gap-4"
+          >
+            {decisionOptions.map(option => (
+              <div key={option.value} className="flex items-center space-x-2">
+                <RadioGroupItem value={option.value} id={`decision-${option.value}`} />
+                <Label htmlFor={`decision-${option.value}`} className="font-normal cursor-pointer">
+                  {option.label}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+          <Button 
+            onClick={handleConfirmAndGenerateEmail} 
+            disabled={!selectedDecision || isGeneratingEmail}
+            className="w-full sm:w-auto"
+          >
+            {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
+            Confirm & Generate Email
+          </Button>
+        </CardContent>
+      </Card>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column / Main Content */}
@@ -322,6 +451,18 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           />
         </div>
       </div>
+      
+      {emailState && (
+        <EmailPreviewDialog
+          isOpen={isEmailDialogOpen}
+          onOpenChange={setIsEmailDialogOpen}
+          emailContent={emailState}
+          onEmailBodyChange={handleEmailBodyChange}
+          onSend={handleSendEmail}
+          isSending={isSendingEmail}
+        />
+      )}
     </div>
   );
 }
+

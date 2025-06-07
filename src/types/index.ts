@@ -9,7 +9,7 @@ export interface Submission {
 }
 
 export interface Guideline {
-  id: string;
+  id:string;
   name: string;
   status: 'Compliant' | 'Needs Clarification' | 'Issue Found' | 'Not Applicable';
   details?: string;
@@ -72,8 +72,7 @@ export interface QuoteDetails {
   underwritingGuidelines: Guideline[];
   managedSubjectToOffers: ManagedSubjectToOffer[];
   managedInformationRequests: ManagedInformationRequest[];
-  coveragesRequested: CoverageItem[]; // Added for requested coverages
-  // Data to be fed to the AI
+  coveragesRequested: CoverageItem[];
   rawSubmissionData: string;
 }
 
@@ -92,6 +91,24 @@ export interface AiProcessingData {
 
 export interface AiUnderwritingActions {
   suggestedActions: string[];
-  informationRequests: string[]; // AI's initial suggestions
-  potentialSubjectToOffers: string[]; // AI's initial suggestions
+  informationRequests: string[];
+  potentialSubjectToOffers: string[];
+}
+
+// Types for Email Generation Flow
+export type UnderwritingDecision = 'Decline' | 'OfferWithSubjectTos' | 'InformationRequired';
+
+export interface EmailGenerationInput {
+  decision: UnderwritingDecision;
+  quoteId: string;
+  insuredName: string;
+  brokerName: string;
+  premium?: number; // Only for 'OfferWithSubjectTos'
+  subjectToOffers?: string[]; // Only for 'OfferWithSubjectTos'
+  informationRequests?: string[]; // Only for 'InformationRequired'
+}
+
+export interface EmailGenerationOutput {
+  emailSubject: string;
+  emailBody: string;
 }
