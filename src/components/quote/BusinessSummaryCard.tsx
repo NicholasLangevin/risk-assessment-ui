@@ -5,7 +5,7 @@ import type { BusinessSummaryDetails, Citation, RichTextSegment, TextSegment } f
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Briefcase, FileText, Globe } from 'lucide-react';
+import { FileText, Globe } from 'lucide-react';
 import React from 'react';
 
 interface BusinessSummaryCardProps {
@@ -115,7 +115,6 @@ export function BusinessSummaryCard({ summary, citations, onShowCitation }: Busi
             <AiSparkleIcon className="h-5 w-5 mr-2" />
             AI Business Summary
           </CardTitle>
-          <Briefcase className="h-5 w-5 text-muted-foreground" />
         </div>
         <CardDescription>AI-augmented risk components of the insured's business with citations.</CardDescription>
       </CardHeader>
@@ -140,4 +139,3 @@ export function BusinessSummaryCard({ summary, citations, onShowCitation }: Busi
     </Card>
   );
 }
-
