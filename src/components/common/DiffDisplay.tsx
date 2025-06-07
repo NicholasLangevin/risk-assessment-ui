@@ -14,7 +14,7 @@ export function DiffDisplay({ originalText, currentText, className }: DiffDispla
   const diffResult = diffWords(originalText, currentText);
 
   return (
-    <div className={className}>
+    <div className={`${className} whitespace-pre-wrap`}>
       {diffResult.map((part, index) => {
         if (part.added) {
           return (
