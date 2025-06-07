@@ -397,6 +397,9 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           <AiProcessingMonitorContent
             aiToolActions={aiProcessingData?.aiToolActions || []}
             submissionId={activeSheetItem.submissionId}
+            insuredName={quoteDetails.insuredName}
+            brokerName={quoteDetails.broker}
+            attachmentsList={quoteDetails.attachments.map(att => ({ fileName: att.fileName, fileType: att.fileType }))}
           />
         );
       case 'guideline':
@@ -424,7 +427,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
    const getSheetDescription = () => {
     if (!activeSheetItem || !quoteDetails) return "";
     switch (activeSheetItem.type) {
-      case 'aiMonitor': return `Real-time view of AI processing for submission ${quoteDetails.id}.`;
+      case 'aiMonitor': return `Real-time view of AI processing for submission ${quoteDetails.id}. Chat with the AI assistant about this submission or guidelines.`;
       case 'guideline': return `Detailed information for guideline "${activeSheetItem.data.name}". Current status: ${activeSheetItem.data.status}.`;
       case 'citation': return `Details for citation: ${activeSheetItem.data.sourceType === 'web' ? activeSheetItem.data.sourceNameOrUrl : activeSheetItem.data.sourceNameOrUrl }`;
       case 'attachment': return `Details for attachment "${activeSheetItem.data.fileName}". Type: ${activeSheetItem.data.fileType.toUpperCase()}, Size: ${activeSheetItem.data.fileSize}`;
@@ -559,4 +562,3 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
     </div>
   );
 }
-

@@ -133,7 +133,7 @@ export interface AiToolAction {
 }
 
 export interface AiProcessingData {
-  aiToolActions: AiToolAction[]; // Changed from processingSteps and reasoning
+  aiToolActions: AiToolAction[];
 }
 // --- End AI Processing Monitor Types ---
 
@@ -143,6 +143,27 @@ export interface AiUnderwritingActions {
   informationRequests: string[];
   potentialSubjectToOffers: string[];
 }
+
+// --- Chat Assistant Types ---
+interface ChatAttachmentInfo {
+  fileName: string;
+  fileType: Attachment['fileType'];
+}
+
+export interface ChatUnderwritingAssistantInput {
+  submissionId: string;
+  insuredName: string;
+  brokerName: string;
+  attachments: ChatAttachmentInfo[];
+  userQuery: string;
+  chatHistory?: { role: 'user' | 'model'; parts: { text: string }[] }[];
+}
+
+export interface ChatUnderwritingAssistantOutput {
+  aiResponse: string;
+}
+// --- End Chat Assistant Types ---
+
 
 // Types for Email Generation Flow
 export type UnderwritingDecision = 'Decline' | 'OfferWithSubjectTos' | 'InformationRequired';

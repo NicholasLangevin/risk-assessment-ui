@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon } from 'lucide-react';
 import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput } from '@/ai/flows/chat-underwriting-assistant';
 import { cn } from '@/lib/utils';
-import type { AiToolAction, AiToolActionType } from '@/types';
+import type { AiToolAction, AiToolActionType, Attachment } from '@/types';
 import { formatDistanceToNowStrict } from 'date-fns';
 
 interface ChatMessage {
@@ -18,9 +18,17 @@ interface ChatMessage {
   text: string;
 }
 
+interface ChatAttachmentInfoForContext {
+  fileName: string;
+  fileType: Attachment['fileType'];
+}
+
 interface AiProcessingMonitorContentProps {
   aiToolActions: AiToolAction[];
   submissionId: string;
+  insuredName: string;
+  brokerName: string;
+  attachmentsList: ChatAttachmentInfoForContext[]; // For providing context to chat
 }
 
 const getActionIcon = (type: AiToolActionType) => {
@@ -38,7 +46,13 @@ const getActionIcon = (type: AiToolActionType) => {
   }
 };
 
-export function AiProcessingMonitorContent({ aiToolActions, submissionId }: AiProcessingMonitorContentProps) {
+export function AiProcessingMonitorContent({
+  aiToolActions,
+  submissionId,
+  insuredName,
+  brokerName,
+  attachmentsList,
+}: AiProcessingMonitorContentProps) {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -63,21 +77,24 @@ export function AiProcessingMonitorContent({ aiToolActions, submissionId }: AiPr
     setIsChatLoading(true);
 
     try {
-      const genkitChatHistory: ChatUnderwritingAssistantInput['chatHistory'] = chatMessages.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }],
+      // Prepare history for Genkit, ensuring it matches the expected schema
+      const genkitChatHistory: ChatUnderwritingAssistantInput['chatHistory'] = chatMessages
+        .filter(msg => msg.id !== newUserMessage.id) // Exclude the current user message as it's passed in userQuery
+        .map(msg => ({
+          role: msg.sender === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.text }],
       }));
-      
-      genkitChatHistory.push({
-        role: 'user',
-        parts: [{text: newUserMessage.text}]
-      });
 
-      const response = await chatWithUnderwritingAssistant({
+      const chatInputPayload: ChatUnderwritingAssistantInput = {
         submissionId,
+        insuredName,
+        brokerName,
+        attachments: attachmentsList, // Pass the list of attachments
         userQuery: newUserMessage.text,
-        chatHistory: genkitChatHistory,
-      });
+        chatHistory: genkitChatHistory.length > 0 ? genkitChatHistory : undefined,
+      };
+      
+      const response = await chatWithUnderwritingAssistant(chatInputPayload);
 
       const newAiMessage: ChatMessage = {
         id: Date.now().toString() + '-ai',
@@ -90,7 +107,7 @@ export function AiProcessingMonitorContent({ aiToolActions, submissionId }: AiPr
       const errorAiMessage: ChatMessage = {
         id: Date.now().toString() + '-error',
         sender: 'ai',
-        text: 'Sorry, I encountered an error. Please try again.',
+        text: 'Sorry, I encountered an error communicating with the AI. Please try again.',
       };
       setChatMessages(prev => [...prev, errorAiMessage]);
     } finally {
@@ -185,7 +202,7 @@ export function AiProcessingMonitorContent({ aiToolActions, submissionId }: AiPr
       <div className="mt-auto p-2 border-t flex items-center space-x-2 mx-1">
         <Input
           type="text"
-          placeholder="Ask a question..."
+          placeholder="Ask about submission or guidelines..."
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && !isChatLoading && handleSendChatMessage()}
