@@ -359,7 +359,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
           </Button>
           
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-1">
+          <div className="flex justify-between items-center mb-1">
             <h1 className="text-3xl font-bold font-headline">
               Quote: {quoteDetails.id}
             </h1>
@@ -378,17 +378,17 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
                   ))}
                 </SelectContent>
               </Select>
+            
+              <Button
+                onClick={handleConfirmAndGenerateEmail}
+                disabled={!selectedDecision || isGeneratingEmail}
+                size="sm"
+                className="h-9"
+              >
+                {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
+                Confirm & Generate Email
+              </Button>
             </div>
-
-            <Button
-              onClick={handleConfirmAndGenerateEmail}
-              disabled={!selectedDecision || isGeneratingEmail}
-              size="sm"
-              className="h-9"
-            >
-              {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
-              Confirm & Generate Email
-            </Button>
           </div>
           
           <p className="text-muted-foreground">Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}</p>
