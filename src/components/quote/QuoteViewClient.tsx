@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
-import { BusinessSummaryCard } from './BusinessSummaryCard'; // Corrected import
+import { BusinessSummaryCard } from './BusinessSummaryCard';
 import { GuidelineStatusList } from './GuidelineStatusList';
 import { AiProcessingMonitorContent } from './AiProcessingMonitorContent';
 import { SubjectToOffersCard } from './SubjectToOffersCard';
@@ -182,10 +182,10 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       if (!prevDetails) return null;
       const newOffer: ManagedSubjectToOffer = {
         id: `sto-custom-${Date.now()}`,
-        originalText: `User-added: ${newOfferText}`, 
+        originalText: `User-added: ${newOfferText}`,
         currentText: newOfferText,
         isRemoved: false,
-        isEdited: true, 
+        isEdited: true,
       };
       const updatedOffers = [...(prevDetails.managedSubjectToOffers || []), newOffer];
       setTimeout(() => {
@@ -280,7 +280,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       decision: selectedDecision,
       quoteId: quoteDetails.id,
       insuredName: quoteDetails.insuredName,
-      brokerName: quoteDetails.broker, 
+      brokerName: quoteDetails.broker,
       ...(selectedDecision === 'OfferWithSubjectTos' && {
         premium: quoteDetails.premiumSummary.totalPremium,
         subjectToOffers: activeSubjectToOffers,
@@ -309,7 +309,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
       setIsGeneratingEmail(false);
     }
   };
-  
+
   const handleEmailBodyChange = (newBody: string) => {
     setEmailState(prev => prev ? { ...prev, currentBody: newBody } : null);
   };
@@ -317,7 +317,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
   const handleSendEmail = async () => {
     if (!emailState) return;
     setIsSendingEmail(true);
-    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     toast({
       title: "Email Sent (Simulated)",
@@ -354,52 +354,49 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       <div className="flex justify-between items-start mb-6"> {/* Main header container */}
-        {/* Left Column for Back button, Quote ID, Decision, Confirm, Insured/Broker */}
+        {/* Left Column for Back button, Quote info, Decision controls */}
         <div>
           <Button variant="outline" size="sm" asChild className="mb-2">
             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
           </Button>
-          
-          <div className="flex justify-between items-center mb-1"> {/* Row for Quote ID and right-aligned controls */}
-            <h1 className="text-3xl font-bold font-headline">
-              Quote: {quoteDetails.id}
-            </h1>
-            {/* Group for Decision Dropdown and Confirm Button - Pushed to the right */}
-            <div className="flex items-center space-x-2 ml-4"> {/* Added ml-4 for spacing from Quote ID */}
-              <Select
-                value={selectedDecision || ""}
-                onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
-              >
-                <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
-                  <SelectValue placeholder="Select decision..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {decisionOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            
-              <Button
-                onClick={handleConfirmAndGenerateEmail}
-                disabled={!selectedDecision || isGeneratingEmail}
-                size="sm"
-                className="h-9"
-              >
-                {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
-                Confirm & Generate Email
-              </Button>
-            </div>
+
+          <h1 className="text-3xl font-bold font-headline mb-1">
+            Quote: {quoteDetails.id}
+          </h1>
+          <p className="text-muted-foreground mb-4">Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}</p>
+
+          <div className="flex items-center space-x-2">
+            <Select
+              value={selectedDecision || ""}
+              onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
+            >
+              <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
+                <SelectValue placeholder="Select decision..." />
+              </SelectTrigger>
+              <SelectContent>
+                {decisionOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              onClick={handleConfirmAndGenerateEmail}
+              disabled={!selectedDecision || isGeneratingEmail}
+              size="sm"
+              className="h-9"
+            >
+              {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
+              Confirm & Generate Email
+            </Button>
           </div>
-          
-          <p className="text-muted-foreground">Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}</p>
         </div>
 
         {/* Right Column for AI Monitor Button */}
         <div>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" className="flex-shrink-0 h-9"> {/* Adjusted height to h-9 */}
+              <Button variant="outline" className="flex-shrink-0 h-9">
                 <Activity className="mr-2 h-4 w-4" /> AI Monitor
               </Button>
             </SheetTrigger>
@@ -450,7 +447,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
           />
         </div>
       </div>
-      
+
       {emailState && (
         <EmailPreviewDialog
           isOpen={isEmailDialogOpen}
@@ -464,4 +461,3 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
     </div>
   );
 }
-
