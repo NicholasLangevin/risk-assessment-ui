@@ -7,10 +7,25 @@ import { Badge } from '@/components/ui/badge';
 import { ShieldCheck, ShieldAlert, ShieldQuestion, ShieldHalf, Shield } from 'lucide-react'; // Example icons
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import React from 'react';
 
 interface CoverageRequestedCardProps {
   coverages: CoverageItem[];
 }
+
+// Define AiSparkleIcon locally or import if it becomes a shared component
+const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 30 30" // Updated viewBox
+    fill="currentColor" // Changed to fill
+    {...props}
+  >
+    {/* Updated path data */}
+    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714-6.31,13.408-13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
+  </svg>
+);
+
 
 const getRiskLevelVariant = (riskLevel: RiskLevel): 'default' | 'secondary' | 'destructive' | 'outline' => {
   switch (riskLevel) {
@@ -88,7 +103,10 @@ export function CoverageRequestedCard({ coverages }: CoverageRequestedCardProps)
                   </Badge>
                 </div>
                 <div>
-                  <h5 className="text-sm font-medium mb-1">AI Risk Evaluation:</h5>
+                  <h5 className="text-sm font-medium mb-1 flex items-center text-primary">
+                    <AiSparkleIcon className="h-4 w-4 mr-2" />
+                    AI Risk Evaluation:
+                  </h5>
                   <p className="text-sm text-foreground/80 bg-muted/30 p-2 rounded-md border border-muted/50">
                     {coverage.aiRiskEvaluation}
                   </p>
