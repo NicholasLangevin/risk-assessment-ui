@@ -22,7 +22,7 @@ import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flow
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Info } from 'lucide-react';
+import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Bot } from 'lucide-react'; // Changed Info to Bot
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
@@ -476,7 +476,7 @@ export function QuoteViewClient({ quoteDetails: initialQuoteDetails, aiProcessin
         {quoteDetails.aiOverallRiskStatement && (
           <div className="mt-4 p-3 border rounded-md bg-muted/30 shadow-sm">
             <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
-              <Info className="h-4 w-4 mr-2" />
+              <Bot className="h-4 w-4 mr-2" />
               AI Risk Summary & Reasoning
             </h4>
             <p className="text-sm text-foreground/90 whitespace-pre-wrap">{quoteDetails.aiOverallRiskStatement}</p>
