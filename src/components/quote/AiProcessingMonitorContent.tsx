@@ -3,11 +3,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon, MessageSquare } from 'lucide-react';
-import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput, type ChatUnderwritingAssistantResponsePart } from '@/ai/flows/chat-underwriting-assistant';
+import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon, MessageSquare, Activity } from 'lucide-react'; // Added Activity here
+import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput } from '@/ai/flows/chat-underwriting-assistant'; // Removed ChatUnderwritingAssistantResponsePart as it's not directly used here
 import { cn } from '@/lib/utils';
 import type { AiToolAction, AiToolActionType, Attachment } from '@/types';
 import { formatDistanceToNowStrict } from 'date-fns';
@@ -68,7 +67,9 @@ export function AiProcessingMonitorContent({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(scrollToBottom, [chatMessages]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]);
 
   const handleSendChatMessage = async () => {
     if (!chatInput.trim()) return;
@@ -86,7 +87,7 @@ export function AiProcessingMonitorContent({
     const genkitChatHistory = chatMessages
         .filter(msg => msg.id !== newUserMessage.id) 
         .map(msg => ({
-          role: msg.sender, // Assuming 'user' or 'model' (use 'model' for 'ai' messages)
+          role: msg.sender === 'user' ? 'user' : 'model' as 'user' | 'model',
           parts: [{ text: msg.text }],
       }));
 
@@ -106,6 +107,7 @@ export function AiProcessingMonitorContent({
       let accumulatedText = "";
       let firstChunk = true;
 
+      // @ts-ignore
       for await (const chunk of stream) {
         if (firstChunk) {
           setChatMessages(prev => [
