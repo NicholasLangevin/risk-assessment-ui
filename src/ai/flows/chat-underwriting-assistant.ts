@@ -177,7 +177,17 @@ Your response should be in the 'aiResponse' field.
 
   const modelHistory: MessageData[] = (chatHistory || []).map(h => ({
     role: h.role as 'user' | 'model' | 'tool', // Type assertion
-    parts: h.parts.map(p => ({ text: p.text } as Part)), // Type assertion for Part
+    parts: h.parts
+      .map(p => {
+        // Ensure that only parts with defined text are converted to TextPart
+        if (typeof p.text === 'string') {
+          return { text: p.text } as Part;
+        }
+        // If p.text is undefined, or if it's another type of part you're not handling yet,
+        // filter it out. For now, we only care about text parts for history.
+        return null; 
+      })
+      .filter(part => part !== null) as Part[], // Filter out nulls and assert Part[]
   }));
 
   const templateInput = {
@@ -216,21 +226,31 @@ Your response should be in the 'aiResponse' field.
             console.error('Error stack:', error.stack);
         }
     } else if (typeof error === 'object' && error !== null) {
-        console.error('Error details (JSON):', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        // Attempt to get more details from the object
+        let errorDetails = {};
+        for (const propName of Object.getOwnPropertyNames(error)) {
+            // @ts-ignore
+            errorDetails[propName] = error[propName];
+        }
+        console.error('Error details (JSON):', JSON.stringify(errorDetails, null, 2));
+        if (Object.keys(errorDetails).length === 0) {
+            console.error('Error object has no enumerable properties. Stringified:', String(error));
+        }
     } else {
         console.error('Error is not an object or Error instance. Stringified:', String(error));
     }
 
+    const errorMessage = error instanceof Error ? error.message : (typeof error === 'string' ? error : 'An unknown error occurred while processing your request.');
     const errorChunk: GenerateResponseChunkData = {
       index: 0,
       choices: [{
         index: 0,
         delta: {
           role: 'model',
-          content: [{ text: `Error: ${error instanceof Error ? error.message : 'An unknown error occurred while processing your request.'}` }],
+          content: [{ text: `Error: ${errorMessage}` }],
         },
         finishReason: 'error',
-        custom: { type: 'error', error: error instanceof Error ? error.message : String(error) || 'An unknown error occurred' }
+        custom: { type: 'error', error: errorMessage }
       }],
     };
     yield errorChunk;
