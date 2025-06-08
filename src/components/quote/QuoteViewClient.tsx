@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput, Citation, ActiveSheetItem, Attachment, StreamedTextResponse } from '@/types';
+import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput, Citation, ActiveSheetItem, Attachment, RiskLevel } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
 import { BusinessSummaryCard } from './BusinessSummaryCard';
@@ -17,23 +18,23 @@ import { CitationViewerContent } from './CitationViewerContent';
 import { AttachmentsCard } from './AttachmentsCard';
 import { AttachmentViewerContent } from './AttachmentViewerContent';
 import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flows/generate-underwriting-email';
-import { suggestUnderwritingActions } from '@/ai/flows/suggest-underwriting-actions';
-import { monitorAiProcessing } from '@/ai/flows/monitor-ai-processing';
-import { evaluateCoverageRisk } from '@/ai/flows/evaluate-coverage-risk';
-import { generateOverallRiskStatement } from '@/ai/flows/generate-overall-risk-statement'; // New import
+// Removed AI flow imports for non-chat functionalities
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Info, Edit, ThumbsUp, ThumbsDown, MailWarning } from 'lucide-react';
+import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Info, Edit, ThumbsUp, ThumbsDown, MailWarning, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getMockAiToolActions } from '@/lib/mockData';
+import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput } from '@/ai/flows/chat-underwriting-assistant';
+
 
 interface QuoteViewClientProps {
   initialQuoteDetails: QuoteDetails | null;
-  initialAiProcessingData: AiProcessingData | null; // For AI Monitor, if we decide to fetch some initial state or pass static
-  initialAiUnderwritingActions: AiUnderwritingActions | null; // For recommended actions, if pre-fetched
+  initialAiProcessingData: AiProcessingData;
+  initialAiUnderwritingActions: AiUnderwritingActions;
 }
 
 const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -48,7 +49,7 @@ const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 
-export function QuoteViewClient({ initialQuoteDetails }: QuoteViewClientProps) {
+export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, initialAiUnderwritingActions }: QuoteViewClientProps) {
   const [quoteDetails, setQuoteDetails] = useState<QuoteDetails | null>(initialQuoteDetails);
   const { toast } = useToast();
   const router = useRouter();
@@ -62,132 +63,73 @@ export function QuoteViewClient({ initialQuoteDetails }: QuoteViewClientProps) {
   } | null>(null);
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
-  
+
   const [activeSheetItem, setActiveSheetItem] = useState<ActiveSheetItem>(null);
 
   // States for AI-driven data
-  const [aiOverallRiskStatement, setAiOverallRiskStatement] = useState<string>("");
-  const [isRiskStatementLoading, setIsRiskStatementLoading] = useState(true);
+  const [aiOverallRiskStatement, setAiOverallRiskStatement] = useState<string>("Mock AI Overall Risk Statement: Based on the initial review, the risk profile appears moderate. Key areas to investigate include financial stability and claims history. Recommend further due diligence on operational risks.");
+  const [isRiskStatementLoading, setIsRiskStatementLoading] = useState(false);
+
   const [managedSubjectToOffers, setManagedSubjectToOffers] = useState<ManagedSubjectToOffer[]>([]);
-  const [isSubjectToOffersLoading, setIsSubjectToOffersLoading] = useState(true);
+  const [isSubjectToOffersLoading, setIsSubjectToOffersLoading] = useState(false);
+
   const [managedInformationRequests, setManagedInformationRequests] = useState<ManagedInformationRequest[]>([]);
-  const [isInfoRequestsLoading, setIsInfoRequestsLoading] = useState(true);
-  const [currentCoveragesRequested, setCurrentCoveragesRequested] = useState<CoverageItem[]>(initialQuoteDetails?.coveragesRequested || []);
-  const [aiProcessingData, setAiProcessingData] = useState<AiProcessingData | null>(null);
+  const [isInfoRequestsLoading, setIsInfoRequestsLoading] = useState(false);
+
+  const [currentCoveragesRequested, setCurrentCoveragesRequested] = useState<CoverageItem[]>([]);
+  const [aiProcessingData, setAiProcessingData] = useState<AiProcessingData>(initialAiProcessingData);
 
 
   useEffect(() => {
     setQuoteDetails(initialQuoteDetails);
     if (initialQuoteDetails) {
-        // Initialize coverages with 'Loading' state
+        // Set mock data for AI components
+        setAiOverallRiskStatement(initialQuoteDetails.aiOverallRiskStatement || "Mock AI Overall Risk Statement: Based on the initial review, the risk profile appears moderate. Key areas to investigate include financial stability and claims history. Recommend further due diligence on operational risks.");
+        setIsRiskStatementLoading(false);
+
+        setManagedSubjectToOffers(
+            initialAiUnderwritingActions.potentialSubjectToOffers.length > 0
+            ? initialAiUnderwritingActions.potentialSubjectToOffers.map((text, index) => ({
+                id: `sto-mock-${index}-${Date.now()}`,
+                originalText: text,
+                currentText: text,
+                isRemoved: false,
+                isEdited: false,
+              }))
+            : [
+                { id: 'mock-sto-1', originalText: 'Subject to satisfactory building inspection report.', currentText: 'Subject to satisfactory building inspection report.', isRemoved: false, isEdited: false },
+                { id: 'mock-sto-2', originalText: 'Subject to review of last 3 years audited financials.', currentText: 'Subject to review of last 3 years audited financials.', isRemoved: false, isEdited: false },
+            ]
+        );
+        setIsSubjectToOffersLoading(false);
+
+        setManagedInformationRequests(
+            initialAiUnderwritingActions.informationRequests.length > 0
+            ? initialAiUnderwritingActions.informationRequests.map((text, index) => ({
+                id: `ir-mock-${index}-${Date.now()}`,
+                originalText: text,
+                currentText: text,
+                isRemoved: false,
+                isEdited: false,
+              }))
+            : [
+                { id: 'mock-ir-1', originalText: 'Provide detailed loss history for the past 5 years.', currentText: 'Provide detailed loss history for the past 5 years.', isRemoved: false, isEdited: false },
+                { id: 'mock-ir-2', originalText: 'Clarify security measures for data protection.', currentText: 'Clarify security measures for data protection.', isRemoved: false, isEdited: false },
+            ]
+        );
+        setIsInfoRequestsLoading(false);
+
         setCurrentCoveragesRequested(
             initialQuoteDetails.coveragesRequested.map(cov => ({
                 ...cov,
-                aiRiskEvaluation: 'Loading AI insights...',
-                riskLevel: 'Loading'
+                aiRiskEvaluation: cov.aiRiskEvaluation || `Mock AI evaluation for ${cov.type}: Standard risk profile observed. No major concerns.`,
+                riskLevel: cov.riskLevel && cov.riskLevel !== 'Loading' ? cov.riskLevel : 'Normal' as RiskLevel,
             }))
         );
-
-        // Fetch AI Overall Risk Statement
-        const fetchRiskStatement = async () => {
-          setIsRiskStatementLoading(true);
-          try {
-            const stream = generateOverallRiskStatement({ submissionData: initialQuoteDetails.rawSubmissionData });
-            let fullStatement = "";
-            for await (const chunk of stream) {
-              if (chunk.type === 'textChunk' && chunk.content) {
-                fullStatement += chunk.content;
-                setAiOverallRiskStatement(prev => prev + chunk.content);
-              } else if (chunk.type === 'error') {
-                console.error("Error streaming risk statement:", chunk.error);
-                setAiOverallRiskStatement("Error generating risk statement.");
-                break;
-              }
-            }
-          } catch (error) {
-            console.error("Failed to fetch AI risk statement:", error);
-            setAiOverallRiskStatement("Could not load AI risk assessment.");
-          } finally {
-            setIsRiskStatementLoading(false);
-          }
-        };
-
-        // Fetch AI Underwriting Actions
-        const fetchUnderwritingActions = async () => {
-          setIsSubjectToOffersLoading(true);
-          setIsInfoRequestsLoading(true);
-          try {
-            const actions = await suggestUnderwritingActions({ submissionData: initialQuoteDetails.rawSubmissionData });
-            setManagedSubjectToOffers(actions.potentialSubjectToOffers.map((text, index) => ({
-              id: `sto-${index}-${Date.now()}`,
-              originalText: text,
-              currentText: text,
-              isRemoved: false,
-              isEdited: false,
-            })));
-            setManagedInformationRequests(actions.informationRequests.map((text, index) => ({
-              id: `ir-${index}-${Date.now()}`,
-              originalText: text,
-              currentText: text,
-              isRemoved: false,
-              isEdited: false,
-            })));
-          } catch (error) {
-            console.error("Error fetching AI underwriting actions:", error);
-            toast({ title: "Error", description: "Failed to load AI suggestions.", variant: "destructive" });
-          } finally {
-            setIsSubjectToOffersLoading(false);
-            setIsInfoRequestsLoading(false);
-          }
-        };
-
-        // Fetch AI Processing Monitor Data
-        const fetchProcessingData = async () => {
-          try {
-            const monitorOutput = await monitorAiProcessing({ submissionId: initialQuoteDetails.id });
-            setAiProcessingData({
-              aiToolActions: monitorOutput.aiToolActions || [],
-            });
-          } catch (error) {
-            console.error("Error fetching AI processing data:", error);
-            // Use mock data as fallback if needed, or handle error display
-            setAiProcessingData({ aiToolActions: getMockAiToolActions(initialQuoteDetails.id) });
-          }
-        };
-
-        // Fetch Individual Coverage Risks
-        const fetchCoverageRisks = async () => {
-          const updatedCoverages = await Promise.all(
-            initialQuoteDetails.coveragesRequested.map(async (coverage) => {
-              try {
-                const evaluationOutput = await evaluateCoverageRisk({
-                  submissionData: initialQuoteDetails.rawSubmissionData,
-                  coverageType: coverage.type,
-                });
-                return {
-                  ...coverage,
-                  aiRiskEvaluation: evaluationOutput.aiRiskEvaluation,
-                  riskLevel: evaluationOutput.riskLevel,
-                };
-              } catch (error) {
-                console.error(`Error evaluating risk for coverage ${coverage.type}:`, error);
-                return {
-                  ...coverage,
-                  aiRiskEvaluation: "AI evaluation failed. Please review manually.",
-                  riskLevel: "Normal" as RiskLevel,
-                };
-              }
-            })
-          );
-          setCurrentCoveragesRequested(updatedCoverages);
-        };
         
-        fetchRiskStatement();
-        fetchUnderwritingActions();
-        fetchProcessingData();
-        fetchCoverageRisks();
+        setAiProcessingData(initialAiProcessingData);
     }
-  }, [initialQuoteDetails, toast]);
+  }, [initialQuoteDetails, initialAiUnderwritingActions, initialAiProcessingData]);
 
 
   const handleAddGuideline = (guidelineInfo: { id: string; name: string }) => {
@@ -472,7 +414,7 @@ export function QuoteViewClient({ initialQuoteDetails }: QuoteViewClientProps) {
       case 'citation':
         return <CitationViewerContent citation={activeSheetItem.data} />;
       case 'attachment':
-        return <AttachmentViewerContent attachment={activeSheetItem.data} quoteId={activeSheetItem.quoteId} />;
+        return <AttachmentViewerContent attachment={activeSheetItem.data} />; // Removed quoteId as it's not used by the component
       default:
         return null;
     }
@@ -558,7 +500,7 @@ export function QuoteViewClient({ initialQuoteDetails }: QuoteViewClientProps) {
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : (
-            <p className="text-sm text-foreground/90 whitespace-pre-wrap">{aiOverallRiskStatement || "AI risk assessment is being generated..."}</p>
+            <p className="text-sm text-foreground/90 whitespace-pre-wrap">{aiOverallRiskStatement}</p>
           )}
         </div>
       </div>
@@ -591,14 +533,14 @@ export function QuoteViewClient({ initialQuoteDetails }: QuoteViewClientProps) {
             onUpdateInfoRequest={handleUpdateInformationRequest}
             onToggleRemoveInfoRequest={handleToggleRemoveInformationRequest}
             onAddInfoRequest={handleAddInformationRequest}
-            isLoading={isInfoRequestsLoading}
+            
           />
           <SubjectToOffersCard
             offers={managedSubjectToOffers}
             onUpdateOffer={handleUpdateSubjectToOffer}
             onToggleRemoveOffer={handleToggleRemoveSubjectToOffer}
             onAddSubjectToOffer={handleAddSubjectToOffer}
-            isLoading={isSubjectToOffersLoading}
+            
           />
         </div>
       </div>
