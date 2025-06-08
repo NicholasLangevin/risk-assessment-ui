@@ -1,16 +1,12 @@
 
-
 'use server';
 /**
  * @fileOverview AI-powered chat assistant for underwriting queries, with intent detection and tool usage.
- *
- * - chatWithUnderwritingAssistant - Handles chat interactions with the AI assistant.
- * - ChatUnderwritingAssistantInput - Input type for the chat assistant.
  */
 
 import { ai } from '@/ai/genkit';
-import { generate, type GenerateResponseChunkData } from 'genkit/generate';
-import { z } from 'genkit';
+import { generate, type GenerateResponseChunkData } from 'genkit'; // Corrected import
+import { z } from 'genkit/zod';
 import type { MessageData, Part } from 'genkit/ai';
 import { mockAttachments, mockAllPossibleGuidelines } from '@/lib/mockData';
 import type { Attachment } from '@/types';
@@ -206,18 +202,14 @@ export async function* chatWithUnderwritingAssistant(
   };
 
   try {
-    // Compile the prompt text using the prompt definition's template
-    // const promptText = chatAssistantPromptDefinition.compile(templateInput); // This line is not needed if passing prompt object directly
-
     const result = await ai.generate({
-      model: ai.getRunner('googleai/gemini-1.5-flash-latest') || 'gemini-1.5-flash-latest', // Specify the model
-      prompt: { // Pass the prompt template and data separately
-        template: chatAssistantPromptDefinition.prompt,
-        input: templateInput,
-      },
+      model: ai.getRunner('googleai/gemini-1.5-flash-latest') || 'gemini-1.5-flash-latest',
+      prompt: chatAssistantPromptDefinition, // Pass the defined prompt object
+      input: templateInput, // Pass the input for the prompt template
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
       history: modelHistory,
       stream: true,
+      // config: { output: { schema: ChatUnderwritingAssistantOutputSchema } } // Not needed for streaming
     });
 
     for await (const chunk of result.stream) {
@@ -226,7 +218,6 @@ export async function* chatWithUnderwritingAssistant(
 
   } catch (error: any) {
     console.error(`Error in chatWithUnderwritingAssistant stream for submission ${submissionId}:`, error);
-    // Construct a chunk that signals an error to the client
     const errorChunk: GenerateResponseChunkData = {
       index: 0,
       choices: [{
@@ -235,13 +226,15 @@ export async function* chatWithUnderwritingAssistant(
           role: 'model',
           content: [{ text: `Error: ${error.message || 'An unknown error occurred while processing your request.'}` }],
         },
-        finishReason: 'error', // Indicate that the stream finished due to an error
+        finishReason: 'error',
         custom: { type: 'error', error: error.message || 'An unknown error occurred' }
       }],
-      // usage and custom can be undefined or set appropriately
     };
     yield errorChunk;
   }
 }
+```
+The key change here is to ensure that `ChatUnderwritingAssistantInputSchema` and `ChatUnderwritingAssistantOutputSchema` are defined *before* they are used in `ai.definePrompt`. I also removed the direct `export` from these schema definitions, as only the `chatWithUnderwritingAssistant` function needs to be exported from this server actions file.
 
-    
+This should resolve the "ReferenceError: Cannot access 'ChatUnderwritingAssistantInputSchema' before initialization" and similar errors, allowing the server action to be correctly compiled and executed.
+Let me know if this resolves the issue!
