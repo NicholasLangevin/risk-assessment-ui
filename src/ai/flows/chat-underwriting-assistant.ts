@@ -9,44 +9,41 @@ import { generate, type GenerateResponseChunkData } from 'genkit';
 import { z } from 'zod';
 import type { MessageData, Part } from 'genkit/ai';
 import { mockAttachments, mockAllPossibleGuidelines } from '@/lib/mockData';
-import type { Attachment } from '@/types'; // This will now point to the consolidated types
+import type { Attachment, ChatUnderwritingAssistantInput, ChatHistoryItem } from '@/types'; // Updated import
 
 // --- Define LOCAL Zod schemas and TypeScript types for internal use ---
-const MessagePartSchema = z.object({
+// These are not exported from this server actions file.
+// If needed by client components, they should be defined and exported from @/types
+const LocalMessagePartSchema = z.object({
   text: z.string().optional(),
 });
 
-const ChatHistoryItemSchema = z.object({
+const LocalChatHistoryItemSchema = z.object({
   role: z.enum(['user', 'model', 'tool']),
-  parts: z.array(MessagePartSchema),
+  parts: z.array(LocalMessagePartSchema),
 });
-type ChatHistoryItem = z.infer<typeof ChatHistoryItemSchema>;
 
-
-const ChatAttachmentInfoSchema = z.object({
+const LocalChatAttachmentInfoSchema = z.object({
   fileName: z.string().describe('The name of the attachment file.'),
   fileType: z.string().describe('The type of the attachment file (e.g., pdf, docx).')
 });
-type ChatAttachmentInfo = z.infer<typeof ChatAttachmentInfoSchema>;
 
-const ChatUnderwritingAssistantInputSchema = z.object({
+const LocalChatUnderwritingAssistantInputSchema = z.object({
   submissionId: z.string().describe('The ID of the submission being discussed.'),
   insuredName: z.string().describe('The name of the insured party.'),
   brokerName: z.string().describe('The name of the broker.'),
-  attachments: z.array(ChatAttachmentInfoSchema).describe('A list of attachments available for this submission.'),
+  attachments: z.array(LocalChatAttachmentInfoSchema).describe('A list of attachments available for this submission.'),
   userQuery: z.string().describe('The user’s current question or message.'),
-  chatHistory: z.array(ChatHistoryItemSchema).optional().describe('The history of the conversation so far.'),
+  chatHistory: z.array(LocalChatHistoryItemSchema).optional().describe('The history of the conversation so far.'),
 });
-type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
 
-const ChatUnderwritingAssistantOutputSchema = z.object({
+const LocalChatUnderwritingAssistantOutputSchema = z.object({
   aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),
 });
-// type ChatUnderwritingAssistantOutput = z.infer<typeof ChatUnderwritingAssistantOutputSchema>; // Not strictly needed if only yielding chunks
 
-const PromptInputSchemaForHandlebars = ChatUnderwritingAssistantInputSchema.extend({
+const PromptInputSchemaForHandlebars = LocalChatUnderwritingAssistantInputSchema.extend({
     chatHistory: z.array(
-      ChatHistoryItemSchema.extend({
+      LocalChatHistoryItemSchema.extend({
         isUser: z.boolean().optional(),
         isModel: z.boolean().optional(),
       })
@@ -56,9 +53,10 @@ const PromptInputSchemaForHandlebars = ChatUnderwritingAssistantInputSchema.exte
 
 // --- The ONLY EXPORTED function ---
 export async function* chatWithUnderwritingAssistant(
-  input: ChatUnderwritingAssistantInput // Type comes from local definition or imported from '@/types' if needed by caller
+  input: ChatUnderwritingAssistantInput // Type comes from @/types
 ): AsyncGenerator<GenerateResponseChunkData> {
   // --- Define Genkit Tools and Prompt INSIDE the async generator ---
+  // This ensures they are not considered module-level exports by Next.js server actions.
   const readAttachmentContentTool = ai.defineTool(
     {
       name: 'readAttachmentContent',
@@ -128,7 +126,7 @@ export async function* chatWithUnderwritingAssistant(
     {
       name: 'chatWithUnderwritingAssistantPrompt',
       input: { schema: PromptInputSchemaForHandlebars }, // Uses locally defined schema
-      output: { schema: ChatUnderwritingAssistantOutputSchema }, // Uses locally defined schema
+      output: { schema: LocalChatUnderwritingAssistantOutputSchema }, // Uses locally defined schema
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
       prompt: `You are an expert underwriting assistant for RiskPilot.
 You are currently discussing submission ID: {{{submissionId}}} for Insured: {{{insuredName}}}, Broker: {{{brokerName}}}.
@@ -178,15 +176,15 @@ Your response should be in the 'aiResponse' field.
   const { submissionId, insuredName, brokerName, attachments, userQuery, chatHistory } = input;
 
   const modelHistory: MessageData[] = (chatHistory || []).map(h => ({
-    role: h.role as 'user' | 'model' | 'tool',
-    parts: h.parts.map(p => ({ text: p.text } as Part)),
+    role: h.role as 'user' | 'model' | 'tool', // Type assertion
+    parts: h.parts.map(p => ({ text: p.text } as Part)), // Type assertion for Part
   }));
 
   const templateInput = {
     submissionId,
     insuredName,
     brokerName,
-    attachments,
+    attachments, // This should be ChatAttachmentInfo[] from the input type
     userQuery,
     chatHistory: chatHistory?.map(item => ({
         ...item,
@@ -197,7 +195,7 @@ Your response should be in the 'aiResponse' field.
 
   try {
     const result = await ai.generate({
-      model: ai.getRunner('googleai/gemini-1.5-flash-latest') || 'gemini-1.5-flash-latest',
+      model: 'googleai/gemini-1.5-flash-latest', // Corrected: directly specify model string
       prompt: chatAssistantPromptDefinition,
       input: templateInput,
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
