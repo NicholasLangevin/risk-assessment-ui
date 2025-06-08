@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Submission } from '@/types';
 import { ArrowRight } from 'lucide-react';
+import { ClientFormattedDate } from '@/components/common/ClientFormattedDate'; // Added import
 
 interface SubmissionsTableProps {
   submissions: Submission[];
@@ -73,7 +75,9 @@ export function SubmissionsTable({ submissions }: SubmissionsTableProps) {
                   <TableCell>
                     <Badge variant={getStatusVariant(submission.status)}>{submission.status}</Badge>
                   </TableCell>
-                  <TableCell>{new Date(submission.receivedDate).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <ClientFormattedDate isoDateString={submission.receivedDate} />
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="ghost" size="sm">
                       <Link href={`/quote/${submission.id}`}>
