@@ -143,7 +143,7 @@ export type ActiveSheetItem =
 
 // --- Types and Schemas for Chat Underwriting Assistant (from chat-underwriting-assistant.ts) ---
 export const MessagePartSchema = z.object({
-  text: z.string().optional(),
+  text: z.string(), // Changed from z.string().optional() to z.string()
 });
 export type MessagePart = z.infer<typeof MessagePartSchema>;
 
@@ -196,3 +196,4 @@ export const EmailGenerationOutputSchema = z.object({
   emailBody: z.string().describe('The suggested body content for the email.'),
 });
 export type EmailGenerationOutput = z.infer<typeof EmailGenerationOutputSchema>;
+
