@@ -5,49 +5,31 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { generate, type GenerateResponseChunkData } from 'genkit';
+import { generate, type GenerateResponseChunkData } from 'genkit'; // Correct Genkit v1.x import
 import { z } from 'zod';
 import type { MessageData, Part } from 'genkit/ai';
 import { mockAttachments, mockAllPossibleGuidelines } from '@/lib/mockData';
-import type { Attachment, ChatUnderwritingAssistantInput, ChatHistoryItem, ChatAttachmentInfo } from '@/types';
+import type { Attachment, ChatUnderwritingAssistantInput, ChatHistoryItem, ChatAttachmentInfo } from '@/types'; // Ensure types from @/types are used for exported function signature
+import { ChatUnderwritingAssistantInputSchema, ChatHistoryItemSchema as TypesChatHistoryItemSchema } from '@/types'; // Import Zod schemas from @/types
 
-// --- Define LOCAL Zod schemas and TypeScript types for internal use ---
+// --- Define LOCAL Zod schemas for internal prompt structure ---
 // These are not exported from this server actions file.
-// If needed by client components, they should be defined and exported from @/types
-const LocalMessagePartSchema = z.object({
-  text: z.string().optional(),
+
+// Local history item schema for the prompt template, extending the one from @/types for template flags
+const PromptChatHistoryItemSchema = TypesChatHistoryItemSchema.extend({
+  isUser: z.boolean().optional(),
+  isModel: z.boolean().optional(),
 });
 
-const LocalChatHistoryItemSchema = z.object({
-  role: z.enum(['user', 'model', 'tool']),
-  parts: z.array(LocalMessagePartSchema),
+// Schema for the input data that the Handlebars prompt template will receive
+const PromptInputSchemaForHandlebars = ChatUnderwritingAssistantInputSchema.extend({
+  // Override chatHistory to use the PromptChatHistoryItemSchema for template logic
+  chatHistory: z.array(PromptChatHistoryItemSchema).optional().describe('The history of the conversation, augmented for template use.'),
 });
 
-const LocalChatAttachmentInfoSchema = z.object({
-  fileName: z.string().describe('The name of the attachment file.'),
-  fileType: z.string().describe('The type of the attachment file (e.g., pdf, docx).')
-});
-
-const LocalChatUnderwritingAssistantInputSchema = z.object({
-  submissionId: z.string().describe('The ID of the submission being discussed.'),
-  insuredName: z.string().describe('The name of the insured party.'),
-  brokerName: z.string().describe('The name of the broker.'),
-  attachments: z.array(LocalChatAttachmentInfoSchema).describe('A list of attachments available for this submission.'),
-  userQuery: z.string().describe('The user’s current question or message.'),
-  chatHistory: z.array(LocalChatHistoryItemSchema).optional().describe('The history of the conversation so far.'),
-});
-
+// Schema for the expected output from the AI model (used in ai.definePrompt)
 const LocalChatUnderwritingAssistantOutputSchema = z.object({
   aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),
-});
-
-const PromptInputSchemaForHandlebars = LocalChatUnderwritingAssistantInputSchema.extend({
-    chatHistory: z.array(
-      LocalChatHistoryItemSchema.extend({
-        isUser: z.boolean().optional(),
-        isModel: z.boolean().optional(),
-      })
-    ).optional().describe('The history of the conversation so far, with added boolean flags for role.'),
 });
 
 
@@ -55,7 +37,6 @@ const PromptInputSchemaForHandlebars = LocalChatUnderwritingAssistantInputSchema
 export async function* chatWithUnderwritingAssistant(
   input: ChatUnderwritingAssistantInput // Type comes from @/types
 ): AsyncGenerator<GenerateResponseChunkData> {
-  // Initialize submissionIdForErrorHandling with a default or from input if available
   let submissionIdForErrorHandling = (input && typeof input.submissionId === 'string') ? input.submissionId : "UNKNOWN_SUBMISSION_ID";
 
   try {
@@ -72,6 +53,7 @@ export async function* chatWithUnderwritingAssistant(
         }),
       },
       async (toolInput) => {
+        // Find in mockAttachments (which is Attachment[] from @/types)
         const attachment = mockAttachments.find((att: Attachment) => att.fileName.toLowerCase() === toolInput.fileName.toLowerCase());
         if (attachment && attachment.mockContent) {
           return { content: attachment.mockContent };
@@ -128,8 +110,8 @@ export async function* chatWithUnderwritingAssistant(
     const chatAssistantPromptDefinition = ai.definePrompt(
       {
         name: 'chatWithUnderwritingAssistantPrompt',
-        input: { schema: PromptInputSchemaForHandlebars }, 
-        output: { schema: LocalChatUnderwritingAssistantOutputSchema }, 
+        input: { schema: PromptInputSchemaForHandlebars },
+        output: { schema: LocalChatUnderwritingAssistantOutputSchema },
         tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
         prompt: `You are an expert underwriting assistant for RiskPilot.
 You are currently discussing submission ID: {{{submissionId}}} for Insured: {{{insuredName}}}, Broker: {{{brokerName}}}.
@@ -172,47 +154,51 @@ Your response should be in the 'aiResponse' field.
     // --- End of internal definitions ---
 
     const { submissionId, insuredName, brokerName, attachments, userQuery, chatHistory } = input;
-    submissionIdForErrorHandling = submissionId; // Update with actual submissionId if input is valid
+    submissionIdForErrorHandling = submissionId;
 
+    // Convert ChatHistoryItem[] (from @/types) to MessageData[] (for Genkit)
     const modelHistory: MessageData[] = [];
     if (chatHistory) {
-      for (const h of chatHistory) {
+      for (const h of chatHistory) { // h is ChatHistoryItem from @/types
         const currentMessageParts: Part[] = [];
         if (h.parts) {
-          for (const p of h.parts) {
-            if (typeof p.text === 'string') {
+          for (const p of h.parts) { // p is MessagePart from @/types (which is {text?: string})
+            if (typeof p.text === 'string' && p.text.trim() !== '') { // Ensure text is a non-empty string
               currentMessageParts.push({ text: p.text });
             }
           }
         }
+        // Only add message to history if it has valid parts
         if (currentMessageParts.length > 0) {
           modelHistory.push({
-            role: h.role as 'user' | 'model',
+            role: h.role as 'user' | 'model', // Cast role; 'tool' role parts are handled by Genkit
             parts: currentMessageParts,
           });
         }
       }
     }
-
+    
+    // Prepare input for the Handlebars template
     const templateInput = {
       submissionId,
       insuredName,
       brokerName,
-      attachments,
+      attachments, // This is ChatAttachmentInfo[] from @/types
       userQuery,
+      // Augment chatHistory for template: ChatHistoryItem[] (from @/types) -> PromptChatHistoryItemSchema[]
       chatHistory: chatHistory?.map(item => ({
-          ...item,
+          ...item, // Spread parts from ChatHistoryItem
           isUser: item.role === 'user',
           isModel: item.role === 'model',
-      })),
+      })).filter(item => item.parts && item.parts.some(p => typeof p.text === 'string' && p.text.trim() !== '')), // Ensure history items for template also have content
     };
 
     const result = await ai.generate({
       model: 'googleai/gemini-1.5-flash-latest',
       prompt: chatAssistantPromptDefinition,
-      input: templateInput,
+      input: templateInput, // This will be validated against PromptInputSchemaForHandlebars
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
-      history: modelHistory,
+      history: modelHistory, // This is MessageData[]
       stream: true,
     });
 
@@ -248,7 +234,7 @@ Your response should be in the 'aiResponse' field.
         index: 0,
         delta: {
           role: 'model',
-          content: [{ text: `Server Error: ${errorMessage}` }],
+          content: [{ text: `Server Error: ${errorMessage}` }], // Genkit v1.x delta content structure
         },
         finishReason: 'error',
         custom: { type: 'error', error: errorMessage }
@@ -257,3 +243,5 @@ Your response should be in the 'aiResponse' field.
     yield errorChunk;
   }
 }
+
+    
