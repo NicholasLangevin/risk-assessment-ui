@@ -1,3 +1,5 @@
+
+
 'use server';
 /**
  * @fileOverview AI-powered chat assistant for underwriting queries, with intent detection and tool usage.
@@ -126,7 +128,7 @@ const chatAssistantPromptDefinition = ai.definePrompt(
   {
     name: 'chatWithUnderwritingAssistantPrompt',
     input: { schema: PromptInputSchemaForHandlebars },
-    output: { schema: ChatUnderwritingAssistantOutputSchema },
+    output: { schema: ChatUnderwritingAssistantOutputSchema }, // Describes the final assembled response
     tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
     prompt: `You are an expert underwriting assistant for RiskPilot.
 You are currently discussing submission ID: {{{submissionId}}} for Insured: {{{insuredName}}}, Broker: {{{brokerName}}}.
@@ -173,7 +175,7 @@ Your response should be in the 'aiResponse' field.
     // prompt text is constructed directly in the `generate` call.
     // However, keeping it aligns with the definePrompt structure.
     // For `generate`, we will compile the prompt text ourselves using the `input`.
-    return { aiResponse: "This output is for non-streaming use or schema validation if not overridden." };
+    return { aiResponse: "This is a placeholder and won't be directly used by the streaming mechanism." };
   }
 );
 
@@ -205,15 +207,17 @@ export async function* chatWithUnderwritingAssistant(
 
   try {
     // Compile the prompt text using the prompt definition's template
-    const promptText = chatAssistantPromptDefinition.compile(templateInput);
+    // const promptText = chatAssistantPromptDefinition.compile(templateInput); // This line is not needed if passing prompt object directly
 
-    const result = await generate({
+    const result = await ai.generate({
       model: ai.getRunner('googleai/gemini-1.5-flash-latest') || 'gemini-1.5-flash-latest', // Specify the model
-      prompt: { text: promptText }, // Pass the compiled prompt text
+      prompt: { // Pass the prompt template and data separately
+        template: chatAssistantPromptDefinition.prompt,
+        input: templateInput,
+      },
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
       history: modelHistory,
       stream: true,
-      // No output schema here for streaming, as chunks have their own structure
     });
 
     for await (const chunk of result.stream) {
@@ -222,6 +226,7 @@ export async function* chatWithUnderwritingAssistant(
 
   } catch (error: any) {
     console.error(`Error in chatWithUnderwritingAssistant stream for submission ${submissionId}:`, error);
+    // Construct a chunk that signals an error to the client
     const errorChunk: GenerateResponseChunkData = {
       index: 0,
       choices: [{
@@ -230,12 +235,13 @@ export async function* chatWithUnderwritingAssistant(
           role: 'model',
           content: [{ text: `Error: ${error.message || 'An unknown error occurred while processing your request.'}` }],
         },
-        finishReason: 'error',
+        finishReason: 'error', // Indicate that the stream finished due to an error
         custom: { type: 'error', error: error.message || 'An unknown error occurred' }
       }],
-      usage: undefined, 
-      custom: { type: 'error', error: error.message || 'An unknown error occurred' }
+      // usage and custom can be undefined or set appropriately
     };
     yield errorChunk;
   }
 }
+
+    
