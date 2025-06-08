@@ -1,25 +1,25 @@
-
 'use server';
 /**
  * @fileOverview AI-powered chat assistant for underwriting queries, with intent detection and tool usage.
  *
  * - chatWithUnderwritingAssistant - Handles chat interactions with the AI assistant.
  * - ChatUnderwritingAssistantInput - Input type for the chat assistant.
- * - ChatUnderwritingAssistantOutput - Output type for the chat assistant.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { generate, type GenerateResponseChunkData } from 'genkit/generate';
+import { z } from 'genkit';
+import type { MessageData, Part } from 'genkit/ai';
 import { mockAttachments, mockAllPossibleGuidelines } from '@/lib/mockData';
 import type { Attachment } from '@/types';
 
 // Define schemas for chat history and input/output
 const MessagePartSchema = z.object({
-  text: z.string(),
+  text: z.string().optional(), // text can be optional for tool parts
 });
 
 const ChatHistoryItemSchema = z.object({
-  role: z.enum(['user', 'model']),
+  role: z.enum(['user', 'model', 'tool']),
   parts: z.array(MessagePartSchema),
 });
 
@@ -28,7 +28,7 @@ const ChatAttachmentInfoSchema = z.object({
   fileType: z.string().describe('The type of the attachment file (e.g., pdf, docx).')
 });
 
-const ChatUnderwritingAssistantInputSchema = z.object({
+export const ChatUnderwritingAssistantInputSchema = z.object({
   submissionId: z.string().describe('The ID of the submission being discussed.'),
   insuredName: z.string().describe('The name of the insured party.'),
   brokerName: z.string().describe('The name of the broker.'),
@@ -38,6 +38,8 @@ const ChatUnderwritingAssistantInputSchema = z.object({
 });
 export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
 
+// This output schema describes the *conceptual* full response, not the stream chunks.
+// It's used by definePrompt to guide the LLM for non-streaming or when tools complete.
 const ChatUnderwritingAssistantOutputSchema = z.object({
   aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),
 });
@@ -45,7 +47,6 @@ export type ChatUnderwritingAssistantOutput = z.infer<typeof ChatUnderwritingAss
 
 
 // --- Define Genkit Tools ---
-
 const readAttachmentContentTool = ai.defineTool(
   {
     name: 'readAttachmentContent',
@@ -58,7 +59,6 @@ const readAttachmentContentTool = ai.defineTool(
     }),
   },
   async (input) => {
-    // In a real app, you might fetch this from a storage service or database
     const attachment = mockAttachments.find((att: Attachment) => att.fileName.toLowerCase() === input.fileName.toLowerCase());
     if (attachment && attachment.mockContent) {
       return { content: attachment.mockContent };
@@ -112,29 +112,23 @@ const searchUnderwritingGuidelinesTool = ai.defineTool(
   }
 );
 
-// --- End Genkit Tools ---
-
-export async function chatWithUnderwritingAssistant(input: ChatUnderwritingAssistantInput): Promise<ChatUnderwritingAssistantOutput> {
-  return chatWithUnderwritingAssistantFlow(input);
-}
-
-// Define an extended schema for the prompt's input, including boolean flags for chat history items
-const PromptInputSchema = ChatUnderwritingAssistantInputSchema.extend({
-  chatHistory: z.array(
-    ChatHistoryItemSchema.extend({
-      isUser: z.boolean().optional(),
-      isModel: z.boolean().optional(),
-    })
-  ).optional().describe('The history of the conversation so far, with added boolean flags for role.'),
+const PromptInputSchemaForHandlebars = ChatUnderwritingAssistantInputSchema.extend({
+    chatHistory: z.array(
+      ChatHistoryItemSchema.extend({
+        isUser: z.boolean().optional(),
+        isModel: z.boolean().optional(),
+      })
+    ).optional().describe('The history of the conversation so far, with added boolean flags for role.'),
 });
 
 
-const prompt = ai.definePrompt({
-  name: 'chatWithUnderwritingAssistantPrompt',
-  input: {schema: PromptInputSchema}, // Use the extended schema for the prompt
-  output: {schema: ChatUnderwritingAssistantOutputSchema},
-  tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
-  prompt: `You are an expert underwriting assistant for RiskPilot.
+const chatAssistantPromptDefinition = ai.definePrompt(
+  {
+    name: 'chatWithUnderwritingAssistantPrompt',
+    input: { schema: PromptInputSchemaForHandlebars },
+    output: { schema: ChatUnderwritingAssistantOutputSchema },
+    tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
+    prompt: `You are an expert underwriting assistant for RiskPilot.
 You are currently discussing submission ID: {{{submissionId}}} for Insured: {{{insuredName}}}, Broker: {{{brokerName}}}.
 
 Available attachments for this submission:
@@ -170,32 +164,78 @@ Carefully consider the user's question and use your capabilities as described ab
 Do not make up information. Be concise, professional, and helpful.
 Your response should be in the 'aiResponse' field.
 `,
-});
-
-
-const chatWithUnderwritingAssistantFlow = ai.defineFlow(
-  {
-    name: 'chatWithUnderwritingAssistantFlow',
-    inputSchema: ChatUnderwritingAssistantInputSchema, // Flow's external input remains the same
-    outputSchema: ChatUnderwritingAssistantOutputSchema,
   },
   async (input) => {
-    // Preprocess chatHistory to add boolean flags for Handlebars
-    const processedChatHistory = input.chatHistory?.map(item => ({
-      ...item,
-      isUser: item.role === 'user',
-      isModel: item.role === 'model',
-    }));
-
-    const promptInputPayload = {
-      ...input,
-      chatHistory: processedChatHistory,
-    };
-
-    const {output} = await prompt(promptInputPayload);
-    if (!output) {
-      return { aiResponse: "I'm sorry, I couldn't generate a response at this time. Please try again." };
-    }
-    return output;
+    // This function is primarily for template compilation if needed before passing to `generate`.
+    // The actual logic of interaction with the model is handled by `ai.generate`.
+    // For definePrompt, this part usually constructs the prompt string.
+    // Since we are passing the template directly, this can be simplified or even removed if the
+    // prompt text is constructed directly in the `generate` call.
+    // However, keeping it aligns with the definePrompt structure.
+    // For `generate`, we will compile the prompt text ourselves using the `input`.
+    return { aiResponse: "This output is for non-streaming use or schema validation if not overridden." };
   }
 );
+
+
+export async function* chatWithUnderwritingAssistant(
+  input: ChatUnderwritingAssistantInput
+): AsyncGenerator<GenerateResponseChunkData> {
+  const { submissionId, insuredName, brokerName, attachments, userQuery, chatHistory } = input;
+
+  // Prepare history for the model
+  const modelHistory: MessageData[] = (chatHistory || []).map(h => ({
+    role: h.role as 'user' | 'model' | 'tool',
+    parts: h.parts.map(p => ({ text: p.text } as Part)), // Ensure Part type
+  }));
+
+  // Prepare input for the Handlebars template
+  const templateInput = {
+    submissionId,
+    insuredName,
+    brokerName,
+    attachments,
+    userQuery,
+    chatHistory: chatHistory?.map(item => ({
+        ...item,
+        isUser: item.role === 'user',
+        isModel: item.role === 'model',
+    })),
+  };
+
+  try {
+    // Compile the prompt text using the prompt definition's template
+    const promptText = chatAssistantPromptDefinition.compile(templateInput);
+
+    const result = await generate({
+      model: ai.getRunner('googleai/gemini-1.5-flash-latest') || 'gemini-1.5-flash-latest', // Specify the model
+      prompt: { text: promptText }, // Pass the compiled prompt text
+      tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
+      history: modelHistory,
+      stream: true,
+      // No output schema here for streaming, as chunks have their own structure
+    });
+
+    for await (const chunk of result.stream) {
+      yield chunk;
+    }
+
+  } catch (error: any) {
+    console.error(`Error in chatWithUnderwritingAssistant stream for submission ${submissionId}:`, error);
+    const errorChunk: GenerateResponseChunkData = {
+      index: 0,
+      choices: [{
+        index: 0,
+        delta: {
+          role: 'model',
+          content: [{ text: `Error: ${error.message || 'An unknown error occurred while processing your request.'}` }],
+        },
+        finishReason: 'error',
+        custom: { type: 'error', error: error.message || 'An unknown error occurred' }
+      }],
+      usage: undefined, 
+      custom: { type: 'error', error: error.message || 'An unknown error occurred' }
+    };
+    yield errorChunk;
+  }
+}
