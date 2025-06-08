@@ -6,8 +6,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon } from 'lucide-react';
-import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput } from '@/ai/flows/chat-underwriting-assistant';
+import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon, MessageSquare } from 'lucide-react';
+import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput, type ChatUnderwritingAssistantResponsePart } from '@/ai/flows/chat-underwriting-assistant';
 import { cn } from '@/lib/utils';
 import type { AiToolAction, AiToolActionType, Attachment } from '@/types';
 import { formatDistanceToNowStrict } from 'date-fns';
@@ -16,7 +16,13 @@ interface ChatMessage {
   id: string;
   sender: 'user' | 'ai';
   text: string;
+  type?: 'text' | 'tool_code' | 'tool_result';
+  toolName?: string;
+  toolInput?: any;
+  toolOutput?: any;
+  isLoading?: boolean; // To show loading for AI thinking
 }
+
 
 interface ChatAttachmentInfoForContext {
   fileName: string;
@@ -28,7 +34,7 @@ interface AiProcessingMonitorContentProps {
   submissionId: string;
   insuredName: string;
   brokerName: string;
-  attachmentsList: ChatAttachmentInfoForContext[]; // For providing context to chat
+  attachmentsList: ChatAttachmentInfoForContext[];
 }
 
 const getActionIcon = (type: AiToolActionType) => {
@@ -55,7 +61,7 @@ export function AiProcessingMonitorContent({
 }: AiProcessingMonitorContentProps) {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isAiTyping, setIsAiTyping] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -68,52 +74,94 @@ export function AiProcessingMonitorContent({
     if (!chatInput.trim()) return;
 
     const newUserMessage: ChatMessage = {
-      id: Date.now().toString() + '-user',
+      id: `user-${Date.now()}`,
       sender: 'user',
       text: chatInput.trim(),
+      type: 'text',
     };
     setChatMessages(prev => [...prev, newUserMessage]);
     setChatInput('');
-    setIsChatLoading(true);
+    setIsAiTyping(true);
 
-    try {
-      // Prepare history for Genkit, ensuring it matches the expected schema
-      const genkitChatHistory: ChatUnderwritingAssistantInput['chatHistory'] = chatMessages
-        .filter(msg => msg.id !== newUserMessage.id) // Exclude the current user message as it's passed in userQuery
+    const genkitChatHistory = chatMessages
+        .filter(msg => msg.id !== newUserMessage.id) 
         .map(msg => ({
-          role: msg.sender === 'user' ? 'user' : 'model',
+          role: msg.sender, // Assuming 'user' or 'model' (use 'model' for 'ai' messages)
           parts: [{ text: msg.text }],
       }));
 
-      const chatInputPayload: ChatUnderwritingAssistantInput = {
-        submissionId,
-        insuredName,
-        brokerName,
-        attachments: attachmentsList, // Pass the list of attachments
-        userQuery: newUserMessage.text,
-        chatHistory: genkitChatHistory.length > 0 ? genkitChatHistory : undefined,
-      };
-      
-      const response = await chatWithUnderwritingAssistant(chatInputPayload);
 
-      const newAiMessage: ChatMessage = {
-        id: Date.now().toString() + '-ai',
-        sender: 'ai',
-        text: response.aiResponse,
-      };
-      setChatMessages(prev => [...prev, newAiMessage]);
+    const chatInputPayload: ChatUnderwritingAssistantInput = {
+      submissionId,
+      insuredName,
+      brokerName,
+      attachments: attachmentsList,
+      userQuery: newUserMessage.text,
+      chatHistory: genkitChatHistory,
+    };
+
+    try {
+      const stream = await chatWithUnderwritingAssistant(chatInputPayload);
+      let currentAiMessageId = `ai-${Date.now()}`;
+      let accumulatedText = "";
+      let firstChunk = true;
+
+      for await (const chunk of stream) {
+        if (firstChunk) {
+          setChatMessages(prev => [
+            ...prev,
+            { id: currentAiMessageId, sender: 'ai', text: '', type: 'text', isLoading: true },
+          ]);
+          firstChunk = false;
+        }
+
+        if (chunk.choice?.delta?.content) {
+          accumulatedText += chunk.choice.delta.content;
+          setChatMessages(prev =>
+            prev.map(msg =>
+              msg.id === currentAiMessageId ? { ...msg, text: accumulatedText, isLoading: false } : msg
+            )
+          );
+        } else if (chunk.choice?.toolCall) {
+            // Handle tool call start - display a "thinking" or "using tool" message
+            setChatMessages(prev => [
+              ...prev,
+              {
+                id: `tool-call-${Date.now()}`,
+                sender: 'ai',
+                text: `Using tool: ${chunk.choice.toolCall.name}...`,
+                type: 'tool_code',
+                toolName: chunk.choice.toolCall.name,
+                toolInput: chunk.choice.toolCall.args,
+                isLoading: true,
+              },
+            ]);
+        } else if (chunk.choice?.toolResult) {
+            // Handle tool result - display the result (or a summary)
+            setChatMessages(prev => prev.map(msg => 
+                msg.type === 'tool_code' && msg.toolName === chunk.choice?.toolResult?.name && msg.isLoading
+                ? { ...msg, text: `Tool ${chunk.choice.toolResult.name} executed.`, isLoading: false, toolOutput: chunk.choice.toolResult.content }
+                : msg
+            ));
+        }
+
+      }
     } catch (error) {
       console.error('Error chatting with AI:', error);
-      const errorAiMessage: ChatMessage = {
-        id: Date.now().toString() + '-error',
-        sender: 'ai',
-        text: 'Sorry, I encountered an error communicating with the AI. Please try again.',
-      };
-      setChatMessages(prev => [...prev, errorAiMessage]);
+      setChatMessages(prev => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          sender: 'ai',
+          text: 'Sorry, I encountered an error. Please try again.',
+          type: 'text',
+        },
+      ]);
     } finally {
-      setIsChatLoading(false);
+      setIsAiTyping(false);
     }
   };
+
 
   const formatTimestamp = (isoTimestamp: string) => {
     try {
@@ -124,45 +172,45 @@ export function AiProcessingMonitorContent({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <h3 className="text-lg font-semibold mb-3 flex items-center px-1 pt-4">
-        <Bot className="mr-2 h-5 w-5 text-primary" />
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
+      <h3 className="text-lg font-semibold mb-3 flex items-center px-4 pt-4 text-slate-700 dark:text-slate-300">
+        <Activity className="mr-2 h-5 w-5 text-primary" />
         AI Agent Activity
       </h3>
-      <ScrollArea className="h-[250px] mb-2 pr-1 border rounded-md p-1 mx-1">
+      <ScrollArea className="h-[250px] mb-2 px-4 border-b dark:border-slate-700">
         {aiToolActions.length === 0 ? (
-          <p className="text-sm text-muted-foreground p-3 text-center">No AI agent activity logged yet.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 p-3 text-center">No AI agent activity logged yet.</p>
         ) : (
-          <ul className="space-y-1">
+          <ul className="space-y-2 pb-4">
             {aiToolActions.map((action) => (
-              <li key={action.id} className="p-2.5 border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+              <li key={action.id} className="p-3 border rounded-lg bg-white dark:bg-slate-800 shadow-sm">
                 <div className="flex items-start space-x-3">
                   {getActionIcon(action.type)}
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground/90">{action.description}</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{action.description}</p>
                     {action.details.targetName && (
-                       <p className="text-xs text-muted-foreground break-all">
-                        Target: <span className="font-medium text-foreground/70">{action.details.targetName}</span>
+                       <p className="text-xs text-slate-600 dark:text-slate-400 break-all">
+                        Target: <span className="font-semibold text-slate-700 dark:text-slate-300">{action.details.targetName}</span>
                        </p>
                     )}
                     {action.details.url && (
-                       <p className="text-xs text-muted-foreground break-all">
+                       <p className="text-xs text-slate-600 dark:text-slate-400 break-all">
                         URL: <a href={action.details.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{action.details.url}</a>
                        </p>
                     )}
                      {action.details.query && (
-                       <p className="text-xs text-muted-foreground">
+                       <p className="text-xs text-slate-600 dark:text-slate-400">
                         Query: "{action.details.query}"
                        </p>
                     )}
                     {action.type === 'PerformingAction' && action.details.actionSummary && (
-                       <p className="text-xs text-muted-foreground">
+                       <p className="text-xs text-slate-600 dark:text-slate-400">
                          Summary: {action.details.actionSummary}
                        </p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center justify-end text-xs text-muted-foreground mt-1.5">
+                <div className="flex items-center justify-end text-xs text-slate-500 dark:text-slate-400 mt-1.5">
                   <ClockIcon className="h-3 w-3 mr-1" />
                   <span>{formatTimestamp(action.timestamp)}</span>
                 </div>
@@ -172,47 +220,67 @@ export function AiProcessingMonitorContent({
         )}
       </ScrollArea>
       
-      <Separator className="my-3 mx-1" />
-
-      <h3 className="text-lg font-semibold mb-2 flex items-center px-1">
-        <Bot className="mr-2 h-5 w-5 text-primary" />
-        Chat with AI Assistant
-      </h3>
-      <ScrollArea className="flex-grow border rounded-md p-3 space-y-3 mx-1 bg-background/30 min-h-[200px]">
-        {chatMessages.map((msg) => (
-          <div
-            key={msg.id}
-            className={cn(
-              "flex items-start space-x-2 text-sm p-2 rounded-lg max-w-[85%]",
-              msg.sender === 'user' ? "ml-auto bg-primary text-primary-foreground flex-row-reverse space-x-reverse" : "bg-muted text-muted-foreground"
+      <div className="flex flex-col flex-grow p-4 space-y-4">
+        <h3 className="text-lg font-semibold flex items-center text-slate-700 dark:text-slate-300">
+          <MessageSquare className="mr-2 h-5 w-5 text-primary" />
+          Chat with AI Assistant
+        </h3>
+        <ScrollArea className="flex-grow border rounded-lg p-4 bg-white dark:bg-slate-800 shadow-inner">
+          <div className="space-y-4">
+            {chatMessages.map((msg) => (
+              <div
+                key={msg.id}
+                className={cn(
+                  "flex items-start space-x-2.5 max-w-[85%]",
+                  msg.sender === 'user' ? "ml-auto flex-row-reverse space-x-reverse" : ""
+                )}
+              >
+                {msg.sender === 'user' ? (
+                  <User className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
+                ) : (
+                  <Bot className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
+                )}
+                <div
+                  className={cn(
+                    "px-4 py-2 rounded-lg shadow-sm",
+                    msg.sender === 'user'
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground",
+                    msg.type === 'tool_code' ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 text-xs italic" : ""
+                  )}
+                >
+                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                </div>
+              </div>
+            ))}
+            {isAiTyping && (
+              <div className="flex items-center space-x-2.5 text-sm p-3 rounded-lg bg-muted text-muted-foreground max-w-[85%]">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <p>AI is thinking...</p>
+              </div>
             )}
-          >
-            {msg.sender === 'user' ? <User className="h-5 w-5 mt-0.5 flex-shrink-0" /> : <Bot className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />}
-            <p className="break-words whitespace-pre-wrap">{msg.text}</p>
           </div>
-        ))}
-        {isChatLoading && (
-          <div className="flex items-center space-x-2 text-sm p-2 rounded-lg bg-muted text-muted-foreground max-w-[85%]">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            <p>AI is thinking...</p>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </ScrollArea>
-      <div className="mt-auto p-2 border-t flex items-center space-x-2 mx-1">
-        <Input
-          type="text"
-          placeholder="Ask about submission or guidelines..."
-          value={chatInput}
-          onChange={(e) => setChatInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && !isChatLoading && handleSendChatMessage()}
-          disabled={isChatLoading}
-          className="flex-grow"
-        />
-        <Button onClick={handleSendChatMessage} disabled={isChatLoading || !chatInput.trim()} size="icon">
-          {isChatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          <span className="sr-only">Send</span>
-        </Button>
+          <div ref={messagesEndRef} />
+        </ScrollArea>
+        <div className="flex items-center space-x-2 pt-2">
+          <Input
+            type="text"
+            placeholder="Type your message..."
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !isAiTyping && chatInput.trim()) {
+                handleSendChatMessage();
+              }
+            }}
+            disabled={isAiTyping}
+            className="flex-grow bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:ring-primary focus:border-primary"
+          />
+          <Button onClick={handleSendChatMessage} disabled={isAiTyping || !chatInput.trim()} className="bg-primary hover:bg-primary/90">
+            {isAiTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            <span className="sr-only">Send</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
