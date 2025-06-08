@@ -23,18 +23,18 @@ const AiToolActionDetailsSchema = z.object({
   url: z.string().optional().describe("The URL, if the action involves a web resource."),
   query: z.string().optional().describe("The search query used, if the action is a web search."),
   actionSummary: z.string().optional().describe("A brief summary if the action is of a generic 'PerformingAction' type.")
-}).describe("Specific details related to the action type.");
+});
 
 const AiToolActionSchema = z.object({
   id: z.string().describe("A unique identifier for this action step (e.g., \"step-1\")."),
   type: z.enum(['ReadingAttachment', 'SearchingWeb', 'PerformingAction', 'ReadingGuideline']).describe("The type of AI tool action taken."),
   timestamp: z.string().describe("ISO 8601 timestamp of when the action occurred (e.g., \"2024-05-15T14:30:00Z\"). Ensure this is a valid ISO 8601 date-time string."),
   description: z.string().describe("A human-readable description of what the AI tool did."),
-  details: AiToolActionDetailsSchema.describe("Structured details about the action.")
+  details: AiToolActionDetailsSchema 
 });
 
 const MonitorAiProcessingOutputSchema = z.object({
-  aiToolActions: z.array(AiToolActionSchema).describe('A list of actions taken by the AI tools, in chronological order.')
+  aiToolActions: z.array(AiToolActionSchema)
 });
 export type MonitorAiProcessingOutput = z.infer<typeof MonitorAiProcessingOutputSchema>;
 
