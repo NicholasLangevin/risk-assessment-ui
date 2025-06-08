@@ -8,7 +8,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import type { MessageData, Part } from 'genkit/ai';
 import { mockAttachments, mockAllPossibleGuidelines } from '@/lib/mockData';
-import type { Attachment, ChatUnderwritingAssistantInput, ChatUnderwritingAssistantOutput, ChatHistoryItem, ChatAttachmentInfo } from '@/types';
+import type { ChatUnderwritingAssistantInput, ChatUnderwritingAssistantOutput, ChatHistoryItem, ChatAttachmentInfo } from '@/types';
 import { ChatUnderwritingAssistantInputSchema, ChatUnderwritingAssistantOutputSchema as TypesChatUnderwritingAssistantOutputSchema, ChatHistoryItemSchema as TypesChatHistoryItemSchema } from '@/types';
 
 // --- Define LOCAL Zod schemas for internal prompt structure ---
@@ -53,7 +53,7 @@ export async function chatWithUnderwritingAssistant(
       },
       async (toolInput) => {
         // Find in mockAttachments (which is Attachment[] from @/types)
-        const attachment = mockAttachments.find((att: Attachment) => att.fileName.toLowerCase() === toolInput.fileName.toLowerCase());
+        const attachment = mockAttachments.find((att) => att.fileName.toLowerCase() === toolInput.fileName.toLowerCase());
         if (attachment && attachment.mockContent) {
           return { content: attachment.mockContent };
         }
@@ -156,33 +156,41 @@ Your response should be in the 'aiResponse' field.
     submissionIdForErrorHandling = submissionId;
 
     // Convert ChatHistoryItem[] (from @/types) to MessageData[] (for Genkit)
-    const modelHistory: MessageData[] = [];
-    if (chatHistory) {
-      for (const h of chatHistory) { // h is ChatHistoryItem from @/types
-        if (h.role === 'tool') { // Skip tool messages for modelHistory if Genkit handles them separately
-            continue;
+    // This is a more robust mapping to avoid issues with null/undefined parts.
+    const modelHistory: MessageData[] = (chatHistory ?? [])
+      .map(h => {
+        if (!h || (h.role !== 'user' && h.role !== 'model')) {
+          return null; // Filter out tool messages or malformed history items
         }
-        const currentMessageParts: Part[] = [];
-        if (Array.isArray(h.parts)) {
-          for (const p of h.parts) { // p is MessagePart from @/types { text?: string }
-            if (p && typeof p === 'object' && typeof p.text === 'string') {
+        if (!Array.isArray(h.parts)) {
+          return null; // Filter out if parts is not an array
+        }
+
+        const validParts: Part[] = h.parts
+          .map(p => {
+            // Ensure p is an object and p.text is a non-empty string
+            if (p && typeof p === 'object' && p.text && typeof p.text === 'string') {
               const trimmedText = p.text.trim();
               if (trimmedText !== '') {
-                currentMessageParts.push({ text: trimmedText });
+                return { text: trimmedText }; // Valid TextPart
               }
             }
-          }
+            return null; // Invalid part structure
+          })
+          .filter((part): part is Part => part !== null); // Remove nulls, ensure Part[]
+
+        if (validParts.length === 0) {
+          return null; // No valid parts for this message, filter it out
         }
-        // Only add message to history if it has valid parts and a user/model role
-        if (currentMessageParts.length > 0 && (h.role === 'user' || h.role === 'model')) {
-          modelHistory.push({
-            role: h.role, // No need to cast if we've filtered
-            parts: currentMessageParts,
-          });
-        }
-      }
-    }
-    
+
+        return {
+          role: h.role as 'user' | 'model', // Role is known to be user or model here
+          parts: validParts,
+        };
+      })
+      .filter((msg): msg is MessageData => msg !== null); // Filter out any history items that became null
+
+
     // Prepare input for the Handlebars template
     const templateInput = {
       submissionId,
@@ -191,19 +199,22 @@ Your response should be in the 'aiResponse' field.
       attachments, // This is ChatAttachmentInfo[] from @/types
       userQuery,
       // Augment chatHistory for template: ChatHistoryItem[] (from @/types) -> PromptChatHistoryItemSchema[]
-      chatHistory: chatHistory?.map(item => ({
-          ...item, // Spread parts from ChatHistoryItem
+      // Ensure history items for template also have content and valid structure
+      chatHistory: (chatHistory ?? []).map(item => ({
+          ...item,
+          parts: (item.parts ?? []).filter(p => p && typeof p.text === 'string' && p.text.trim() !== ''),
           isUser: item.role === 'user',
           isModel: item.role === 'model',
-      })).filter(item => item.parts && item.parts.some(p => p && typeof p.text === 'string' && p.text.trim() !== '')), // Ensure history items for template also have content
+      })).filter(item => item.parts && item.parts.length > 0 && item.parts.some(p => p && typeof p.text === 'string' && p.text.trim() !== '')),
     };
+
 
     const result = await ai.generate({
       model: 'googleai/gemini-1.5-flash-latest',
       prompt: chatAssistantPromptDefinition,
-      input: templateInput, // This will be validated against PromptInputSchemaForHandlebars
+      input: templateInput,
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
-      history: modelHistory, // This is MessageData[]
+      history: modelHistory,
     });
 
     if (result.output?.aiResponse) {
