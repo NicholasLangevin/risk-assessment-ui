@@ -453,7 +453,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
         </Button>
       </div>
 
-      <div className="bg-card p-6 rounded-lg shadow-sm mb-6">
+      <div className="bg-card/30 p-6 rounded-lg shadow-sm mb-6">
         <div className="flex justify-between items-start mb-4">
           <div>
             <h1 className="text-3xl font-bold font-headline mb-1">
