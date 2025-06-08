@@ -5,12 +5,11 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { generate, type GenerateResponseChunkData } from 'genkit'; // Correct Genkit v1.x import
 import { z } from 'zod';
 import type { MessageData, Part } from 'genkit/ai';
 import { mockAttachments, mockAllPossibleGuidelines } from '@/lib/mockData';
-import type { Attachment, ChatUnderwritingAssistantInput, ChatHistoryItem, ChatAttachmentInfo } from '@/types'; // Ensure types from @/types are used for exported function signature
-import { ChatUnderwritingAssistantInputSchema, ChatHistoryItemSchema as TypesChatHistoryItemSchema } from '@/types'; // Import Zod schemas from @/types
+import type { Attachment, ChatUnderwritingAssistantInput, ChatUnderwritingAssistantOutput, ChatHistoryItem, ChatAttachmentInfo } from '@/types';
+import { ChatUnderwritingAssistantInputSchema, ChatUnderwritingAssistantOutputSchema as TypesChatUnderwritingAssistantOutputSchema, ChatHistoryItemSchema as TypesChatHistoryItemSchema } from '@/types';
 
 // --- Define LOCAL Zod schemas for internal prompt structure ---
 // These are not exported from this server actions file.
@@ -34,9 +33,9 @@ const LocalChatUnderwritingAssistantOutputSchema = z.object({
 
 
 // --- The ONLY EXPORTED function ---
-export async function* chatWithUnderwritingAssistant(
-  input: ChatUnderwritingAssistantInput // Type comes from @/types
-): AsyncGenerator<GenerateResponseChunkData> {
+export async function chatWithUnderwritingAssistant(
+  input: ChatUnderwritingAssistantInput
+): Promise<ChatUnderwritingAssistantOutput | { error: string }> {
   let submissionIdForErrorHandling = (input && typeof input.submissionId === 'string') ? input.submissionId : "UNKNOWN_SUBMISSION_ID";
 
   try {
@@ -199,15 +198,19 @@ Your response should be in the 'aiResponse' field.
       input: templateInput, // This will be validated against PromptInputSchemaForHandlebars
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
       history: modelHistory, // This is MessageData[]
-      stream: true,
+      // stream: true, // Removed for non-streaming
     });
 
-    for await (const chunk of result.stream) {
-      yield chunk;
+    if (result.output?.aiResponse) {
+      return { aiResponse: result.output.aiResponse };
+    } else {
+      // This case should ideally be handled by the prompt's output schema validation or if the AI truly returns nothing
+      console.error(`Error in chatWithUnderwritingAssistant for submission ${submissionIdForErrorHandling}: AI returned no usable response or 'aiResponse' field was missing. Full output:`, JSON.stringify(result.output, null, 2));
+      return { error: 'Server Error: AI returned an empty or invalid response.' };
     }
 
   } catch (error: any) {
-    console.error(`Error in chatWithUnderwritingAssistant stream for submission ${submissionIdForErrorHandling}. Original error object:`, error);
+    console.error(`Error in chatWithUnderwritingAssistant for submission ${submissionIdForErrorHandling}. Original error object:`, error);
     if (error instanceof Error) {
         console.error('Error message:', error.message);
         console.error('Error name:', error.name);
@@ -228,20 +231,6 @@ Your response should be in the 'aiResponse' field.
     }
 
     const errorMessage = error instanceof Error ? error.message : (typeof error === 'string' ? error : 'An unknown error occurred while processing your request.');
-    const errorChunk: GenerateResponseChunkData = {
-      index: 0,
-      choices: [{
-        index: 0,
-        delta: {
-          role: 'model',
-          content: [{ text: `Server Error: ${errorMessage}` }], // Genkit v1.x delta content structure
-        },
-        finishReason: 'error',
-        custom: { type: 'error', error: errorMessage }
-      }],
-    };
-    yield errorChunk;
+    return { error: `Server Error: ${errorMessage}` };
   }
 }
-
-    
