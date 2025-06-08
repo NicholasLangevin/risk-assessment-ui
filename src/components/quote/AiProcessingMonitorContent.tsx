@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon, MessageSquare as ChatIcon } from 'lucide-react'; // Renamed MessageSquare to ChatIcon for clarity
+import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon, MessageSquare as ChatIcon } from 'lucide-react';
 import { chatWithUnderwritingAssistant } from '@/ai/flows/chat-underwriting-assistant';
 import { cn } from '@/lib/utils';
 import type { AiToolAction, AiToolActionType, ChatUnderwritingAssistantInput, ChatHistoryItem, ChatAttachmentInfo } from '@/types';
@@ -15,7 +15,7 @@ interface ChatMessage {
   id: string;
   sender: 'user' | 'ai';
   text: string;
-  type?: 'text' | 'tool_code' | 'tool_result';
+  type?: 'text' | 'tool_code' | 'tool_result'; // 'tool_code' for showing tool call, 'tool_result' for showing tool output
   toolName?: string;
   toolInput?: any;
   toolOutput?: any;
@@ -27,7 +27,7 @@ interface AiProcessingMonitorContentProps {
   submissionId: string;
   insuredName: string;
   brokerName: string;
-  attachmentsList: ChatAttachmentInfo[]; // Updated to use ChatAttachmentInfo from @/types
+  attachmentsList: ChatAttachmentInfo[];
 }
 
 const getActionIcon = (type: AiToolActionType) => {
@@ -54,7 +54,7 @@ export function AiProcessingMonitorContent({
 }: AiProcessingMonitorContentProps) {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [isAiTyping, setIsAiTyping] = useState(false);
+  const [isAiTyping, setIsAiTyping] = useState(false); // General AI thinking indicator
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -77,164 +77,153 @@ export function AiProcessingMonitorContent({
     setChatMessages(prev => [...prev, newUserMessage]);
     const currentInput = chatInput.trim();
     setChatInput('');
-    setIsAiTyping(true);
+    setIsAiTyping(true); // Show general AI typing indicator
 
     const genkitChatHistory: ChatHistoryItem[] = chatMessages
-        // Exclude the new user message we just added to UI from history sent to Genkit
-        .filter(msg => msg.id !== newUserMessage.id) 
-        .map(msg => ({
-          role: msg.sender === 'user' ? 'user' : 'model' as 'user' | 'model',
-          parts: [{ text: msg.text }], // Assuming simple text parts for history
+      .filter(msg => msg.id !== newUserMessage.id)
+      .map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }], // Assuming simple text parts for history for now
       }));
-
 
     const chatInputPayload: ChatUnderwritingAssistantInput = {
       submissionId,
       insuredName,
       brokerName,
-      attachments: attachmentsList, // Already correctly typed from props
+      attachments: attachmentsList,
       userQuery: currentInput,
       chatHistory: genkitChatHistory,
     };
 
-    let accumulatedText = "";
     let currentAiMessageId = `ai-${Date.now()}`;
-    let firstChunkForMessage = true;
+    let accumulatedText = "";
+    let inToolPhase = false; // True if a tool call has been made and we are waiting for AI's text response using the tool's output
+
+    // Add initial placeholder for the AI's response message
+    setChatMessages(prev => [
+      ...prev,
+      { id: currentAiMessageId, sender: 'ai', text: '', type: 'text', isLoading: true },
+    ]);
 
     try {
-      const stream = chatWithUnderwritingAssistant(chatInputPayload); // Returns async iterable
+      const stream = chatWithUnderwritingAssistant(chatInputPayload);
 
       for await (const chunk of stream) {
-        if (firstChunkForMessage) {
-          setChatMessages(prev => {
-            // Remove previous loading message if any
-            const filtered = prev.filter(m => !(m.sender === 'ai' && m.isLoading && m.text === ''));
-            return [
-              ...filtered,
-              { id: currentAiMessageId, sender: 'ai', text: '', type: 'text', isLoading: true },
-            ];
-          });
-          firstChunkForMessage = false;
-        }
-
         if (chunk.choices && chunk.choices.length > 0) {
           const choice = chunk.choices[0];
+          let partProcessedInChunk = false;
 
-          let processedChunk = false;
-
-          // Handle text delta
-          if (choice.delta && choice.delta.parts && choice.delta.parts.length > 0 && choice.delta.parts[0].text) {
-            const textContent = choice.delta.parts[0].text;
-            accumulatedText += textContent;
-            setChatMessages(prev =>
-              prev.map(msg =>
-                msg.id === currentAiMessageId ? { ...msg, text: accumulatedText, isLoading: false } : msg
-              )
-            );
-            processedChunk = true;
+          if (choice.delta && choice.delta.parts && choice.delta.parts.length > 0) {
+            for (const part of choice.delta.parts) {
+              if (part.text) {
+                if (inToolPhase) {
+                  // This text is part of a new AI message segment following a tool call/result
+                  // The currentAiMessageId should already be for the new placeholder.
+                  accumulatedText += part.text;
+                   setChatMessages(prev =>
+                    prev.map(msg =>
+                      msg.id === currentAiMessageId ? { ...msg, text: accumulatedText, isLoading: !(choice.finishReason && choice.finishReason !== 'unknown') } : msg
+                    )
+                  );
+                } else {
+                  // Standard text accumulation for the current AI message
+                  accumulatedText += part.text;
+                  setChatMessages(prev =>
+                    prev.map(msg =>
+                      msg.id === currentAiMessageId ? { ...msg, text: accumulatedText, isLoading: !(choice.finishReason && choice.finishReason !== 'unknown') } : msg
+                    )
+                  );
+                }
+                // If text is received after a tool phase, it means the tool phase is over for this text segment
+                if (inToolPhase && accumulatedText.trim() !== '') {
+                    inToolPhase = false; 
+                }
+                partProcessedInChunk = true;
+              } else if (part.toolCall) {
+                const toolCallInfo = part.toolCall;
+                const toolMessageText = `Using tool: ${toolCallInfo.name}${toolCallInfo.args ? ` with input ${JSON.stringify(toolCallInfo.args)}` : ''}...`;
+                // Update the current AI message to show the tool call
+                setChatMessages(prev =>
+                  prev.map(msg =>
+                    msg.id === currentAiMessageId
+                      ? { ...msg, text: toolMessageText, type: 'tool_code', toolName: toolCallInfo.name, toolInput: toolCallInfo.args, isLoading: false }
+                      : msg
+                  )
+                );
+                // Prepare for a new AI message that will contain the model's text response *after* this tool call
+                currentAiMessageId = `ai-after-tool-${toolCallInfo.ref || Date.now()}`;
+                accumulatedText = "";
+                inToolPhase = true;
+                // Add a new placeholder for the AI's subsequent response
+                setChatMessages(prev => [
+                  ...prev,
+                  { id: currentAiMessageId, sender: 'ai', text: '', type: 'text', isLoading: true },
+                ]);
+                partProcessedInChunk = true;
+              } else if (part.toolResult) {
+                const toolResultInfo = part.toolResult;
+                const toolResultMessageText = `Tool ${toolResultInfo.name} executed.`; // Simplified, actual result processing may be complex
+                // Update the current AI message (which might be the placeholder after a tool call)
+                 setChatMessages(prev =>
+                  prev.map(msg =>
+                    msg.id === currentAiMessageId
+                      ? { ...msg, text: toolResultMessageText, type: 'tool_result', toolName: toolResultInfo.name, toolOutput: toolResultInfo.content, isLoading: false }
+                      : msg
+                  )
+                );
+                // Prepare for a new AI message that will contain the model's text response
+                currentAiMessageId = `ai-after-tool-result-${toolResultInfo.ref || Date.now()}`;
+                accumulatedText = "";
+                inToolPhase = true;
+                // Add a new placeholder for the AI's subsequent response
+                setChatMessages(prev => [
+                  ...prev,
+                  { id: currentAiMessageId, sender: 'ai', text: '', type: 'text', isLoading: true },
+                ]);
+                partProcessedInChunk = true;
+              }
+            }
           }
 
-          // Handle tool call (either on choice or in delta.parts)
-          const toolCall = choice.toolCall || (choice.delta?.parts?.[0]?.toolCall);
-          if (toolCall) {
-            firstChunkForMessage = true; // Reset for AI's text response after tool
-            const toolMessageId = `ai-tool-call-${Date.now()}`;
-            setChatMessages(prev => [
-              ...prev.map(m => m.id === currentAiMessageId && m.text === '' && m.isLoading ? {...m, isLoading: false } : m), // Mark previous empty loading as done if any
-              {
-                id: toolMessageId,
-                sender: 'ai',
-                text: `Using tool: ${toolCall.name}...`,
-                type: 'tool_code',
-                toolName: toolCall.name,
-                toolInput: toolCall.args,
-                isLoading: true, // This message itself is loading until result or next AI text
-              },
-            ]);
-            currentAiMessageId = `ai-${Date.now()}`; // Prepare for next AI text message
-            accumulatedText = ""; // Reset for next text message
-            processedChunk = true;
-          }
-
-          // Handle tool result (either on choice or in delta.parts)
-          const toolResult = choice.toolResult || (choice.delta?.parts?.[0]?.toolResult);
-          if (toolResult) {
-            firstChunkForMessage = true;
-            const toolResultMessageId = `ai-tool-result-${Date.now()}`;
-            const toolResultContentString = typeof toolResult.content === 'string' ? toolResult.content : JSON.stringify(toolResult.content);
-            
-            setChatMessages(prev => {
-              // Update the corresponding tool_code message to show it's done (if applicable)
-              // This is a bit tricky as tool_code and tool_result might be separate messages.
-              // For simplicity, we add a new message for the tool result.
-              const updatedMessages = prev.map(m => (m.type === 'tool_code' && m.isLoading && m.toolName === toolResult.name) ? {...m, isLoading: false, text: `${m.text} completed.`} : m);
-              return [
-                  ...updatedMessages,
-                  {
-                      id: toolResultMessageId,
-                      sender: 'ai',
-                      text: `Tool ${toolResult.name || 'N/A'} executed.`, // Displaying full result might be too verbose
-                      type: 'tool_result',
-                      toolName: toolResult.name,
-                      toolOutput: toolResult.content,
-                      isLoading: false,
-                  }
-              ];
-            });
-            currentAiMessageId = `ai-${Date.now()}`; // Prepare for next AI text message
-            accumulatedText = "";
-            processedChunk = true;
-          }
-          
-          // Handle finish reason
-          if (choice.finishReason && choice.finishReason !== 'unknown' && choice.finishReason !== 'stop') {
-             // If it's an error or other non-stop finish, ensure loading state is cleared.
+          // Handle finish reason for the current active AI message
+          if (choice.finishReason && choice.finishReason !== 'unknown') {
             setChatMessages(prev =>
               prev.map(msg =>
                 msg.id === currentAiMessageId ? { ...msg, isLoading: false } : msg
               )
             );
-            if (choice.finishReason === 'error' && choice.delta?.parts?.[0]?.text) {
-              // If finishReason is error and there's text, it might be the error message from the server.
-               setChatMessages(prev => [
-                ...prev,
-                {
-                  id: `error-${Date.now()}`,
-                  sender: 'ai',
-                  text: choice.delta.parts[0].text || "An error occurred.",
-                  type: 'text',
-                  isLoading: false,
-                },
-              ]);
-            }
-          } else if (choice.finishReason === 'stop') {
-             setChatMessages(prev =>
+            if (choice.finishReason === 'error' && !partProcessedInChunk) {
+              const errorText = (choice.custom as any)?.error || (choice.delta?.parts?.[0]?.text) || "An error occurred with the AI response.";
+              setChatMessages(prev =>
                 prev.map(msg =>
-                  msg.id === currentAiMessageId ? { ...msg, isLoading: false } : msg
-                )
+                  msg.id === currentAiMessageId ? { ...msg, text: errorText, isLoading: false } : msg
+                ).filter(m => !(m.id === currentAiMessageId && m.text === '' && !m.isLoading)) // Clean up empty error bubbles if text exists
               );
+            } else if (choice.finishReason !== 'error' && accumulatedText.trim() === '' && !inToolPhase) {
+                // If finished but current message is empty and not in a tool phase, remove it (it might be an empty placeholder)
+                setChatMessages(prev => prev.filter(msg => msg.id !== currentAiMessageId || msg.text.trim() !== '' || msg.isLoading));
+            }
           }
         }
       }
     } catch (error: any) {
-      console.error('Error processing chat stream on client:', error);
-      setChatMessages(prev => [
-        ...prev.map(m => m.isLoading ? {...m, isLoading: false} : m), // Clear any existing loading states
-        {
-          id: `error-catch-${Date.now()}`,
-          sender: 'ai',
-          text: 'Sorry, I encountered an error processing the stream. Please try again.',
-          type: 'text',
-          isLoading: false,
-        },
-      ]);
+      console.error('Error in handleSendChatMessage (outer catch):', error);
+      const errorMsg = error.message || 'An unrecoverable client-side error occurred. Please try again.';
+      setChatMessages(prev => {
+        const updatedMessages = prev.map(m => (m.isLoading && m.sender === 'ai') ? { ...m, isLoading: false, text: m.text || errorMsg } : m);
+        if (!updatedMessages.find(m => m.id === currentAiMessageId && m.sender === 'ai')) {
+          return [...updatedMessages, { id: `error-catch-${Date.now()}`, sender: 'ai', text: errorMsg, type: 'text', isLoading: false }];
+        }
+        return updatedMessages;
+      });
     } finally {
-      setIsAiTyping(false);
-       // Ensure the very last AI message bubble (if any) has its loading indicator turned off.
-      setChatMessages(prev => prev.map(msg => (msg.sender === 'ai' && msg.isLoading) ? { ...msg, isLoading: false } : msg));
+      setIsAiTyping(false); // Hide general AI typing indicator
+      // Ensure any final AI message bubble has its loading indicator turned off
+      setChatMessages(prev =>
+        prev.map(msg => (msg.sender === 'ai' && msg.isLoading) ? { ...msg, isLoading: false } : msg)
+      );
     }
   };
-
 
   const formatTimestamp = (isoTimestamp: string) => {
     try {
@@ -324,13 +313,13 @@ export function AiProcessingMonitorContent({
                   )}
                 >
                   <p className="whitespace-pre-wrap">{msg.text}</p>
-                  {msg.isLoading && msg.sender === 'ai' && msg.type === 'text' && (
+                  {msg.isLoading && msg.sender === 'ai' && (msg.type === 'text' || !msg.type) && (
                     <Loader2 className="h-4 w-4 animate-spin inline-block ml-2" />
                   )}
                 </div>
               </div>
             ))}
-            {isAiTyping && chatMessages.every(m => !m.isLoading) && ( // Show general "AI is thinking" only if no specific message is loading
+            {isAiTyping && !chatMessages.some(m => m.sender === 'ai' && m.isLoading) && (
               <div className="flex items-start space-x-2.5 text-sm p-3 rounded-lg bg-muted text-muted-foreground max-w-[85%]">
                  <Bot className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
                 <div className="px-4 py-2 rounded-lg shadow-sm bg-muted text-muted-foreground">
@@ -353,11 +342,15 @@ export function AiProcessingMonitorContent({
                 handleSendChatMessage();
               }
             }}
-            disabled={isAiTyping}
+            disabled={isAiTyping && chatMessages.some(m => m.sender === 'ai' && m.isLoading)}
             className="flex-grow bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:ring-primary focus:border-primary"
           />
-          <Button onClick={handleSendChatMessage} disabled={isAiTyping || !chatInput.trim()} className="bg-primary hover:bg-primary/90">
-            {isAiTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          <Button 
+            onClick={handleSendChatMessage} 
+            disabled={(isAiTyping && chatMessages.some(m => m.sender === 'ai' && m.isLoading)) || !chatInput.trim()} 
+            className="bg-primary hover:bg-primary/90"
+          >
+            {(isAiTyping && chatMessages.some(m => m.sender === 'ai' && m.isLoading)) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             <span className="sr-only">Send</span>
           </Button>
         </div>
@@ -365,4 +358,3 @@ export function AiProcessingMonitorContent({
     </div>
   );
 }
-
