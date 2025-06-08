@@ -5,10 +5,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon, MessageSquare, Activity } from 'lucide-react'; // Added Activity here
-import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput } from '@/ai/flows/chat-underwriting-assistant'; // Removed ChatUnderwritingAssistantResponsePart as it's not directly used here
+import { Bot, User, Send, Loader2, FileText, Search, ListChecks, Zap, ClockIcon, MessageSquare, Activity } from 'lucide-react';
+import { chatWithUnderwritingAssistant } from '@/ai/flows/chat-underwriting-assistant';
 import { cn } from '@/lib/utils';
-import type { AiToolAction, AiToolActionType, Attachment } from '@/types';
+import type { AiToolAction, AiToolActionType, Attachment, ChatUnderwritingAssistantInput, ChatHistoryItem } from '@/types'; // Updated import
 import { formatDistanceToNowStrict } from 'date-fns';
 
 interface ChatMessage {
@@ -19,7 +19,7 @@ interface ChatMessage {
   toolName?: string;
   toolInput?: any;
   toolOutput?: any;
-  isLoading?: boolean; // To show loading for AI thinking
+  isLoading?: boolean;
 }
 
 
@@ -84,8 +84,8 @@ export function AiProcessingMonitorContent({
     setChatInput('');
     setIsAiTyping(true);
 
-    const genkitChatHistory = chatMessages
-        .filter(msg => msg.id !== newUserMessage.id) 
+    const genkitChatHistory: ChatHistoryItem[] = chatMessages
+        .filter(msg => msg.id !== newUserMessage.id)
         .map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'model' as 'user' | 'model',
           parts: [{ text: msg.text }],
@@ -118,14 +118,15 @@ export function AiProcessingMonitorContent({
         }
 
         if (chunk.choice?.delta?.content) {
-          accumulatedText += chunk.choice.delta.content;
+          // @ts-ignore // content can be Part[] or string. Assuming text content.
+          const textContent = Array.isArray(chunk.choice.delta.content) ? chunk.choice.delta.content.map(c => c.text || '').join('') : chunk.choice.delta.content;
+          accumulatedText += textContent;
           setChatMessages(prev =>
             prev.map(msg =>
               msg.id === currentAiMessageId ? { ...msg, text: accumulatedText, isLoading: false } : msg
             )
           );
         } else if (chunk.choice?.toolCall) {
-            // Handle tool call start - display a "thinking" or "using tool" message
             setChatMessages(prev => [
               ...prev,
               {
@@ -139,16 +140,15 @@ export function AiProcessingMonitorContent({
               },
             ]);
         } else if (chunk.choice?.toolResult) {
-            // Handle tool result - display the result (or a summary)
-            setChatMessages(prev => prev.map(msg => 
+            setChatMessages(prev => prev.map(msg =>
                 msg.type === 'tool_code' && msg.toolName === chunk.choice?.toolResult?.name && msg.isLoading
-                ? { ...msg, text: `Tool ${chunk.choice.toolResult.name} executed.`, isLoading: false, toolOutput: chunk.choice.toolResult.content }
+                // @ts-ignore
+                ? { ...msg, text: `Tool ${chunk.choice.toolResult.name} executed. Result: ${JSON.stringify(chunk.choice.toolResult.content)?.substring(0,100)}...`, isLoading: false, toolOutput: chunk.choice.toolResult.content }
                 : msg
             ));
         }
-
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error chatting with AI:', error);
       setChatMessages(prev => [
         ...prev,
