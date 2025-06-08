@@ -56,7 +56,6 @@ export async function* chatWithUnderwritingAssistant(
   input: ChatUnderwritingAssistantInput // Type comes from @/types
 ): AsyncGenerator<GenerateResponseChunkData> {
   // --- Define Genkit Tools and Prompt INSIDE the async generator ---
-  // This ensures they are not considered module-level exports by Next.js server actions.
   const readAttachmentContentTool = ai.defineTool(
     {
       name: 'readAttachmentContent',
@@ -164,31 +163,37 @@ Carefully consider the user's question and use your capabilities as described ab
 Do not make up information. Be concise, professional, and helpful.
 Your response should be in the 'aiResponse' field.
 `,
-    },
-    async (promptInput) => {
-      // This part is not directly used when `ai.generate` is called with the compiled prompt text.
-      return { aiResponse: "This is a placeholder and won't be directly used by the streaming mechanism." };
     }
+    // Removed the secondary function argument here as it's not needed when 'prompt' field is used.
   );
   // --- End of internal definitions ---
 
 
   const { submissionId, insuredName, brokerName, attachments, userQuery, chatHistory } = input;
 
-  const modelHistory: MessageData[] = (chatHistory || []).map(h => ({
-    role: h.role as 'user' | 'model' | 'tool', // Type assertion
-    parts: h.parts
-      .map(p => {
-        // Ensure that only parts with defined text are converted to TextPart
-        if (typeof p.text === 'string') {
-          return { text: p.text } as Part;
+  // More robust modelHistory creation
+  const modelHistory: MessageData[] = [];
+  if (chatHistory) {
+    for (const h of chatHistory) {
+      const currentMessageParts: Part[] = [];
+      if (h.parts) {
+        for (const p of h.parts) {
+          if (typeof p.text === 'string') {
+            // Ensure it's a TextPart structure.
+            // Since client sends {text: string}, this is generally fine.
+            currentMessageParts.push({ text: p.text });
+          }
         }
-        // If p.text is undefined, or if it's another type of part you're not handling yet,
-        // filter it out. For now, we only care about text parts for history.
-        return null; 
-      })
-      .filter(part => part !== null) as Part[], // Filter out nulls and assert Part[]
-  }));
+      }
+      // Only add the message to history if it has any valid parts
+      if (currentMessageParts.length > 0) {
+        modelHistory.push({
+          role: h.role as 'user' | 'model', // Client currently only sends 'user' or 'model' for history items
+          parts: currentMessageParts,
+        });
+      }
+    }
+  }
 
   const templateInput = {
     submissionId,
@@ -196,7 +201,7 @@ Your response should be in the 'aiResponse' field.
     brokerName,
     attachments, // This should be ChatAttachmentInfo[] from the input type
     userQuery,
-    chatHistory: chatHistory?.map(item => ({
+    chatHistory: chatHistory?.map(item => ({ // This is for the Handlebars template
         ...item,
         isUser: item.role === 'user',
         isModel: item.role === 'model',
@@ -226,10 +231,10 @@ Your response should be in the 'aiResponse' field.
             console.error('Error stack:', error.stack);
         }
     } else if (typeof error === 'object' && error !== null) {
-        // Attempt to get more details from the object
         let errorDetails = {};
+        // @ts-ignore
         for (const propName of Object.getOwnPropertyNames(error)) {
-            // @ts-ignore
+             // @ts-ignore
             errorDetails[propName] = error[propName];
         }
         console.error('Error details (JSON):', JSON.stringify(errorDetails, null, 2));
@@ -256,4 +261,3 @@ Your response should be in the 'aiResponse' field.
     yield errorChunk;
   }
 }
-
