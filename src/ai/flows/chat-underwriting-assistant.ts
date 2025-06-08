@@ -159,18 +159,24 @@ Your response should be in the 'aiResponse' field.
     const modelHistory: MessageData[] = [];
     if (chatHistory) {
       for (const h of chatHistory) { // h is ChatHistoryItem from @/types
+        if (h.role === 'tool') { // Skip tool messages for modelHistory if Genkit handles them separately
+            continue;
+        }
         const currentMessageParts: Part[] = [];
-        if (h.parts) {
-          for (const p of h.parts) { // p is MessagePart from @/types (which is {text?: string})
-            if (typeof p.text === 'string' && p.text.trim() !== '') { // Ensure text is a non-empty string
-              currentMessageParts.push({ text: p.text });
+        if (Array.isArray(h.parts)) {
+          for (const p of h.parts) { // p is MessagePart from @/types { text?: string }
+            if (p && typeof p === 'object' && typeof p.text === 'string') {
+              const trimmedText = p.text.trim();
+              if (trimmedText !== '') {
+                currentMessageParts.push({ text: trimmedText });
+              }
             }
           }
         }
-        // Only add message to history if it has valid parts
-        if (currentMessageParts.length > 0) {
+        // Only add message to history if it has valid parts and a user/model role
+        if (currentMessageParts.length > 0 && (h.role === 'user' || h.role === 'model')) {
           modelHistory.push({
-            role: h.role as 'user' | 'model', // Cast role; 'tool' role parts are handled by Genkit
+            role: h.role, // No need to cast if we've filtered
             parts: currentMessageParts,
           });
         }
@@ -189,7 +195,7 @@ Your response should be in the 'aiResponse' field.
           ...item, // Spread parts from ChatHistoryItem
           isUser: item.role === 'user',
           isModel: item.role === 'model',
-      })).filter(item => item.parts && item.parts.some(p => typeof p.text === 'string' && p.text.trim() !== '')), // Ensure history items for template also have content
+      })).filter(item => item.parts && item.parts.some(p => p && typeof p.text === 'string' && p.text.trim() !== '')), // Ensure history items for template also have content
     };
 
     const result = await ai.generate({
@@ -198,25 +204,25 @@ Your response should be in the 'aiResponse' field.
       input: templateInput, // This will be validated against PromptInputSchemaForHandlebars
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
       history: modelHistory, // This is MessageData[]
-      // stream: true, // Removed for non-streaming
     });
 
     if (result.output?.aiResponse) {
       return { aiResponse: result.output.aiResponse };
     } else {
-      // This case should ideally be handled by the prompt's output schema validation or if the AI truly returns nothing
       console.error(`Error in chatWithUnderwritingAssistant for submission ${submissionIdForErrorHandling}: AI returned no usable response or 'aiResponse' field was missing. Full output:`, JSON.stringify(result.output, null, 2));
       return { error: 'Server Error: AI returned an empty or invalid response.' };
     }
 
   } catch (error: any) {
     console.error(`Error in chatWithUnderwritingAssistant for submission ${submissionIdForErrorHandling}. Original error object:`, error);
+    let errorMessage = 'An unknown error occurred while processing your request.';
     if (error instanceof Error) {
         console.error('Error message:', error.message);
         console.error('Error name:', error.name);
         if (error.stack) {
             console.error('Error stack:', error.stack);
         }
+        errorMessage = error.message;
     } else if (typeof error === 'object' && error !== null) {
         let errorDetails: { [key: string]: any } = {};
         for (const propName of Object.getOwnPropertyNames(error)) {
@@ -226,11 +232,11 @@ Your response should be in the 'aiResponse' field.
         if (Object.keys(errorDetails).length === 0) {
             console.error('Error object has no enumerable properties. Stringified:', String(error));
         }
+        if (errorDetails.message) errorMessage = errorDetails.message;
     } else {
         console.error('Error is not an object or Error instance. Stringified:', String(error));
+        if (typeof error === 'string') errorMessage = error;
     }
-
-    const errorMessage = error instanceof Error ? error.message : (typeof error === 'string' ? error : 'An unknown error occurred while processing your request.');
     return { error: `Server Error: ${errorMessage}` };
   }
 }
