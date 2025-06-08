@@ -195,7 +195,7 @@ Your response should be in the 'aiResponse' field.
 
   try {
     const result = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest', // Corrected: directly specify model string
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: chatAssistantPromptDefinition,
       input: templateInput,
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
@@ -208,19 +208,32 @@ Your response should be in the 'aiResponse' field.
     }
 
   } catch (error: any) {
-    console.error(`Error in chatWithUnderwritingAssistant stream for submission ${submissionId}:`, error);
+    console.error(`Error in chatWithUnderwritingAssistant stream for submission ${submissionId}. Original error object:`, error);
+    if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error name:', error.name);
+        if (error.stack) {
+            console.error('Error stack:', error.stack);
+        }
+    } else if (typeof error === 'object' && error !== null) {
+        console.error('Error details (JSON):', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    } else {
+        console.error('Error is not an object or Error instance. Stringified:', String(error));
+    }
+
     const errorChunk: GenerateResponseChunkData = {
       index: 0,
       choices: [{
         index: 0,
         delta: {
           role: 'model',
-          content: [{ text: `Error: ${error.message || 'An unknown error occurred while processing your request.'}` }],
+          content: [{ text: `Error: ${error instanceof Error ? error.message : 'An unknown error occurred while processing your request.'}` }],
         },
         finishReason: 'error',
-        custom: { type: 'error', error: error.message || 'An unknown error occurred' }
+        custom: { type: 'error', error: error instanceof Error ? error.message : String(error) || 'An unknown error occurred' }
       }],
     };
     yield errorChunk;
   }
 }
+
