@@ -1,3 +1,4 @@
+
 import { DashboardClient } from '@/components/dashboard/DashboardClient';
 import { mockSubmissions } from '@/lib/mockData';
 import type { Submission } from '@/types';
