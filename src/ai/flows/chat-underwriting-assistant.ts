@@ -1,14 +1,24 @@
 
 'use server';
+/**
+ * @fileOverview A specialized AI assistant for underwriting tasks within RiskPilot.
+ * It answers questions about a specific insurance submission and general underwriting guidelines.
+ *
+ * - chatWithUnderwritingAssistant - The main exported function to interact with the assistant.
+ * - ChatUnderwritingAssistantInput - Expected input structure.
+ * - ChatUnderwritingAssistantOutput - Expected output structure.
+ */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import type { MessageData, Part } from 'genkit'; // Import Genkit specific types
 import type {
   ChatUnderwritingAssistantInput,
   ChatUnderwritingAssistantOutput,
-  ChatHistoryItem, // For internal modelHistory conversion
+  ChatHistoryItem, // Used for input processing
+  ChatAttachmentInfo // Used for input processing
 } from '@/types';
-import { ChatUnderwritingAssistantOutputSchema, ChatUnderwritingAssistantInputSchema } from '@/types'; // Import the schema
+import { ChatUnderwritingAssistantOutputSchema, ChatUnderwritingAssistantInputSchema } from '@/types';
 
 // Schemas for the tools
 const ReadAttachmentInputSchema = z.object({
@@ -26,12 +36,9 @@ const SearchGuidelinesOutputSchema = z.object({
 });
 
 // Internal Zod schema for the data object that will be passed to the Handlebars prompt template.
-const PromptTemplateInputSchema = z.object({
-  submissionId: z.string(),
-  insuredName: z.string(),
-  brokerName: z.string(),
+// This extends the main input schema to add formatted fields for the template.
+const PromptTemplateInputSchema = ChatUnderwritingAssistantInputSchema.extend({
   formattedAttachments: z.string(),
-  userQuery: z.string(),
   formattedChatHistory: z.string(),
 });
 
@@ -40,7 +47,6 @@ export async function chatWithUnderwritingAssistant(
   input: ChatUnderwritingAssistantInput
 ): Promise<ChatUnderwritingAssistantOutput> {
   try {
-    // Define tools available to the AI
     const readAttachmentContentTool = ai.defineTool(
       {
         name: 'readAttachmentContent',
@@ -91,35 +97,94 @@ export async function chatWithUnderwritingAssistant(
       }
     );
 
-    const formattedAttachments = input.attachments && input.attachments.length > 0
+    const formattedAttachmentsForPrompt = (input.attachments && input.attachments.length > 0
       ? input.attachments.map(att => `- ${att.fileName} (${att.fileType})`).join('\n')
-      : "  - No attachments provided for this submission.";
+      : "No attachments provided for this submission."
+    ).trim();
 
-    let formattedChatHistory = "  No previous messages in this conversation.";
+    let formattedChatHistoryForPrompt = "No previous conversation.";
     if (input.chatHistory && input.chatHistory.length > 0) {
-      formattedChatHistory = input.chatHistory
+      const historyStr = input.chatHistory
         .map(msg => {
-          let prefix = "  Unknown Role:";
-          const firstPartText = msg.parts?.[0]?.text?.trim() || '[empty message or non-text part]';
-          if (msg.role === 'user') prefix = "  User:";
-          else if (msg.role === 'model') prefix = "  Assistant:";
-          else if (msg.role === 'tool') prefix = "  Tool Interaction:";
+          if (!msg || !msg.role || !Array.isArray(msg.parts) || msg.parts.length === 0) return null;
+          
+          const firstPartText = (msg.parts[0] && typeof msg.parts[0].text === 'string')
+                                ? msg.parts[0].text.trim()
+                                : '[non-text or empty part]';
+
+          if (!firstPartText) return null; // Skip if text is effectively empty
+
+          let prefix = "Unknown Role:";
+          if (msg.role === 'user') prefix = "User:";
+          else if (msg.role === 'model') prefix = "Assistant:";
+          else return null; // Only include user and model text messages in this simple history format
+          
           return `${prefix} ${firstPartText}`;
         })
+        .filter(Boolean) // Remove nulls
         .join('\n');
+      
+      if (historyStr.trim()) {
+        formattedChatHistoryForPrompt = historyStr.trim();
+      }
     }
+
+    // Prepare history for Genkit's `ai.generate()` call
+    const modelHistory: MessageData[] = [];
+    if (input.chatHistory && Array.isArray(input.chatHistory)) {
+      for (const histItem of input.chatHistory) {
+        if (!histItem || !histItem.role || !Array.isArray(histItem.parts)) continue;
+
+        if (histItem.role === 'user' || histItem.role === 'model') {
+          const processedParts: Part[] = [];
+          for (const p of histItem.parts) {
+            // Ensure p and p.text are valid and p.text is a non-empty string after trimming
+            if (p && typeof p.text === 'string') {
+              const trimmedText = p.text.trim();
+              if (trimmedText) { // Only add if text has content after trimming
+                processedParts.push({ text: trimmedText });
+              }
+            }
+          }
+          // Only add the message to history if it has valid parts
+          if (processedParts.length > 0) {
+            modelHistory.push({
+              role: histItem.role, // 'user' or 'model'
+              parts: processedParts,
+            });
+          }
+        }
+      }
+    }
+    
+    // Add current user query to modelHistory if it's non-empty
+    const currentUserQueryTrimmed = input.userQuery.trim();
+    if (currentUserQueryTrimmed) {
+        modelHistory.push({
+            role: 'user',
+            parts: [{ text: currentUserQueryTrimmed }],
+        });
+    } else if (modelHistory.length === 0) {
+        // If history is empty AND current query is empty,
+        // we must provide at least one user message for the model.
+        // The prompt template itself will serve as this message.
+        // So, modelHistory can remain empty.
+    }
+
 
     const templateInputForPrompt: z.infer<typeof PromptTemplateInputSchema> = {
       submissionId: input.submissionId,
       insuredName: input.insuredName,
       brokerName: input.brokerName,
-      userQuery: input.userQuery,
-      formattedAttachments,
-      formattedChatHistory,
+      attachments: input.attachments || [], // Pass original attachments
+      userQuery: currentUserQueryTrimmed || "User provided no specific query text for this turn.", // For template
+      formattedAttachments: formattedAttachmentsForPrompt,
+      formattedChatHistory: formattedChatHistoryForPrompt,
+      chatHistory: input.chatHistory, // Pass original chatHistory for Zod validation
     };
 
     const chatAssistantPrompt = ai.definePrompt({
-      name: 'chatUnderwritingAssistantPrompt_v3_scoped_non_stream',
+      name: 'chatUnderwritingAssistantPrompt_v4_non_stream_strict_history',
       input: { schema: PromptTemplateInputSchema },
       output: { schema: ChatUnderwritingAssistantOutputSchema },
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
@@ -134,59 +199,40 @@ Current Submission Context:
 Available Attachments for this Submission:
 {{formattedAttachments}}
 
-Conversation History (if any):
+Conversation History (for your reference, not part of the current query structure):
 {{formattedChatHistory}}
 
-Current User Query: "{{userQuery}}"
+Current User Query (this is the main query to respond to): "{{userQuery}}"
 
 Your Task:
-1.  Analyze Query Scope: Examine "Current User Query". Determine if it directly relates to:
-    a.  The specific details of the current submission.
+1.  Analyze "Current User Query". Determine if it directly relates to:
+    a.  The specific details of the current submission (attachments, data within the quote).
     b.  General underwriting guidelines, company policies, or risk assessment principles.
 2.  In-Scope - Submission Specific: If the query is about this submission:
-    - If user asks about an attachment, use 'readAttachmentContent' tool.
-    - Provide a concise answer.
+    - If user asks about an attachment, use 'readAttachmentContent' tool with the exact filename.
+    - Provide a concise answer based on available information or tool output.
 3.  In-Scope - Guidelines: If query is about guidelines:
-    - Use 'searchUnderwritingGuidelines' tool.
-    - Provide an informative summary.
-4.  Out-of-Scope: If query is NOT about this submission NOR guidelines:
-    - Respond with: "I can only answer questions related to the current quote ({{submissionId}}) or general underwriting guidelines. How can I help you with those specific topics?"
-    - Do NOT use tools or attempt to answer.
-5.  Tool Usage: Only use tools if directly relevant and in-scope.
-6.  Response Quality: Concise, accurate, professional. If info isn't available, state that.
+    - Use 'searchUnderwritingGuidelines' tool with a clear query.
+    - Provide an informative summary based on tool output.
+4.  Out-of-Scope: If query is NOT about this submission NOR general underwriting guidelines:
+    - Respond ONLY with: "I can only answer questions related to the current quote ({{submissionId}}) or general underwriting guidelines. How can I help you with those specific topics?"
+    - Do NOT use tools or attempt to answer the out-of-scope query.
+5.  Tool Usage: Only use tools if directly relevant and the query is in-scope. Prioritize answering from context if possible.
+6.  Response Quality: Be concise, accurate, and professional. If information isn't available (even after tool use), state that clearly.
 
-Your final response MUST be a JSON object with a single key "aiResponse", containing your textual answer. Example: {"aiResponse": "The requested information is..."}
+Your final response MUST be a JSON object with a single key "aiResponse", containing your textual answer.
+Example: {"aiResponse": "The requested information is..."}
+If declining due to scope, the aiResponse should be exactly: "I can only answer questions related to the current quote ({{submissionId}}) or general underwriting guidelines. How can I help you with those specific topics?"
 `,
     });
-
-    // Extremely robust modelHistory creation
-    const modelHistory: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
-    if (input.chatHistory && Array.isArray(input.chatHistory)) {
-      for (const h of input.chatHistory) {
-        // Ensure h is an object and h.parts is an array and role is user or model
-        if (h && typeof h === 'object' && (h.role === 'user' || h.role === 'model') && Array.isArray(h.parts)) {
-          const validMessageParts: Array<{ text: string }> = [];
-          for (const p of h.parts) {
-            // Ensure p is an object and p.text is a non-empty string
-            if (p && typeof p === 'object' && typeof p.text === 'string') {
-              const trimmedText = p.text.trim();
-              if (trimmedText) { // Check for non-empty string
-                validMessageParts.push({ text: trimmedText });
-              }
-            }
-          }
-          // Only add the message to history if it has valid parts
-          if (validMessageParts.length > 0) {
-            modelHistory.push({ role: h.role, parts: validMessageParts });
-          }
-        }
-      }
-    }
-
+    
+    // If modelHistory is empty and currentUserQueryTrimmed is also empty,
+    // the prompt template itself (with userQuery as "User provided no specific query text...")
+    // will act as the user's turn. This should be valid.
     const { response } = await ai.generate({
       prompt: chatAssistantPrompt,
       input: templateInputForPrompt,
-      history: modelHistory,
+      history: modelHistory, // Pass the carefully constructed history
       tools: [readAttachmentContentTool, searchUnderwritingGuidelinesTool],
     });
 
@@ -194,32 +240,32 @@ Your final response MUST be a JSON object with a single key "aiResponse", contai
     if (output) {
       return output as ChatUnderwritingAssistantOutput;
     } else {
+      // Fallback if structured output is not available
       if (response.text) {
-        try {
+         try {
+            // Attempt to parse if the model still produced a JSON string in .text
             const parsedText = JSON.parse(response.text);
             if (parsedText && typeof parsedText.aiResponse === 'string') {
                 return parsedText as ChatUnderwritingAssistantOutput;
             }
-        } catch (e) { /* Not a JSON string */ }
+         } catch (e) { /* Not a valid JSON string */ }
+        // If not JSON, or parsing failed, return the raw text wrapped in the schema
         return { aiResponse: response.text };
       }
-      console.error('Chat assistant did not return structured output or text for submission', input.submissionId, 'Full response object:', JSON.stringify(response));
-      return { aiResponse: "I received a response, but it wasn't in the expected format. Please try rephrasing." };
+      // If no output and no text, it's a more significant issue
+      console.error('Chat assistant did not return structured output or text for submission', input.submissionId, 'Full response object:', JSON.stringify(response, null, 2));
+      return { aiResponse: "I received a response, but it wasn't in the expected format. Please try rephrasing or check the logs." };
     }
 
   } catch (error: any) {
     console.error(`Error in chatWithUnderwritingAssistant for submission ${input.submissionId || 'UNKNOWN'}:`, error);
-    let errorMessage = "An unexpected error occurred while processing your request. Please check the system logs for more details.";
-    if (error instanceof Error) {
+    let errorMessage = "An unexpected error occurred while processing your request in the AI assistant. Please check the system logs for more details.";
+    if (error.name === 'GenkitError' && error.message && error.message.includes('Schema validation failed')) {
+        errorMessage = `A data validation error occurred: ${error.message.substring(0, 300)}... Check server logs for full details of invalid data.`;
+    } else if (error instanceof Error) {
         errorMessage = `Error: ${error.message}`;
         if (error.name) errorMessage = `${error.name}: ${error.message}`;
         if (error.stack) console.error("Error stack:", error.stack);
-        if (error.cause) {
-           try {
-            const causeStr = JSON.stringify(error.cause);
-            errorMessage += ` Details: ${causeStr.substring(0, 500)}`;
-           } catch (e) { /* unable to stringify cause */ }
-        }
     } else if (typeof error === 'object' && error !== null) {
         try {
             const errorStr = JSON.stringify(error);
@@ -229,5 +275,3 @@ Your final response MUST be a JSON object with a single key "aiResponse", contai
     return { aiResponse: errorMessage };
   }
 }
-
-    

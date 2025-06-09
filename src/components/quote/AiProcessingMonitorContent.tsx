@@ -15,7 +15,7 @@ interface ChatMessage {
   id: string;
   sender: 'user' | 'ai';
   text: string;
-  type?: 'text' | 'tool_code' | 'tool_result' | 'error'; // Added 'error' type
+  type?: 'text' | 'tool_code' | 'tool_result' | 'error';
   toolName?: string;
   toolInput?: any;
   toolOutput?: any;
@@ -68,18 +68,17 @@ export function AiProcessingMonitorContent({
   const handleSendChatMessage = async () => {
     if (!chatInput.trim()) return;
 
+    const currentInput = chatInput.trim();
     const newUserMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       sender: 'user',
-      text: chatInput.trim(),
+      text: currentInput,
       type: 'text',
     };
     setChatMessages(prev => [...prev, newUserMessage]);
-    const currentInput = chatInput.trim();
     setChatInput('');
     setIsAiTyping(true);
 
-    // Add a temporary loading message for AI response
     const loadingAiMessageId = `ai-loading-${Date.now()}`;
     setChatMessages(prev => [
       ...prev,
@@ -87,11 +86,24 @@ export function AiProcessingMonitorContent({
     ]);
 
     const genkitChatHistory: ChatHistoryItem[] = chatMessages
-      .filter(msg => msg.id !== newUserMessage.id && msg.sender !== 'ai' && !msg.isLoading) // Exclude loading messages from history
-      .map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }],
-      }));
+      .filter(msg => msg.id !== newUserMessage.id && !msg.isLoading)
+      .map(msg => {
+        let role: 'user' | 'model' | 'tool' = 'model';
+        if (msg.sender === 'user') {
+          role = 'user';
+        } else if (msg.sender === 'ai') {
+          role = 'model'; // For simplicity, all AI messages are 'model' text for history
+        }
+
+        // Ensure msg.text is a string, then trim. Provide a fallback if necessary.
+        const textContent = (typeof msg.text === 'string' ? msg.text.trim() : '');
+        
+        return {
+          role,
+          parts: [{ text: textContent || " " }], // Ensure text is at least a space if empty after trim
+        };
+      })
+      .filter(item => item.parts.length > 0 && item.parts[0].text.trim() !== ""); // Final check for non-empty content
 
     const chatInputPayload: ChatUnderwritingAssistantInput = {
       submissionId,
@@ -105,11 +117,9 @@ export function AiProcessingMonitorContent({
     try {
       const response = await chatWithUnderwritingAssistant(chatInputPayload);
       setIsAiTyping(false);
-
-      // Remove the loading message
       setChatMessages(prev => prev.filter(msg => msg.id !== loadingAiMessageId));
-      
-      if ('aiResponse' in response && response.aiResponse) {
+
+      if (response && response.aiResponse) {
         const aiMessage: ChatMessage = {
           id: `ai-${Date.now()}`,
           sender: 'ai',
@@ -117,28 +127,19 @@ export function AiProcessingMonitorContent({
           type: 'text',
         };
         setChatMessages(prev => [...prev, aiMessage]);
-      } else if ('error' in response && response.error) {
-        const errorMessage: ChatMessage = {
-          id: `ai-error-${Date.now()}`,
-          sender: 'ai',
-          text: response.error,
-          type: 'error', 
-        };
-        setChatMessages(prev => [...prev, errorMessage]);
       } else {
-        const fallbackErrorMessage: ChatMessage = {
+        const errorText = response && (response as any).error ? (response as any).error : 'The AI did not provide a response or an unknown error occurred.';
+        const errorMessage: ChatMessage = {
           id: `ai-error-unknown-${Date.now()}`,
           sender: 'ai',
-          text: 'An unexpected error occurred or the AI did not provide a response.',
+          text: errorText,
           type: 'error',
         };
-        setChatMessages(prev => [...prev, fallbackErrorMessage]);
+        setChatMessages(prev => [...prev, errorMessage]);
       }
-
     } catch (error: any) {
       console.error('Error in handleSendChatMessage (client-side catch):', error);
       setIsAiTyping(false);
-      // Remove the loading message
       setChatMessages(prev => prev.filter(msg => msg.id !== loadingAiMessageId));
       
       const errorMsg = error.message || 'A client-side error occurred. Please try again.';
@@ -250,7 +251,6 @@ export function AiProcessingMonitorContent({
                 </div>
               </div>
             ))}
-            {/* General AI Typing indicator (isAiTyping && not specific message loading) */}
             {isAiTyping && !chatMessages.some(m => m.isLoading && m.sender === 'ai') && (
               <div className="flex items-start space-x-2.5 text-sm p-3 rounded-lg bg-muted text-muted-foreground max-w-[85%]">
                  <Bot className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
