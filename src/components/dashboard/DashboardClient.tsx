@@ -23,7 +23,10 @@ export function DashboardClient({ submissions }: DashboardClientProps) {
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8 bg-primary text-primary-foreground rounded-lg my-4">
-      <h1 className="text-3xl font-bold mb-6 font-headline">Dashboard Overview</h1>
+      <h1 className="text-3xl font-bold mb-6 font-headline">
+        Dashboard Overview
+        <span className="ml-2 font-normal opacity-90">Intact</span>
+      </h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
         <MetricsCard
           title="Quotes to Process"
