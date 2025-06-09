@@ -97,13 +97,15 @@ export interface QuoteDetails {
   };
   businessSummary: BusinessSummaryDetails;
   underwritingGuidelines: Guideline[];
-  managedSubjectToOffers: ManagedSubjectToOffer[];
-  managedInformationRequests: ManagedInformationRequest[];
+  managedSubjectToOffers?: ManagedSubjectToOffer[]; // Made optional, will be initialized from mock/DB
+  managedInformationRequests?: ManagedInformationRequest[]; // Made optional
   coveragesRequested: CoverageItem[];
   citations: Citation[];
   attachments: Attachment[];
   aiOverallRiskStatement?: string;
-  rawSubmissionData: string; // For passing to AI
+  rawSubmissionData: string; 
+  subjectToOffers?: string[]; // For data fetched from DB
+  subjectToOffersUpdatedAt?: string; // For data fetched from DB
 }
 
 export interface AiProcessingData {
@@ -121,7 +123,7 @@ export interface ManagedSubjectToOffer {
   originalText: string;
   currentText: string;
   isRemoved: boolean;
-  isEdited: boolean; // True if currentText differs from originalText
+  isEdited: boolean; 
 }
 
 export interface ManagedInformationRequest {
@@ -129,7 +131,7 @@ export interface ManagedInformationRequest {
   originalText: string;
   currentText: string;
   isRemoved: boolean;
-  isEdited: boolean; // True if currentText differs from originalText
+  isEdited: boolean; 
 }
 
 export type UnderwritingDecision = 'Decline' | 'OfferWithSubjectTos' | 'InformationRequired';
@@ -143,7 +145,7 @@ export type ActiveSheetItem =
 
 // --- Types and Schemas for Chat Underwriting Assistant (from chat-underwriting-assistant.ts) ---
 export const MessagePartSchema = z.object({
-  text: z.string(), // Changed from z.string().optional() to z.string()
+  text: z.string(), 
 });
 export type MessagePart = z.infer<typeof MessagePartSchema>;
 
@@ -169,7 +171,6 @@ export const ChatUnderwritingAssistantInputSchema = z.object({
 });
 export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
 
-// This output schema describes the *conceptual* full response, not the stream chunks.
 export const ChatUnderwritingAssistantOutputSchema = z.object({
   aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),
 });
@@ -196,4 +197,3 @@ export const EmailGenerationOutputSchema = z.object({
   emailBody: z.string().describe('The suggested body content for the email.'),
 });
 export type EmailGenerationOutput = z.infer<typeof EmailGenerationOutputSchema>;
-

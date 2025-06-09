@@ -18,12 +18,13 @@ import { CitationViewerContent } from './CitationViewerContent';
 import { AttachmentsCard } from './AttachmentsCard';
 import { AttachmentViewerContent } from './AttachmentViewerContent';
 import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flows/generate-underwriting-email';
-// Removed AI flow imports for non-chat functionalities
+import { updateSubjectToOffersInDB } from '@/app/actions/updateSubjectToOffers';
+
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Info, Edit, ThumbsUp, ThumbsDown, MailWarning, Wrench } from 'lucide-react';
+import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Info, Edit, ThumbsUp, ThumbsDown, MailWarning, Wrench, Database } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -63,10 +64,10 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   } | null>(null);
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isSavingToDB, setIsSavingToDB] = useState(false);
 
   const [activeSheetItem, setActiveSheetItem] = useState<ActiveSheetItem>(null);
 
-  // States for AI-driven data
   const [aiOverallRiskStatement, setAiOverallRiskStatement] = useState<string>("Mock AI Overall Risk Statement: Based on the initial review, the risk profile appears moderate. Key areas to investigate include financial stability and claims history. Recommend further due diligence on operational risks.");
   const [isRiskStatementLoading, setIsRiskStatementLoading] = useState(false);
 
@@ -83,12 +84,10 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   useEffect(() => {
     setQuoteDetails(initialQuoteDetails);
     if (initialQuoteDetails) {
-        // Set mock data for AI components
         setAiOverallRiskStatement(initialQuoteDetails.aiOverallRiskStatement || "Mock AI Overall Risk Statement: Based on the initial review, the risk profile appears moderate. Key areas to investigate include financial stability and claims history. Recommend further due diligence on operational risks.");
         setIsRiskStatementLoading(false);
 
-        setManagedSubjectToOffers(
-            initialAiUnderwritingActions.potentialSubjectToOffers.length > 0
+        const initialSTOs = initialAiUnderwritingActions.potentialSubjectToOffers.length > 0
             ? initialAiUnderwritingActions.potentialSubjectToOffers.map((text, index) => ({
                 id: `sto-mock-${index}-${Date.now()}`,
                 originalText: text,
@@ -99,12 +98,11 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
             : [
                 { id: 'mock-sto-1', originalText: 'Subject to satisfactory building inspection report.', currentText: 'Subject to satisfactory building inspection report.', isRemoved: false, isEdited: false },
                 { id: 'mock-sto-2', originalText: 'Subject to review of last 3 years audited financials.', currentText: 'Subject to review of last 3 years audited financials.', isRemoved: false, isEdited: false },
-            ]
-        );
+            ];
+        setManagedSubjectToOffers(initialQuoteDetails.managedSubjectToOffers || initialSTOs);
         setIsSubjectToOffersLoading(false);
 
-        setManagedInformationRequests(
-            initialAiUnderwritingActions.informationRequests.length > 0
+        const initialIRs = initialAiUnderwritingActions.informationRequests.length > 0
             ? initialAiUnderwritingActions.informationRequests.map((text, index) => ({
                 id: `ir-mock-${index}-${Date.now()}`,
                 originalText: text,
@@ -115,8 +113,8 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
             : [
                 { id: 'mock-ir-1', originalText: 'Provide detailed loss history for the past 5 years.', currentText: 'Provide detailed loss history for the past 5 years.', isRemoved: false, isEdited: false },
                 { id: 'mock-ir-2', originalText: 'Clarify security measures for data protection.', currentText: 'Clarify security measures for data protection.', isRemoved: false, isEdited: false },
-            ]
-        );
+            ];
+        setManagedInformationRequests(initialQuoteDetails.managedInformationRequests || initialIRs);
         setIsInfoRequestsLoading(false);
 
         setCurrentCoveragesRequested(
@@ -132,17 +130,44 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   }, [initialQuoteDetails, initialAiUnderwritingActions, initialAiProcessingData]);
 
 
+  const syncSubjectToOffersToDB = async (updatedOffers: ManagedSubjectToOffer[]) => {
+    if (!quoteDetails?.id) return;
+    setIsSavingToDB(true);
+    const offerTexts = updatedOffers.filter(offer => !offer.isRemoved).map(offer => offer.currentText);
+    try {
+      const result = await updateSubjectToOffersInDB(quoteDetails.id, offerTexts);
+      if (result.success) {
+        toast({
+          title: "Subject-Tos Saved",
+          description: result.message,
+          variant: "default",
+        });
+      } else {
+        throw new Error(result.message || "Failed to save to database.");
+      }
+    } catch (error: any) {
+      console.error("Failed to save subject-to offers:", error);
+      toast({
+        title: "Save Error",
+        description: error.message || "Could not save subject-to offers to the database.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingToDB(false);
+    }
+  };
+
   const handleAddGuideline = (guidelineInfo: { id: string; name: string }) => {
     setQuoteDetails(prevDetails => {
       if (!prevDetails) return null;
       const newGuideline: Guideline = {
         id: guidelineInfo.id,
         name: guidelineInfo.name,
-        status: 'Needs Clarification', // Default status for manually added guidelines
+        status: 'Needs Clarification', 
         details: 'Manually added for evaluation. Please provide details.',
       };
       if (prevDetails.underwritingGuidelines.some(g => g.id === newGuideline.id)) {
-        setTimeout(() => { // Ensure toast appears after state update
+        setTimeout(() => { 
           toast({
             title: "Guideline Exists",
             description: `"${newGuideline.name}" is already in the list.`,
@@ -189,37 +214,28 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   };
 
   const handleUpdateSubjectToOffer = (id: string, newText: string) => {
-    setManagedSubjectToOffers(prevOffers => 
-      prevOffers.map(offer =>
+    const updated = managedSubjectToOffers.map(offer =>
         offer.id === id ? { ...offer, currentText: newText, isEdited: true, isRemoved: false } : offer
-      )
-    );
-    toast({
-      title: "Subject-To Offer Updated",
-      description: `Offer "${newText.substring(0,30)}..." has been modified.`,
-      variant: "default"
-    });
+      );
+    setManagedSubjectToOffers(updated);
+    syncSubjectToOffersToDB(updated);
+    // Toast is handled by syncSubjectToOffersToDB
   };
 
   const handleToggleRemoveSubjectToOffer = (id: string) => {
-    setManagedSubjectToOffers(prevOffers => {
-      let offerText = "";
-      let isNowRemoved = false;
-      const updatedOffers = prevOffers.map(offer => {
-        if (offer.id === id) {
-          offerText = offer.currentText;
-          isNowRemoved = !offer.isRemoved;
-          return { ...offer, isRemoved: !offer.isRemoved };
-        }
-        return offer;
-      });
-      toast({
-        title: `Subject-To Offer ${isNowRemoved ? 'Removed' : 'Restored'}`,
-        description: `Offer "${offerText.substring(0,30)}..." has been ${isNowRemoved ? 'marked as removed' : 'restored'}.`,
-        variant: "default"
-      });
-      return updatedOffers;
+    let offerText = "";
+    let isNowRemoved = false;
+    const updated = managedSubjectToOffers.map(offer => {
+      if (offer.id === id) {
+        offerText = offer.currentText;
+        isNowRemoved = !offer.isRemoved;
+        return { ...offer, isRemoved: !offer.isRemoved };
+      }
+      return offer;
     });
+    setManagedSubjectToOffers(updated);
+    syncSubjectToOffersToDB(updated);
+     // Toast is handled by syncSubjectToOffersToDB
   };
 
    const handleAddSubjectToOffer = (newOfferText: string) => {
@@ -228,14 +244,12 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
       originalText: `User-added: ${newOfferText}`,
       currentText: newOfferText,
       isRemoved: false,
-      isEdited: false,
+      isEdited: false, // Or true if we consider adding as an edit from a blank state
     };
-    setManagedSubjectToOffers(prev => [...prev, newOffer]);
-    toast({
-      title: "Subject-To Offer Added",
-      description: `New offer "${newOfferText.substring(0,30)}..." added.`,
-      variant: "default"
-    });
+    const updated = [...managedSubjectToOffers, newOffer];
+    setManagedSubjectToOffers(updated);
+    syncSubjectToOffersToDB(updated);
+    // Toast is handled by syncSubjectToOffersToDB
   };
 
   const handleUpdateInformationRequest = (id: string, newText: string) => {
@@ -343,7 +357,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   const handleSendEmail = async () => {
     if (!emailState) return;
     setIsSendingEmail(true);
-    // Simulate sending email
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     toast({
@@ -414,7 +427,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
       case 'citation':
         return <CitationViewerContent citation={activeSheetItem.data} />;
       case 'attachment':
-        return <AttachmentViewerContent attachment={activeSheetItem.data} />; // Removed quoteId as it's not used by the component
+        return <AttachmentViewerContent attachment={activeSheetItem.data} />;
       default:
         return null;
     }
@@ -453,7 +466,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
         </Button>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6 border p-3">
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6 border">
         <div className="flex justify-between items-start mb-4">
           <div>
             <h1 className="text-3xl font-bold font-headline mb-1">
@@ -540,7 +553,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
             onUpdateOffer={handleUpdateSubjectToOffer}
             onToggleRemoveOffer={handleToggleRemoveSubjectToOffer}
             onAddSubjectToOffer={handleAddSubjectToOffer}
-            
+            isSaving={isSavingToDB}
           />
         </div>
       </div>

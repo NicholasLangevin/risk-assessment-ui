@@ -5,7 +5,7 @@ import type { ManagedSubjectToOffer } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SubjectToOfferItem } from './SubjectToOfferItem';
-import { PlusCircle } from 'lucide-react'; // Removed ClipboardList
+import { PlusCircle, Loader2 } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/dialog';
 import React, { useState } from 'react';
 
-// Define AiSparkleIcon locally
 const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -36,6 +35,7 @@ interface SubjectToOffersCardProps {
   onUpdateOffer: (id: string, newText: string) => void;
   onToggleRemoveOffer: (id: string) => void;
   onAddSubjectToOffer: (newOfferText: string) => void;
+  isSaving?: boolean; // Added isSaving prop
 }
 
 export function SubjectToOffersCard({
@@ -43,6 +43,7 @@ export function SubjectToOffersCard({
   onUpdateOffer,
   onToggleRemoveOffer,
   onAddSubjectToOffer,
+  isSaving, // Destructure isSaving prop
 }: SubjectToOffersCardProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newOfferText, setNewOfferText] = useState('');
@@ -60,12 +61,13 @@ export function SubjectToOffersCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center text-primary">
-            <AiSparkleIcon className="h-5 w-5 mr-2" /> {/* Replaced ClipboardList with AiSparkleIcon and added text-primary */}
+            <AiSparkleIcon className="h-5 w-5 mr-2" />
             AI Subject-To Offers
+            {isSaving && <Loader2 className="ml-2 h-5 w-5 animate-spin text-muted-foreground" />}
           </CardTitle>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" disabled={isSaving}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New
               </Button>
             </DialogTrigger>
@@ -91,13 +93,13 @@ export function SubjectToOffersCard({
             </DialogContent>
           </Dialog>
         </div>
-        <CardDescription>Manage and adjust AI-suggested or manually added subject-to conditions.</CardDescription>
+        <CardDescription>Manage and adjust AI-suggested or manually added subject-to conditions. Changes are saved automatically.</CardDescription>
       </CardHeader>
       <CardContent>
         {offers.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">No subject-to offers currently defined.</p>
         ) : (
-          <ScrollArea className="h-[180px] pr-2"> {/* Adjust height as needed */}
+          <ScrollArea className="h-[180px] pr-2"> 
             <div className="space-y-1">
               {offers.map((offer) => (
                 <SubjectToOfferItem
@@ -114,4 +116,3 @@ export function SubjectToOffersCard({
     </Card>
   );
 }
-
