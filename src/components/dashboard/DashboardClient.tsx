@@ -22,7 +22,7 @@ export function DashboardClient({ submissions }: DashboardClientProps) {
   const totalSubmissions = submissions.length;
 
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8 bg-primary text-primary-foreground rounded-lg my-4">
+    <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       <h1 className="text-3xl font-bold mb-6 font-headline">
         Dashboard Overview
         <span className="ml-2 font-normal opacity-90">Intact</span>
