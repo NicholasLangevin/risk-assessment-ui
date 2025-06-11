@@ -1,75 +1,93 @@
+
 'use server';
 /**
- * @fileOverview A simplified conversational AI assistant for underwriting tasks.
- * It maintains a conversation but does not use tools or have complex logic.
- */
-
-import { ai } from '@/ai/genkit'; // Assuming this correctly initializes Genkit
-import type { MessageData } from 'genkit';
-import type {
-  ChatUnderwritingAssistantInput,
-  ChatUnderwritingAssistantOutput,
-} from '@/types';
-
-/**
- * A simplified conversational agent that uses the same interface as the complex one.
- * It maintains conversational context but has no tools or special rules.
+ * @fileOverview AI-powered chat assistant for underwriting queries.
  *
- * @param input - An object containing the user's query and chat history.
- * @returns A promise that resolves to the AI's response.
+ * - chatWithUnderwritingAssistant - Handles chat interactions with the AI assistant.
+ * - ChatUnderwritingAssistantInput - Input type for the chat assistant.
+ * - ChatUnderwritingAssistantOutput - Output type for the chat assistant.
  */
-export async function chatWithUnderwritingAssistant(
-  input: ChatUnderwritingAssistantInput,
-): Promise<ChatUnderwritingAssistantOutput> {
-  try {
-    console.log("hello world")
 
-    // 1. Prepare the conversation messages for the AI.
-    const messages: MessageData[] = [];
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
 
-    // Add a simple instruction for the AI.
-    messages.push({
-      role: 'system',
-      parts: [{ text: 'You are a helpful underwriting assistant.' }],
-    });
+const MessagePartSchema = z.object({
+  text: z.string(),
+});
 
-    // Add the previous messages from the chat history.
-    // The `?? []` ensures this works even if chatHistory is undefined.
-    for (const historyMessage of input.chatHistory ?? []) {
-      // We only add valid messages to avoid errors
-      if (
-        historyMessage &&
-        historyMessage.role &&
-        Array.isArray(historyMessage.parts)
-      ) {
-        messages.push(historyMessage);
-      }
-    }
+const ChatHistoryItemSchema = z.object({
+  role: z.enum(['user', 'model']),
+  parts: z.array(MessagePartSchema),
+});
 
-    // Add the user's current message.
-    messages.push({
-      role: 'user',
-      parts: [{ text: input.userQuery }],
-    });
+// These are not exported to avoid "use server" issues with non-async exports.
+const ChatUnderwritingAssistantInputSchema = z.object({
+  submissionId: z.string().describe('The ID of the submission being discussed.'),
+  userQuery: z.string().describe('The user’s current question or message.'),
+  chatHistory: z.array(ChatHistoryItemSchema).optional().describe('The history of the conversation so far.')
+});
+export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
 
-    // 2. Call the AI model to get a response.
-    const { response } = await ai.generate({
-      messages: messages,
-    });
-    console.log("hello world")
+const ChatUnderwritingAssistantOutputSchema = z.object({
+  aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),
+});
+export type ChatUnderwritingAssistantOutput = z.infer<typeof ChatUnderwritingAssistantOutputSchema>;
 
-    // 3. Return the AI's text response in the expected format.
-    return {
-      aiResponse: response.text(),
-    };
-  } catch (error) {
-    console.error(
-      `Error in simplified chatWithUnderwritingAssistant:`,
-      error,
-    );
-    // Provide a basic error response that fits the output schema.
-    return {
-      aiResponse: 'Sorry, I encountered an error and could not respond.',
-    };
-  }
+export async function chatWithUnderwritingAssistant(input: ChatUnderwritingAssistantInput): Promise<ChatUnderwritingAssistantOutput> {
+  return chatWithUnderwritingAssistantFlow(input);
 }
+
+const prompt = ai.definePrompt({
+  name: 'chatWithUnderwritingAssistantPrompt',
+  input: {schema: ChatUnderwritingAssistantInputSchema},
+  output: {schema: ChatUnderwritingAssistantOutputSchema},
+  prompt: `You are an expert underwriting assistant for RiskPilot. You are discussing submission ID: {{{submissionId}}}.
+
+{{#if chatHistory}}
+Previous conversation:
+{{#each chatHistory}}
+{{#if isUser}}{{!-- User's turn --}}
+User: {{#each parts}}{{text}}{{/each}}
+{{/if}}
+{{#if isModel}}{{!-- Model's turn --}}
+AI: {{#each parts}}{{text}}{{/each}}
+{{/if}}
+{{/each}}
+{{/if}}
+
+Current User Question: {{{userQuery}}}
+
+Answer the user's question based on your knowledge of underwriting principles and any context you have about this submission.
+If the question is about general underwriting guidelines, provide helpful explanations.
+Keep your answers concise, professional, and helpful.
+If you cannot answer the question or it's outside your scope, politely say so.
+Do not make up information.
+`,
+});
+
+
+const chatWithUnderwritingAssistantFlow = ai.defineFlow(
+  {
+    name: 'chatWithUnderwritingAssistantFlow',
+    inputSchema: ChatUnderwritingAssistantInputSchema,
+    outputSchema: ChatUnderwritingAssistantOutputSchema,
+  },
+  async (input) => {
+    // Preprocess chatHistory to add boolean flags for Handlebars
+    const processedInput = {
+      ...input,
+      chatHistory: input.chatHistory?.map(item => ({
+        ...item, // Spread original item properties (like 'parts')
+        isUser: item.role === 'user',
+        isModel: item.role === 'model',
+      })),
+    };
+
+    const {output} = await prompt(processedInput);
+    if (!output) {
+      return { aiResponse: "I'm sorry, I couldn't generate a response at this time." };
+    }
+    return output;
+  }
+);
+
