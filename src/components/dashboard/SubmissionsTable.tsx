@@ -78,8 +78,7 @@ export function SubmissionsTable({ submissions }: SubmissionsTableProps) {
               <TableHead>Insured Name</TableHead>
               <TableHead>Broker</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead> {/* Changed from Received Date */}
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Priority</TableHead><TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
