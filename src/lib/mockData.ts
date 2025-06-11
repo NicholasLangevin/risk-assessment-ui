@@ -1,10 +1,11 @@
 
-import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel, Citation, RichTextSegment, Attachment, AiToolAction } from '@/types';
+import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel, Citation, RichTextSegment, Attachment, AiToolAction, PriorityLevel } from '@/types';
 import { addMinutes, formatISO } from 'date-fns';
 
 const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group", "Apex Enterprises", "Momentum Industries"];
 const brokers = ["Marsh", "Aon", "Willis Towers Watson", "Gallagher", "HUB International"];
 const statuses: Submission['status'][] = ['New', 'Pending Review', 'Information Requested', 'Quoted', 'Bound', 'Declined'];
+const priorities: PriorityLevel[] = ['High', 'Medium', 'Low'];
 const guidelineNames = [
   "Exposure Limits", "Geographical Restrictions", "Claims History Review",
   "Financial Stability Check", "Regulatory Compliance", "Specific Industry Exclusions"
@@ -26,6 +27,7 @@ export const mockSubmissions: Submission[] = Array.from({ length: 10 }, (_, i) =
   status: statuses[i % statuses.length],
   receivedDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
   premium: Math.floor(Math.random() * 50000) + 5000,
+  priority: priorities[i % priorities.length], // Assign priority
 }));
 
 export const mockAttachments: Attachment[] = [
@@ -197,7 +199,7 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     coveragesRequested,
     citations: mockCitations,
     attachments: mockAttachments.slice(0, Math.floor(Math.random() * (mockAttachments.length -1)) + 2), // show 2 to all attachments
-    aiOverallRiskStatement: aiOverallRiskStatementText, // Added mock statement
+    aiOverallRiskStatement: aiOverallRiskStatementText,
     rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${currentPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}`
   };
 };

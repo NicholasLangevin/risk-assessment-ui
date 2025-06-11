@@ -12,9 +12,10 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Submission } from '@/types';
+import type { Submission, PriorityLevel } from '@/types';
 import { ArrowRight } from 'lucide-react';
-import { ClientFormattedDate } from '@/components/common/ClientFormattedDate'; // Added import
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface SubmissionsTableProps {
   submissions: Submission[];
@@ -24,15 +25,15 @@ export function SubmissionsTable({ submissions }: SubmissionsTableProps) {
   const getStatusVariant = (status: Submission['status']): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (status) {
       case 'New':
-        return 'default'; // primary color
+        return 'default';
       case 'Pending Review':
         return 'secondary';
       case 'Information Requested':
-        return 'outline'; // uses accent color from theme for border
+        return 'outline';
       case 'Quoted':
-        return 'default'; // can use a different color if 'default' is primary
+        return 'default';
       case 'Bound':
-        return 'default'; // can use a 'success' variant if defined in theme
+        return 'default';
       case 'Declined':
         return 'destructive';
       default:
@@ -40,6 +41,28 @@ export function SubmissionsTable({ submissions }: SubmissionsTableProps) {
     }
   };
 
+  const getPriorityBadgeClass = (priority: PriorityLevel): string => {
+    switch (priority) {
+      case 'High':
+        return 'bg-red-100 text-red-700 border-red-300 dark:bg-red-700/30 dark:text-red-300 dark:border-red-600';
+      case 'Medium':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-600/30 dark:text-yellow-300 dark:border-yellow-500';
+      case 'Low':
+        return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-700/30 dark:text-green-300 dark:border-green-600';
+      default:
+        return '';
+    }
+  };
+
+  const priorityOrder: Record<PriorityLevel, number> = {
+    'High': 1,
+    'Medium': 2,
+    'Low': 3,
+  };
+
+  const sortedSubmissions = [...submissions].sort((a, b) => {
+    return priorityOrder[a.priority] - priorityOrder[b.priority];
+  });
 
   return (
     <Card className="mt-6">
@@ -55,19 +78,19 @@ export function SubmissionsTable({ submissions }: SubmissionsTableProps) {
               <TableHead>Insured Name</TableHead>
               <TableHead>Broker</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Received Date</TableHead>
+              <TableHead>Priority</TableHead> {/* Changed from Received Date */}
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {submissions.length === 0 ? (
+            {sortedSubmissions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center h-24">
                   No submissions found.
                 </TableCell>
               </TableRow>
             ) : (
-              submissions.map((submission) => (
+              sortedSubmissions.map((submission) => (
                 <TableRow key={submission.id}>
                   <TableCell className="font-medium">{submission.id}</TableCell>
                   <TableCell>{submission.insuredName}</TableCell>
@@ -76,7 +99,9 @@ export function SubmissionsTable({ submissions }: SubmissionsTableProps) {
                     <Badge variant={getStatusVariant(submission.status)}>{submission.status}</Badge>
                   </TableCell>
                   <TableCell>
-                    <ClientFormattedDate isoDateString={submission.receivedDate} />
+                    <Badge variant="outline" className={cn("font-semibold", getPriorityBadgeClass(submission.priority))}>
+                      {submission.priority}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="ghost" size="sm">
@@ -94,6 +119,3 @@ export function SubmissionsTable({ submissions }: SubmissionsTableProps) {
     </Card>
   );
 }
-
-// Needs Card, CardHeader, CardTitle, CardDescription from ui/card
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';

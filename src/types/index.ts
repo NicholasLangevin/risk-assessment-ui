@@ -2,6 +2,8 @@
 import { z } from 'zod';
 
 // General Application Types
+export type PriorityLevel = 'High' | 'Medium' | 'Low';
+
 export interface Submission {
   id: string;
   insuredName: string;
@@ -9,6 +11,7 @@ export interface Submission {
   status: 'New' | 'Pending Review' | 'Information Requested' | 'Quoted' | 'Bound' | 'Declined';
   receivedDate: string; // ISO date string
   premium?: number;
+  priority: PriorityLevel; // Added priority
 }
 
 export type RiskLevel = 'Very Low' | 'Low' | 'Normal' | 'High' | 'Very High' | 'Loading';
@@ -97,15 +100,15 @@ export interface QuoteDetails {
   };
   businessSummary: BusinessSummaryDetails;
   underwritingGuidelines: Guideline[];
-  managedSubjectToOffers?: ManagedSubjectToOffer[]; // Made optional, will be initialized from mock/DB
-  managedInformationRequests?: ManagedInformationRequest[]; // Made optional
+  managedSubjectToOffers?: ManagedSubjectToOffer[];
+  managedInformationRequests?: ManagedInformationRequest[];
   coveragesRequested: CoverageItem[];
   citations: Citation[];
   attachments: Attachment[];
   aiOverallRiskStatement?: string;
-  rawSubmissionData: string; 
-  subjectToOffers?: string[]; // For data fetched from DB
-  subjectToOffersUpdatedAt?: string; // For data fetched from DB
+  rawSubmissionData: string;
+  subjectToOffers?: string[];
+  subjectToOffersUpdatedAt?: string;
 }
 
 export interface AiProcessingData {
@@ -123,7 +126,7 @@ export interface ManagedSubjectToOffer {
   originalText: string;
   currentText: string;
   isRemoved: boolean;
-  isEdited: boolean; 
+  isEdited: boolean;
 }
 
 export interface ManagedInformationRequest {
@@ -131,7 +134,7 @@ export interface ManagedInformationRequest {
   originalText: string;
   currentText: string;
   isRemoved: boolean;
-  isEdited: boolean; 
+  isEdited: boolean;
 }
 
 export type UnderwritingDecision = 'Decline' | 'OfferWithSubjectTos' | 'InformationRequired';
@@ -145,7 +148,7 @@ export type ActiveSheetItem =
 
 // --- Types and Schemas for Chat Underwriting Assistant (from chat-underwriting-assistant.ts) ---
 export const MessagePartSchema = z.object({
-  text: z.string(), 
+  text: z.string(),
 });
 export type MessagePart = z.infer<typeof MessagePartSchema>;
 
