@@ -43,6 +43,8 @@ const prompt = ai.definePrompt({
   output: {schema: ChatUnderwritingAssistantOutputSchema},
   prompt: `You are an expert underwriting assistant for RiskPilot. You are discussing submission ID: {{{submissionId}}}.
 
+You can search information about the applicant in the attached submission or search the guideline. Since you dont have real access, just invent fact.
+
 {{#if chatHistory}}
 Previous conversation:
 {{#each chatHistory}}
