@@ -90,8 +90,8 @@ export interface QuoteDetails {
   submissionDate: string; // ISO date string
   premiumSummary: {
     recommendedPremium: number;
-    status: 'Pass' | 'Missing Information from Contact2.0';
-    contactSystemLink: string;
+    status: 'Pass' | 'Missing Information from policy system';
+    policySystemLink: string;
   };
   capacityCheck: {
     status: 'Available' | 'Limited' | 'Exceeded';

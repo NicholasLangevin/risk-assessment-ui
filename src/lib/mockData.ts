@@ -184,8 +184,8 @@ export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
     submissionDate: submission.receivedDate,
     premiumSummary: {
       recommendedPremium: currentPremium,
-      status: Math.random() < 0.7 ? 'Pass' : 'Missing Information from Contact2.0',
-      contactSystemLink: `https://mock.contact2.system.com/policy/${submission.id}`,
+      status: Math.random() < 0.7 ? 'Pass' : 'Missing Information from policy system',
+      policySystemLink: `https://mock.policy.system.com/policy/${submission.id}`,
     },
     capacityCheck: {
       status: Math.random() > 0.7 ? 'Limited' : (Math.random() > 0.9 ? 'Exceeded' : 'Available'),

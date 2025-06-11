@@ -20,7 +20,7 @@ export function PremiumSummaryCard({ summary }: PremiumSummaryCardProps) {
           <DollarSign className="h-6 w-6 mr-2" />
           Premium Recommendation
         </CardTitle>
-        <CardDescription>Details from Contact2.0 policy system.</CardDescription>
+        <CardDescription>Details from policy policy system.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
@@ -33,7 +33,7 @@ export function PremiumSummaryCard({ summary }: PremiumSummaryCardProps) {
           ) : (
             <span className="font-semibold text-yellow-600 dark:text-yellow-500 ml-2 flex items-center">
               <AlertTriangle className="h-4 w-4 mr-1" />
-              Missing Information from Contact2.0
+              Missing Information from Policy System
             </span>
           )}
         </div>
@@ -44,8 +44,8 @@ export function PremiumSummaryCard({ summary }: PremiumSummaryCardProps) {
         </div>
 
         <Button variant="link" asChild className="p-0 h-auto text-sm !mt-3">
-          <a href={summary.contactSystemLink} target="_blank" rel="noopener noreferrer">
-            View in Contact2.0
+          <a href={summary.policySystemLink} target="_blank" rel="noopener noreferrer">
+            View in Policy System
             <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
           </a>
         </Button>
