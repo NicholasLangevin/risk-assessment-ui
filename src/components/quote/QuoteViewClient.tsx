@@ -45,7 +45,7 @@ const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     fill="currentColor"
     {...props}
   >
-    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714-6.31,13.408-13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
+    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714,6.31,13.408-13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
   </svg>
 );
 
@@ -55,7 +55,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   const { toast } = useToast();
   const router = useRouter();
 
-  const [selectedDecision, setSelectedDecision] = useState<UnderwritingDecision | null>(null);
+  const [selectedDecision, setSelectedDecision] = useState<UnderwritingDecision | null>('OfferWithSubjectTos');
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [emailState, setEmailState] = useState<{
     subject: string;
