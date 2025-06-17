@@ -173,23 +173,24 @@ export const columns: ColumnDef<CaseListItem>[] = [
       return <Badge variant={getStatusBadgeVariant(status)} className={cn(badgeClass)}>{status}</Badge>;
     },
   },
-  {
-    id: 'actions',
-    cell: ({ row }) => {
-      const caseItem = row.original;
-      if (caseItem.relatedQuoteId) {
-        return (
-          <Button variant="ghost" asChild size="sm">
-            <Link href={`/quote/${caseItem.relatedQuoteId}`}>View Quote</Link>
-          </Button>
-        );
-      }
-      // Placeholder for future case detail view or other actions
-      return (
-        <Button variant="ghost" size="sm" disabled>
-          View Case
-        </Button>
-      );
-    },
-  },
+  // Removed the 'actions' column
+  // {
+  //   id: 'actions',
+  //   cell: ({ row }) => {
+  //     const caseItem = row.original;
+  //     if (caseItem.relatedQuoteId) {
+  //       return (
+  //         <Button variant="ghost" asChild size="sm">
+  //           <Link href={`/quote/${caseItem.relatedQuoteId}`}>View Quote</Link>
+  //         </Button>
+  //       );
+  //     }
+  //     // Placeholder for future case detail view or other actions
+  //     return (
+  //       <Button variant="ghost" size="sm" disabled>
+  //         View Case
+  //       </Button>
+  //     );
+  //   },
+  // },
 ];
