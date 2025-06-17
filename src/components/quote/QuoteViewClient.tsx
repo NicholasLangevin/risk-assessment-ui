@@ -36,7 +36,7 @@ interface QuoteViewClientProps {
   initialQuoteDetails: QuoteDetails | null;
   initialAiProcessingData: AiProcessingData;
   initialAiUnderwritingActions: AiUnderwritingActions;
-  hideHeader?: boolean; // New prop
+  hideHeader?: boolean;
 }
 
 const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -131,7 +131,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   }, [initialQuoteDetails, initialAiUnderwritingActions, initialAiProcessingData]);
 
 
-  const syncSubjectToOffersToDB = async (updatedOffers: ManagedSubjectToOffer[]) => {
+  const syncSubjectToOffersToDB = useCallback(async (updatedOffers: ManagedSubjectToOffer[]) => {
     if (!quoteDetails?.id) return;
     setIsSavingToDB(true);
     const offerTexts = updatedOffers.filter(offer => !offer.isRemoved).map(offer => offer.currentText);
@@ -156,9 +156,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     } finally {
       setIsSavingToDB(false);
     }
-  };
+  }, [quoteDetails?.id, toast]);
 
-  const handleAddGuideline = (guidelineInfo: { id: string; name: string }) => {
+  const handleAddGuideline = useCallback((guidelineInfo: { id: string; name: string }) => {
     setQuoteDetails(prevDetails => {
       if (!prevDetails) return null;
       const newGuideline: Guideline = {
@@ -189,9 +189,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
         underwritingGuidelines: [...prevDetails.underwritingGuidelines, newGuideline],
       };
     });
-  };
+  }, [toast]);
 
-  const handleUpdateGuideline = (id: string, status: Guideline['status'], details?: string) => {
+  const handleUpdateGuideline = useCallback((id: string, status: Guideline['status'], details?: string) => {
     setQuoteDetails(prevDetails => {
       if (!prevDetails) return null;
       const updatedGuidelines = prevDetails.underwritingGuidelines.map(g =>
@@ -212,17 +212,17 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
         underwritingGuidelines: updatedGuidelines,
       };
     });
-  };
+  }, [toast]);
 
-  const handleUpdateSubjectToOffer = (id: string, newText: string) => {
+  const handleUpdateSubjectToOffer = useCallback((id: string, newText: string) => {
     const updated = managedSubjectToOffers.map(offer =>
         offer.id === id ? { ...offer, currentText: newText, isEdited: true, isRemoved: false } : offer
       );
     setManagedSubjectToOffers(updated);
     syncSubjectToOffersToDB(updated);
-  };
+  }, [managedSubjectToOffers, syncSubjectToOffersToDB]);
 
-  const handleToggleRemoveSubjectToOffer = (id: string) => {
+  const handleToggleRemoveSubjectToOffer = useCallback((id: string) => {
     let offerText = "";
     let isNowRemoved = false;
     const updated = managedSubjectToOffers.map(offer => {
@@ -235,9 +235,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     });
     setManagedSubjectToOffers(updated);
     syncSubjectToOffersToDB(updated);
-  };
+  }, [managedSubjectToOffers, syncSubjectToOffersToDB]);
 
-   const handleAddSubjectToOffer = (newOfferText: string) => {
+   const handleAddSubjectToOffer = useCallback((newOfferText: string) => {
     const newOffer: ManagedSubjectToOffer = {
       id: `sto-custom-${Date.now()}`,
       originalText: `User-added: ${newOfferText}`,
@@ -248,9 +248,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     const updated = [...managedSubjectToOffers, newOffer];
     setManagedSubjectToOffers(updated);
     syncSubjectToOffersToDB(updated);
-  };
+  }, [managedSubjectToOffers, syncSubjectToOffersToDB]);
 
-  const handleUpdateInformationRequest = (id: string, newText: string) => {
+  const handleUpdateInformationRequest = useCallback((id: string, newText: string) => {
     setManagedInformationRequests(prevRequests => 
       prevRequests.map(req =>
         req.id === id ? { ...req, currentText: newText, isEdited: true, isRemoved: false } : req
@@ -261,9 +261,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
       description: `Request "${newText.substring(0,30)}..." has been modified.`,
       variant: "default"
     });
-  };
+  }, [toast]);
 
-  const handleToggleRemoveInformationRequest = (id: string) => {
+  const handleToggleRemoveInformationRequest = useCallback((id: string) => {
     setManagedInformationRequests(prevRequests => {
       let reqText = "";
       let isNowRemoved = false;
@@ -282,9 +282,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
       });
       return updatedRequests;
     });
-  };
+  }, [toast]);
 
-  const handleAddInformationRequest = (newRequestText: string) => {
+  const handleAddInformationRequest = useCallback((newRequestText: string) => {
     const newRequest: ManagedInformationRequest = {
       id: `ir-custom-${Date.now()}`,
       originalText: `User-added: ${newRequestText}`,
@@ -298,9 +298,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
       description: `New request "${newRequestText.substring(0,30)}..." added.`,
       variant: "default"
     });
-  };
+  }, [toast]);
   
-  const handleConfirmAndGenerateEmail = async () => {
+  const handleConfirmAndGenerateEmail = useCallback(async () => {
     if (!selectedDecision || !quoteDetails) return;
 
     setIsGeneratingEmail(true);
@@ -346,13 +346,13 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     } finally {
       setIsGeneratingEmail(false);
     }
-  };
+  }, [selectedDecision, quoteDetails, managedInformationRequests, managedSubjectToOffers, toast]);
 
   const handleEmailBodyChange = (newBody: string) => {
     setEmailState(prev => prev ? { ...prev, currentBody: newBody } : null);
   };
 
-  const handleSendEmail = async () => {
+  const handleSendEmail = useCallback(async () => {
     if (!emailState) return;
     setIsSendingEmail(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -367,7 +367,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     setEmailState(null);
     setSelectedDecision(null);
     router.push('/');
-  };
+  }, [emailState, quoteDetails, router, toast]);
 
   const handleShowGuidelineDetails = (guideline: Guideline) => {
     setActiveSheetItem({ type: 'guideline', data: guideline });
@@ -456,19 +456,18 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       <div className="flex justify-between items-start mb-6">
-        <div>
-          {!hideHeader && (
-            <>
-              <h1 className="text-3xl font-bold font-headline mb-1">
-                Quote: {quoteDetails.id}
-              </h1>
-              <p className="text-muted-foreground">
-                Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}
-              </p>
-            </>
-          )}
-        </div>
-        <div>
+        {!hideHeader && (
+            <div>
+                <h1 className="text-3xl font-bold font-headline mb-1">
+                    Quote: {quoteDetails.id}
+                </h1>
+                <p className="text-muted-foreground">
+                    Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}
+                </p>
+            </div>
+        )}
+         {/* This div ensures the button is on the right, even if hideHeader is true */}
+        <div className={hideHeader ? "w-full flex justify-end" : ""}>
           <Button variant="outline" className="h-9" onClick={handleShowAiMonitor}>
             <Activity className="mr-2 h-4 w-4" /> AI Chat & Monitor
           </Button>
@@ -546,7 +545,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
           <InformationRequestsCard
             requests={managedInformationRequests}
             onUpdateInfoRequest={handleUpdateInformationRequest}
-            onToggleRemoveInfoRequest={handleToggleRemoveInfoRequest}
+            onToggleRemoveInfoRequest={handleToggleRemoveInformationRequest}
             onAddInfoRequest={handleAddInformationRequest}
             
           />
@@ -585,4 +584,3 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     </div>
   );
 }
-
