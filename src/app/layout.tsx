@@ -28,7 +28,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <div
-          className="group/sidebar-wrapper flex flex-col min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar"
+          className="group/sidebar-wrapper flex flex-col min-h-svh w-full has-[[data-variant=inset]]:bg-background/95 has-[[data-variant=inset]]:supports-[backdrop-filter]:bg-background/60"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH,
@@ -37,7 +37,7 @@ export default function RootLayout({
             } as React.CSSProperties
           }
         >
-          <SidebarProvider defaultOpen={true}>
+          <SidebarProvider defaultOpen={false}>
             <Header />
             {/* This div now handles the offset for the header and takes remaining space */}
             <div className="flex-1 pt-14 overflow-hidden"> {/* pt-14 for header, flex-1 to grow */}
