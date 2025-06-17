@@ -31,9 +31,6 @@ export function CaseViewPageClient({ caseDetails }: CaseViewPageClientProps) {
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
-      <Button variant="outline" size="sm" asChild className="mb-4">
-        <Link href="/cases"><ChevronLeft className="mr-2 h-4 w-4" /> Back to All Cases</Link>
-      </Button>
       <Card className="shadow-lg">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
