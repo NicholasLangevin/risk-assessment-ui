@@ -23,11 +23,8 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Home" isActive={pathname === '/'}>
               <Link href="/">
-                <span className={cn(
-                  "inline-flex items-center justify-center", 
-                  pathname === '/' && 'bg-destructive p-1 rounded-md'
-                )}>
-                  <HomeIcon className={cn("h-4 w-4", pathname === '/' && "text-destructive-foreground")} />
+                <span className={cn("inline-flex items-center justify-center")}>
+                  <HomeIcon className={cn("h-4 w-4")} />
                 </span>
                 <span>Home</span>
               </Link>
@@ -36,11 +33,8 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Quote Dashboard" isActive={pathname === '/quote-dashboard'}>
               <Link href="/quote-dashboard">
-                <span className={cn(
-                  "inline-flex items-center justify-center", 
-                  pathname === '/quote-dashboard' && 'bg-destructive p-1 rounded-md'
-                )}>
-                  <LayoutDashboardIcon className={cn("h-4 w-4", pathname === '/quote-dashboard' && "text-destructive-foreground")} />
+                <span className={cn("inline-flex items-center justify-center")}>
+                  <LayoutDashboardIcon className={cn("h-4 w-4")} />
                 </span>
                 <span>Quote Dashboard</span>
               </Link>

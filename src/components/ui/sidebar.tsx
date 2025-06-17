@@ -263,7 +263,7 @@ const Sidebar = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-            "group peer hidden md:block text-foreground", // Changed text-sidebar-foreground
+            "group peer hidden md:block text-foreground", 
             placeholderWidthClass,
             "transition-[width] duration-200 ease-linear relative h-full",
             className
@@ -276,7 +276,7 @@ const Sidebar = React.forwardRef<
       >
         <div
           className={cn(
-            "fixed z-30 flex flex-col bg-background/95 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-[width] duration-200 ease-linear", // Changed bg-sidebar and text-sidebar-foreground
+            "fixed z-30 flex flex-col bg-background/95 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-[width] duration-200 ease-linear", 
             "top-14 h-[calc(100vh-3.5rem)]",
             panelWidthClass,
             panelTransformClass,
@@ -286,7 +286,7 @@ const Sidebar = React.forwardRef<
               ? "w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
               : "",
             (variant !== "floating" && variant !== "inset") && (side === "left" ? "border-r" : "border-l"),
-            (variant === "floating" || variant === "inset") && "group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-border group-data-[variant=floating]:shadow" // Kept border-border for floating
+            (variant === "floating" || variant === "inset") && "group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-border group-data-[variant=floating]:shadow" 
           )}
         >
           <SidebarViewContext.Provider value={currentViewMode}>
@@ -360,7 +360,7 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "flex-1 bg-background h-full overflow-y-auto min-h-0",
-        "px-4 sm:px-6 lg:px-8 py-8", // This padding is for the content within the main area
+        "px-4 sm:px-6 lg:px-8 py-8", 
         "max-w-screen-2xl mx-auto w-full",
         className
       )}
@@ -379,7 +379,7 @@ const SidebarInput = React.forwardRef<
       ref={ref}
       data-sidebar="input"
       className={cn(
-        "h-8 w-full bg-background shadow-none focus-visible:ring-2 focus-visible:ring-ring", // Use default ring color
+        "h-8 w-full bg-background shadow-none focus-visible:ring-2 focus-visible:ring-ring", 
         className
       )}
       {...props}
@@ -445,7 +445,7 @@ const SidebarSeparator = React.forwardRef<
     <Separator
       ref={ref}
       data-sidebar="separator"
-      className={cn("mx-2 w-auto bg-border", className)} // Use default border color
+      className={cn("mx-2 w-auto bg-border", className)} 
       {...props}
     />
   )
@@ -463,7 +463,7 @@ const SidebarContent = React.forwardRef<HTMLDivElement, SidebarContentProps>(
       ref={ref}
       data-sidebar="content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto pt-2 px-2", // px-2 for consistent left/right padding
+        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto pt-2 px-2",
         className
       )}
       {...props}
@@ -520,7 +520,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-foreground/70 outline-none ring-ring focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0", // Use default ring and foreground
+        "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-foreground/70 outline-none ring-ring focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0", 
         className
       )}
       {...props}
@@ -545,7 +545,7 @@ const SidebarGroupAction = React.forwardRef<
       ref={ref}
       data-sidebar="group-action"
       className={cn(
-        "absolute right-3 top-3.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-foreground outline-none ring-ring transition-transform hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0", // Use default ring, foreground, accent
+        "absolute right-3 top-3.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-foreground outline-none ring-ring transition-transform hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0", 
         "after:absolute after:-inset-2 after:md:hidden",
         className
       )}
@@ -615,7 +615,7 @@ const SidebarMenuItem = React.forwardRef<HTMLLIElement, SidebarMenuItemProps>(
         data-sidebar="menu-item"
         className={cn(
           "group/menu-item relative",
-          isCollapsed && "flex justify-center", // This centers the icon-only button when collapsed
+          isCollapsed && "flex justify-center", 
           className
         )}
         {...props}
@@ -632,13 +632,13 @@ const SidebarMenuItem = React.forwardRef<HTMLLIElement, SidebarMenuItemProps>(
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-accent-foreground data-[state=open]:hover:bg-accent data-[state=open]:hover:text-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0", // Use default ring, accent, foreground
+  "peer/menu-button flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:bg-muted data-[active=true]:text-muted-foreground data-[state=open]:hover:bg-accent data-[state=open]:hover:text-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0", 
   {
     variants: {
       variant: {
-        default: "hover:bg-accent hover:text-accent-foreground", // Use default accent, foreground
+        default: "hover:bg-accent hover:text-accent-foreground", 
         outline:
-          "bg-background shadow-[0_0_0_1px_hsl(var(--border))] hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--accent))]", // Use default border, accent, foreground
+          "bg-background shadow-[0_0_0_1px_hsl(var(--border))] hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--accent))]", 
       },
       size: {
         default: "h-8 text-sm",
@@ -712,7 +712,7 @@ const SidebarMenuButton = React.forwardRef<
 
     const finalButtonClasses = cn(
       sidebarMenuButtonVariants({ variant, size, className }),
-      isCollapsed && "!size-8 !p-0 flex items-center justify-center" // Ensure centering of the single child (icon/icon wrapper)
+      isCollapsed && "!size-8 !p-0 flex items-center justify-center" 
     );
 
     const buttonElement = (
@@ -776,7 +776,7 @@ const SidebarMenuAction = React.forwardRef<
       ref={ref}
       data-sidebar="menu-action"
       className={cn(
-        "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-foreground outline-none ring-ring transition-transform hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 peer-hover/menu-button:text-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0", // Use defaults
+        "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-foreground outline-none ring-ring transition-transform hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 peer-hover/menu-button:text-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0", 
         "after:absolute after:-inset-2 after:md:hidden",
         "peer-data-[size=sm]/menu-button:top-1",
         "peer-data-[size=default]/menu-button:top-1.5",
@@ -804,7 +804,7 @@ const SidebarMenuBadge = React.forwardRef<
     ref={ref}
     data-sidebar="menu-badge"
     className={cn(
-      "absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-foreground select-none pointer-events-none", // Use default foreground
+      "absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-foreground select-none pointer-events-none", 
       "peer-hover/menu-button:text-accent-foreground peer-data-[active=true]/menu-button:text-accent-foreground",
       "peer-data-[size=sm]/menu-button:top-1",
       "peer-data-[size=default]/menu-button:top-1.5",
@@ -866,7 +866,7 @@ const SidebarMenuSub = React.forwardRef<
     ref={ref}
     data-sidebar="menu-sub"
     className={cn(
-      "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-border px-2.5 py-0.5", // Use default border
+      "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-border px-2.5 py-0.5", 
       className
     )}
     {...props}
@@ -901,7 +901,7 @@ const SidebarMenuSubButton = React.forwardRef<
       data-size={size}
       data-active={isActive}
       className={cn(
-        "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-foreground outline-none ring-ring hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-accent-foreground", // Use defaults
+        "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-foreground outline-none ring-ring hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-accent-foreground", 
         "data-[active=true]:bg-accent data-[active=true]:text-accent-foreground",
         size === "sm" && "text-xs",
         size === "md" && "text-sm",
