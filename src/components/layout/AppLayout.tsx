@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-  SidebarTrigger 
+  SidebarTrigger // Added import for SidebarTrigger
 } from '@/components/ui/sidebar';
 import { HomeIcon, LayoutDashboard as LayoutDashboardIcon, SettingsIcon, UserCircle } from 'lucide-react'; 
 
@@ -23,10 +23,10 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar collapsible="icon"> {/* Changed collapsible to "icon" */}
-        <SidebarHeader className="p-4">
-          
-          {/* Link component removed as requested */}
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="p-2 flex justify-end items-center">
+          {/* Link component was previously removed here by user request */}
+          <SidebarTrigger /> {/* SidebarTrigger added here */}
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
