@@ -10,28 +10,27 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import type { ChatUnderwritingAssistantInput, ChatUnderwritingAssistantOutput, ChatHistoryItem } from '@/types'; // Adjusted imports
 
-const MessagePartSchema = z.object({
-  text: z.string(),
-});
-
-const ChatHistoryItemSchema = z.object({
-  role: z.enum(['user', 'model']),
-  parts: z.array(MessagePartSchema),
-});
 
 // These are not exported to avoid "use server" issues with non-async exports.
 const ChatUnderwritingAssistantInputSchema = z.object({
   submissionId: z.string().describe('The ID of the submission being discussed.'),
+  insuredName: z.string().describe('The name of the insured party.'), // Added as per types/index.ts
+  brokerName: z.string().describe('The name of the broker.'), // Added as per types/index.ts
+  attachments: z.array(z.object({fileName: z.string(), fileType: z.string()})).describe('A list of attachments.'), // Added as per types/index.ts
   userQuery: z.string().describe('The user’s current question or message.'),
-  chatHistory: z.array(ChatHistoryItemSchema).optional().describe('The history of the conversation so far.')
+  chatHistory: z.array(z.object({ // Using inline definition to match type
+    role: z.enum(['user', 'model', 'tool']),
+    parts: z.array(z.object({ text: z.string().min(1) })),
+  })).optional().describe('The history of the conversation so far.')
 });
-export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
+
 
 const ChatUnderwritingAssistantOutputSchema = z.object({
   aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),
 });
-export type ChatUnderwritingAssistantOutput = z.infer<typeof ChatUnderwritingAssistantOutputSchema>;
+
 
 export async function chatWithUnderwritingAssistant(input: ChatUnderwritingAssistantInput): Promise<ChatUnderwritingAssistantOutput> {
   return chatWithUnderwritingAssistantFlow(input);
@@ -39,9 +38,22 @@ export async function chatWithUnderwritingAssistant(input: ChatUnderwritingAssis
 
 const prompt = ai.definePrompt({
   name: 'chatWithUnderwritingAssistantPrompt',
-  input: {schema: ChatUnderwritingAssistantInputSchema},
+  input: {schema: ChatUnderwritingAssistantInputSchema.extend({
+    // Adding boolean flags for Handlebars template convenience
+    isUser: z.boolean().optional(),
+    isModel: z.boolean().optional(),
+  })},
   output: {schema: ChatUnderwritingAssistantOutputSchema},
-  prompt: `You are an expert underwriting assistant for RiskPilot. You are discussing submission ID: {{{submissionId}}}.
+  prompt: `You are an expert underwriting assistant for CL Underwriting Assist. You are discussing submission ID: {{{submissionId}}} for insured {{{insuredName}}}, handled by broker {{{brokerName}}}.
+
+Available attachments for this submission are:
+{{#if attachments.length}}
+{{#each attachments}}
+- {{fileName}} ({{fileType}})
+{{/each}}
+{{else}}
+- No attachments listed for this submission.
+{{/if}}
 
 You can search information about the applicant in the attached submission or search the guideline. Since you dont have real access, just invent fact.
 
@@ -79,7 +91,7 @@ const chatWithUnderwritingAssistantFlow = ai.defineFlow(
     const processedInput = {
       ...input,
       chatHistory: input.chatHistory?.map(item => ({
-        ...item, // Spread original item properties (like 'parts')
+        ...item, 
         isUser: item.role === 'user',
         isModel: item.role === 'model',
       })),

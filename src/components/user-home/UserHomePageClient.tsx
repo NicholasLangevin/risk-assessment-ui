@@ -14,7 +14,7 @@ export function UserHomePageClient() {
   const recentActivity = "Reviewed Quote Q1000008";
 
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
+    <>
       <div className="flex items-center mb-8">
         <UserCircle2 className="h-12 w-12 mr-4 text-primary" />
         <div>
@@ -61,6 +61,6 @@ export function UserHomePageClient() {
           <Link href="/quote-dashboard">View Full Quote Dashboard</Link>
         </Button>
       </div>
-    </div>
+    </>
   );
 }

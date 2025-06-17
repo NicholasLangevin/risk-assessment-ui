@@ -18,6 +18,7 @@ import type {
   PriorityLevel,
   CaseType,
   CaseStatus,
+  NotificationItem, // Added NotificationItem
 } from '@/types';
 import { formatISO, addDays, addMinutes, subDays } from 'date-fns';
 
@@ -38,9 +39,10 @@ export const mockCaseListItems: CaseListItem[] = allMockCases.map(c => ({
   insuredName: c.insuredName,
   broker: c.broker,
   status: c.status,
-  receivedDate: c.receivedDate, // keep for potential future use or if other components need it
+  receivedDate: c.receivedDate, 
   priority: c.priority,
-  relatedQuoteId: c.relatedQuoteId, // Ensure this is mapped
+  relatedQuoteId: c.relatedQuoteId,
+  assignedTo: c.assignedTo, // Ensure assignedTo is mapped
 }));
 
 
@@ -162,4 +164,76 @@ export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'GUIDE-112', name: 'Product Liability Assessment' },
   { id: 'GUIDE-113', name: 'Professional Indemnity Requirements' },
   { id: 'GUIDE-114', name: 'Supply Chain Risk Analysis' },
+];
+
+export const mockNotifications: NotificationItem[] = [
+  {
+    id: 'notif-1',
+    avatarSrc: 'https://placehold.co/40x40.png',
+    avatarAlt: 'User1',
+    message: 'AhnaldT101 a mis en ligne: We need to talk about GL Ahsoka Tano... Was This a MASSIVE Failure?',
+    timestamp: '13 hours ago',
+    imageSrc: 'https://placehold.co/112x63.png',
+    imageAlt: 'Video thumbnail for Ahsoka Tano discussion',
+    isRead: false,
+    category: 'Important',
+  },
+  {
+    id: 'notif-2',
+    avatarSrc: 'https://placehold.co/40x40.png',
+    avatarAlt: 'User2',
+    message: 'Risk Assessment for Q-20240701-001 has been updated. Please review the changes.',
+    timestamp: '2 days ago',
+    isRead: true,
+    category: 'Important',
+  },
+  {
+    id: 'notif-3',
+    avatarSrc: 'https://placehold.co/40x40.png',
+    avatarAlt: 'User1',
+    message: 'AhnaldT101 a mis en ligne: One of the WORST Things SWGoH Has Done... What Are They Thinking?',
+    timestamp: '3 days ago',
+    imageSrc: 'https://placehold.co/112x63.png',
+    imageAlt: 'Video thumbnail for SWGoH discussion',
+    isRead: false,
+    category: 'More',
+  },
+  {
+    id: 'notif-4',
+    avatarSrc: 'https://placehold.co/40x40.png',
+    avatarAlt: 'System',
+    message: 'Policy P-20230915-002 is due for renewal in 14 days. Start renewal process for Synergy Group.',
+    timestamp: '4 days ago',
+    isRead: true,
+    category: 'More',
+  },
+  {
+    id: 'notif-5',
+    avatarSrc: 'https://placehold.co/40x40.png',
+    avatarAlt: 'User1',
+    message: "AhnaldT101 a mis en ligne: I can't believe this is not 100% trash...",
+    timestamp: '4 days ago',
+    imageSrc: 'https://placehold.co/112x63.png',
+    imageAlt: 'Video thumbnail for game critique',
+    isRead: true,
+    category: 'More',
+  },
+  {
+    id: 'notif-6',
+    avatarSrc: 'https://placehold.co/40x40.png',
+    avatarAlt: 'User3',
+    message: 'New case C-20240715-009 assigned: High priority submission from Innovate Corp.',
+    timestamp: '1 hour ago',
+    isRead: false,
+    category: 'Important',
+  },
+  {
+    id: 'notif-7',
+    avatarSrc: 'https://placehold.co/40x40.png',
+    avatarAlt: 'AI Agent',
+    message: 'AI has completed initial analysis for Quote Q-20240710-004. Guideline evaluation is ready.',
+    timestamp: '5 hours ago',
+    isRead: true,
+    category: 'More',
+  },
 ];

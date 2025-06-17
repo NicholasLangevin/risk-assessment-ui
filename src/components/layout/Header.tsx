@@ -1,41 +1,58 @@
 
+'use client';
+
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar'; // Import SidebarTrigger
-import { Input } from '@/components/ui/input'; // Import Input
-import { Search } from 'lucide-react'; // Import Search icon
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Input } from '@/components/ui/input';
+import { Search, Bell } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { NotificationList } from './NotificationList';
+import { mockNotifications } from '@/lib/mockData';
+import { useState } from 'react';
 
 export function Header() {
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-14">
-      <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Left Section */}
+    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-2">
+        
+        {/* Left Section: Sidebar Trigger and App Title */}
         <div className="flex items-center space-x-2">
-          <SidebarTrigger className="h-8 w-8 p-2" />
-          <Link href="/" className="flex items-center">
+          <SidebarTrigger />
+          <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold sm:inline-block font-headline">
-              RiskPilot
+              CL Underwriting Assist
             </span>
           </Link>
         </div>
 
-        {/* Center Section - Search Bar */}
-        <div className="flex flex-1 items-center justify-center px-4">
-          <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        {/* Center Section: Search Bar */}
+        <div className="flex-1 flex justify-center px-4">
+          <div className="relative w-full max-w-md">
             <Input
               type="search"
-              placeholder="Search (e.g., quote ID, insured name)..."
-              className="w-full rounded-md bg-background/70 pl-10 pr-4 py-2 text-sm h-9"
+              placeholder="Search submissions, policies..."
+              className="pl-10 h-9"
             />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
         </div>
 
-        {/* Right Section - Future Icons/User Menu */}
+        {/* Right Section: Notification Icon & Popover */}
         <div className="flex items-center space-x-2">
-          {/* Placeholder for future user menu, notifications, etc. */}
-          {/* Example: <Button variant="ghost" size="icon"><User className="h-5 w-5" /></Button> */}
+           <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Notifications">
+                <Bell className="h-6 w-6" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 border-border shadow-xl mt-2" align="end" sideOffset={8}>
+              <NotificationList notifications={mockNotifications} />
+            </PopoverContent>
+          </Popover>
+          {/* User Profile button removed from here */}
         </div>
       </div>
     </header>
