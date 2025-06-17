@@ -506,8 +506,8 @@ SidebarGroup.displayName = "SidebarGroup"
 
 const SidebarGroupLabel = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> & { asChild?: boolean }
->(({ className, asChild = false, ...props }, ref) => {
+  React.ComponentProps<"div"> & { asChild?: boolean, sidebarViewMode?: 'expanded' | 'collapsed'; }
+>(({ className, asChild = false, sidebarViewMode: _ignoredPropViewMode, ...props }, ref) => {
   const Comp = asChild ? Slot : "div";
   const viewMode = useSidebarView();
 
@@ -531,8 +531,8 @@ SidebarGroupLabel.displayName = "SidebarGroupLabel"
 
 const SidebarGroupAction = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<"button"> & { asChild?: boolean }
->(({ className, asChild = false, ...props }, ref) => {
+  React.ComponentProps<"button"> & { asChild?: boolean, sidebarViewMode?: 'expanded' | 'collapsed'; }
+>(({ className, asChild = false, sidebarViewMode: _ignoredPropViewMode, ...props }, ref) => {
   const Comp = asChild ? Slot : "button";
   const viewMode = useSidebarView();
 
@@ -632,13 +632,13 @@ const SidebarMenuItem = React.forwardRef<HTMLLIElement, SidebarMenuItemProps>(
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:bg-muted data-[active=true]:text-muted-foreground data-[state=open]:hover:bg-accent data-[state=open]:hover:text-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0", 
+  "peer/menu-button flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:bg-muted data-[active=true]:text-muted-foreground data-[state=open]:hover:bg-muted data-[state=open]:hover:text-muted-foreground [&>svg]:size-4 [&>svg]:shrink-0", 
   {
     variants: {
       variant: {
-        default: "hover:bg-accent hover:text-accent-foreground", 
+        default: "hover:bg-muted hover:text-muted-foreground", 
         outline:
-          "bg-background shadow-[0_0_0_1px_hsl(var(--border))] hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--accent))]", 
+          "bg-background shadow-[0_0_0_1px_hsl(var(--border))] hover:bg-muted hover:text-muted-foreground hover:shadow-[0_0_0_1px_hsl(var(--muted))]", 
       },
       size: {
         default: "h-8 text-sm",
@@ -685,28 +685,47 @@ const SidebarMenuButton = React.forwardRef<
     let childrenToRender: React.ReactNode = children;
 
     if (isCollapsed) {
-        if (asChild && React.isValidElement(children)) {
-            // Child is <Link>
-            const linkElement = children as React.ReactElement<any>;
-            // The first child of <Link> is the icon wrapper span (or the icon itself if not wrapped for active state bg)
-            const iconWrapperOrIcon = React.Children.toArray(linkElement.props.children)[0];
-            if (React.isValidElement(iconWrapperOrIcon)) {
-                childrenToRender = React.cloneElement(linkElement, { children: iconWrapperOrIcon });
+      if (asChild && React.isValidElement(children)) {
+        // Child is <Link>
+        const linkElement = children as React.ReactElement<any>;
+        // The first child of <Link> is the icon (or its wrapper span if used for styling)
+        const firstChildOfLink = React.Children.toArray(linkElement.props.children)[0];
+
+        if (React.isValidElement(firstChildOfLink)) {
+          // Check if this first child is the span wrapping the icon (e.g., for active state background)
+          if (firstChildOfLink.type === 'span' && React.Children.count(firstChildOfLink.props.children) === 1) {
+            const iconInsideSpan = React.Children.toArray(firstChildOfLink.props.children)[0];
+            if (React.isValidElement(iconInsideSpan) && typeof iconInsideSpan.type === 'function' && /Icon/i.test((iconInsideSpan.type as Function).name)) {
+               // Render the wrapper span with the icon inside, but ensure the Link (button) itself is small.
+               childrenToRender = React.cloneElement(linkElement, { children: firstChildOfLink });
             } else {
-                 childrenToRender = React.cloneElement(linkElement, { children: null }); // Fallback
+              // Fallback: render just the first child if it's not the icon wrapper pattern
+              childrenToRender = React.cloneElement(linkElement, { children: firstChildOfLink });
             }
-        } else if (!asChild) {
-            // Direct children of button
-            const directChildrenArray = React.Children.toArray(children);
-            const iconOrWrapper = directChildrenArray.find(child => {
-                if (React.isValidElement(child)) {
-                    // Check if it's the span wrapping the icon or the icon itself
-                    return child.type === 'span' || (typeof child.type === 'function' && /Icon/i.test((child.type as Function).name));
-                }
-                return false;
-            });
-            childrenToRender = iconOrWrapper || null;
+          } else if (typeof firstChildOfLink.type === 'function' && /Icon/i.test((firstChildOfLink.type as Function).name)) {
+            // Direct icon child of Link
+            childrenToRender = React.cloneElement(linkElement, { children: firstChildOfLink });
+          } else {
+            childrenToRender = React.cloneElement(linkElement, { children: null }); // Fallback
+          }
+        } else {
+          childrenToRender = React.cloneElement(linkElement, { children: null }); // Fallback
         }
+
+      } else if (!asChild) {
+          // Direct children of button
+          const directChildrenArray = React.Children.toArray(children);
+          const iconOrWrapper = directChildrenArray.find(child => {
+              if (React.isValidElement(child)) {
+                  // Check if it's the span wrapping the icon OR the icon itself
+                  const isIconWrapperSpan = child.type === 'span' && React.Children.count(child.props.children) === 1 && React.isValidElement(React.Children.toArray(child.props.children)[0]) && typeof (React.Children.toArray(child.props.children)[0] as React.ReactElement).type === 'function' && /Icon/i.test(((React.Children.toArray(child.props.children)[0] as React.ReactElement).type as Function).name);
+                  const isDirectIcon = typeof child.type === 'function' && /Icon/i.test((child.type as Function).name);
+                  return isIconWrapperSpan || isDirectIcon;
+              }
+              return false;
+          });
+          childrenToRender = iconOrWrapper || null;
+      }
     }
 
 
@@ -761,9 +780,10 @@ const SidebarMenuAction = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & {
     asChild?: boolean
-    showOnHover?: boolean
+    showOnHover?: boolean,
+    sidebarViewMode?: 'expanded' | 'collapsed';
   }
->(({ className, asChild = false, showOnHover = false, ...props }, ref) => {
+>(({ className, asChild = false, showOnHover = false, sidebarViewMode: _ignoredPropViewMode, ...props }, ref) => {
   const Comp = asChild ? Slot : "button";
   const viewMode = useSidebarView();
 
@@ -793,8 +813,8 @@ SidebarMenuAction.displayName = "SidebarMenuAction"
 
 const SidebarMenuBadge = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, ...props }, ref) => {
+  React.ComponentProps<"div"> & { sidebarViewMode?: 'expanded' | 'collapsed'; }
+>(({ className, sidebarViewMode: _ignoredPropViewMode, ...props }, ref) => {
   const viewMode = useSidebarView();
   if (viewMode === 'collapsed') {
     return null;
@@ -855,8 +875,8 @@ SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton"
 
 const SidebarMenuSub = React.forwardRef<
   HTMLUListElement,
-  React.ComponentProps<"ul">
->(({ className, ...props }, ref) => {
+  React.ComponentProps<"ul"> & { sidebarViewMode?: 'expanded' | 'collapsed'; }
+>(({ className, sidebarViewMode: _ignoredPropViewMode, ...props }, ref) => {
   const viewMode = useSidebarView();
   if (viewMode === 'collapsed') {
     return null;
@@ -885,9 +905,10 @@ const SidebarMenuSubButton = React.forwardRef<
   React.ComponentProps<"a"> & {
     asChild?: boolean
     size?: "sm" | "md"
-    isActive?: boolean
+    isActive?: boolean,
+    sidebarViewMode?: 'expanded' | 'collapsed';
   }
->(({ asChild = false, size = "md", isActive, className, ...props }, ref) => {
+>(({ asChild = false, size = "md", isActive, className, sidebarViewMode: _ignoredPropViewMode, ...props }, ref) => {
   const Comp = asChild ? Slot : "a";
   const viewMode = useSidebarView();
   if (viewMode === 'collapsed') {
