@@ -60,20 +60,16 @@ export function SidebarProvider({
   onOpenChange?: (open: boolean) => void;
 }) {
   const isMobileHookValue = useIsMobile();
-  const [_open, _setOpenInternal] = React.useState(defaultOpen); // Initial state based on defaultOpen
+  const [_open, _setOpenInternal] = React.useState(defaultOpen); 
 
-  // Effect to sync with cookie and openProp *after* mount
   React.useEffect(() => {
-    // Handle controlled component scenario
     if (openProp !== undefined) {
-      if (openProp !== _open) { // Check if internal state needs to align with prop
+      if (openProp !== _open) { 
          _setOpenInternal(openProp);
       }
-      // If controlled, cookie updates are managed by the controlling component via onOpenChange
       return;
     }
 
-    // Handle uncontrolled component with cookie
     if (typeof window !== "undefined") {
       const cookieValueString = document.cookie
         .split("; ")
@@ -82,13 +78,12 @@ export function SidebarProvider({
 
       if (cookieValueString) {
         const cookieValueBoolean = cookieValueString === "true";
-        if (_open !== cookieValueBoolean) { // Only update if different from current/default
+        if (_open !== cookieValueBoolean) { 
           _setOpenInternal(cookieValueBoolean);
         }
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openProp, defaultOpen]); // Rerun if defaultOpen or openProp changes
+  }, [openProp, defaultOpen, _open]); 
 
   const open = openProp !== undefined ? openProp : _open;
 
@@ -96,15 +91,15 @@ export function SidebarProvider({
     (value: boolean | ((prevState: boolean) => boolean)) => {
       const newOpenState = typeof value === "function" ? value(open) : value;
       if (setOpenProp) {
-        setOpenProp(newOpenState); // Call prop if controlled
+        setOpenProp(newOpenState); 
       } else {
-        _setOpenInternal(newOpenState); // Update internal state if uncontrolled
-        if (typeof window !== "undefined") { // Update cookie only if uncontrolled
+        _setOpenInternal(newOpenState); 
+        if (typeof window !== "undefined") { 
           document.cookie = `${SIDEBAR_COOKIE_NAME}=${newOpenState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
         }
       }
     },
-    [open, setOpenProp] // Removed _setOpenInternal from deps as it's stable
+    [open, setOpenProp] 
   );
 
 
@@ -218,7 +213,7 @@ const Sidebar = React.forwardRef<
             {...props}
           >
             <div className="flex h-full w-full flex-col">
-              <SidebarViewContext.Provider value="expanded"> {/* Mobile always expanded view */}
+              <SidebarViewContext.Provider value="expanded"> 
                 {children}
               </SidebarViewContext.Provider>
             </div>
@@ -230,54 +225,49 @@ const Sidebar = React.forwardRef<
     // Desktop
     const isIconCollapsible = currentCollapsibleMode === 'icon';
 
-    // Placeholder is always there to affect AppLayout's flex behavior
     const placeholderWidthClass = currentViewMode === "expanded"
       ? "w-[var(--sidebar-width)]"
       : isIconCollapsible
         ? "w-[var(--sidebar-width-icon)]"
-        : "w-0"; // Offcanvas (desktop) placeholder is 0 when collapsed
+        : "w-0"; 
 
-    // Panel styling
     const panelWidthClass = currentViewMode === "expanded"
         ? "w-[var(--sidebar-width)]"
         : isIconCollapsible
             ? "w-[var(--sidebar-width-icon)]"
-            : "w-[var(--sidebar-width)]"; // Offcanvas keeps width but translates
+            : "w-[var(--sidebar-width)]"; 
 
     const panelTransformClass = (currentViewMode === "collapsed" && currentCollapsibleMode === "offcanvas")
         ? (side === "left" ? "-translate-x-full" : "translate-x-full")
         : "";
 
     return (
-      // This div acts as the placeholder by taking up space in the layout flow.
-      // It also serves as the positioning context for the fixed visual panel if needed, though the panel is fixed to viewport.
       <div
         ref={ref}
         className={cn(
             "group peer hidden md:block text-sidebar-foreground",
             placeholderWidthClass,
-            "transition-[width] duration-200 ease-linear relative h-full", // Removed top-14 h-[calc(100vh-3.5rem)]
+            "transition-[width] duration-200 ease-linear relative h-full", 
             className
         )}
         data-state={currentViewMode}
-        data-collapsible={currentCollapsibleMode} // Use resolved collapsible mode
+        data-collapsible={currentCollapsibleMode} 
         data-variant={variant}
         data-side={side}
         {...props}
       >
-        {/* Actual visual sidebar panel, fixed positioning */}
         <div
           className={cn(
             "fixed z-30 flex flex-col bg-sidebar transition-[width,transform] duration-200 ease-linear",
-            "top-14 h-[calc(100vh-3.5rem)]", // Positioned below header
+            "top-14 h-[calc(100vh-3.5rem)]", 
             panelWidthClass,
             panelTransformClass,
             side === "left" ? "left-0" : "right-0",
             (variant === "floating" || variant === "inset") && "p-2",
             (variant === "floating" || variant === "inset") && currentViewMode === "collapsed" && isIconCollapsible
-              ? "w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]" // Adjust for padding if floating/inset and icon
+              ? "w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]" 
               : "",
-            (variant !== "floating" && variant !== "inset") && (side === "left" ? "border-r" : "border-l"), // Border for non-floating/inset
+            (variant !== "floating" && variant !== "inset") && (side === "left" ? "border-r" : "border-l"), 
             (variant === "floating" || variant === "inset") && "group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           )}
         >
@@ -303,7 +293,7 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-7 w-7", className)}
+      className={cn("h-8 w-8 p-0 flex items-center justify-center", className)}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
@@ -352,10 +342,10 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "flex-1 bg-background h-full overflow-y-auto min-h-0",
-        "px-4 sm:px-6 lg:px-8 py-8",
-        "max-w-screen-2xl mx-auto w-full",
-        // No longer adjusting padding based on peer state here
-        // The placeholder in Sidebar handles the width adjustment for content flow
+        "px-4 sm:px-6 lg:px-8 py-8", // Standard padding
+        "max-w-screen-2xl mx-auto w-full", // Centering and max-width for content
+        // Removed peer-data based padding adjustments
+        "transition-[padding-left] duration-200 ease-linear", // Added transition for padding if it were to change (though not directly by peer here)
         className
       )}
       {...props}
@@ -599,7 +589,7 @@ const SidebarMenuItem = React.forwardRef<
       data-sidebar="menu-item"
       className={cn(
         "group/menu-item relative",
-        isCollapsed && "flex justify-center",
+        isCollapsed && "flex justify-center", // Center button when item is collapsed
         className
       )}
       {...props}
@@ -615,7 +605,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -653,7 +643,7 @@ const SidebarMenuButton = React.forwardRef<
       size = "default",
       tooltip,
       className,
-      children, // These are the original children passed to SidebarMenuButton
+      children, 
       sidebarViewMode: propSidebarViewMode,
       ...props
     },
@@ -668,44 +658,34 @@ const SidebarMenuButton = React.forwardRef<
 
     const finalButtonClasses = cn(
       sidebarMenuButtonVariants({ variant, size, className }),
-      isCollapsed && "!size-8 !p-0 flex items-center justify-center" // Collapsed specific: 2rem square, no padding, flex center
+      isCollapsed && "!size-8 !p-0 flex items-center justify-center" 
     );
 
     let childrenToRender: React.ReactNode;
 
-    if (asChild && React.isValidElement(children)) {
-      // If asChild, children is the <Link> component.
-      // We need to modify the children *of the Link component*.
-      const linkElement = children as React.ReactElement<any>;
-      const modifiedLinkChildren: React.ReactNode[] = [];
-      React.Children.forEach(linkElement.props.children, (grandChild) => {
-        if (React.isValidElement(grandChild)) {
-          if (isCollapsed && grandChild.type === 'span') {
-            // Omit span if collapsed
-          } else {
-            modifiedLinkChildren.push(grandChild); // Keep icon or other elements
+    if (isCollapsed) {
+      const iconChildren: React.ReactNode[] = [];
+      const processChildrenForIcon = (childrenToProcess: React.ReactNode) => {
+        React.Children.forEach(childrenToProcess, (child) => {
+          if (React.isValidElement(child)) {
+            // In collapsed mode, only keep the non-span child (assumed to be the icon or icon wrapper)
+            if (typeof child.type !== 'string' || child.type.toLowerCase() !== 'span') {
+              iconChildren.push(child);
+            }
           }
-        } else {
-          modifiedLinkChildren.push(grandChild); // Keep text nodes if any (shouldn't be for Link)
-        }
-      });
-      // Clone the Link element with its modified children
-      childrenToRender = React.cloneElement(linkElement, { children: modifiedLinkChildren });
+        });
+      };
+
+      if (asChild && React.isValidElement(children)) {
+        const linkElement = children as React.ReactElement<any>;
+        processChildrenForIcon(linkElement.props.children);
+        childrenToRender = React.cloneElement(linkElement, { children: iconChildren });
+      } else {
+        processChildrenForIcon(children);
+        childrenToRender = iconChildren;
+      }
     } else {
-      // If not asChild, children are direct Icon and Span.
-      const directChildrenArray: React.ReactNode[] = [];
-      React.Children.forEach(children, (child) => {
-        if (React.isValidElement(child)) {
-          if (isCollapsed && child.type === 'span') {
-            // Omit span if collapsed
-          } else {
-            directChildrenArray.push(child); // Keep icon
-          }
-        } else {
-           directChildrenArray.push(child);
-        }
-      });
-      childrenToRender = directChildrenArray;
+      childrenToRender = children;
     }
     
     const buttonElement = (
