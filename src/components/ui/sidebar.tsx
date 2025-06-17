@@ -206,6 +206,10 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
+            {/* Added SheetHeader and SheetTitle for accessibility on mobile */}
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle className="sr-only">Main Navigation</SheetTitle>
+            </SheetHeader>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>

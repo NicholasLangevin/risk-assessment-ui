@@ -1,18 +1,22 @@
+'use client'; // Ensures context can flow from SidebarProvider in RootLayout
+
 import type React from 'react';
-import { Header } from './Header';
+import { SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from './AppSidebar';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  // AppSidebar is fixed and handles its own positioning (top-14).
+  // SidebarInset needs padding-top to account for the fixed header and should grow.
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1">
+    <>
+      <AppSidebar />
+      <SidebarInset className="pt-14 bg-background flex-grow">
         {children}
-      </main>
-      {/* Add a footer here if needed */}
-    </div>
+      </SidebarInset>
+    </>
   );
 }

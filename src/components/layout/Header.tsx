@@ -1,28 +1,45 @@
 
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button'; // Added Button for consistent styling
+import { Button } from '@/components/ui/button';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center">
-        <Link href="/" className="flex items-center space-x-2 mr-6">
-           {/* You can add a logo here if you have one */}
-          {/* <Image src="https://logotyp.us/file/firebase.svg" alt="Logo" width={24} height={24} /> */}
-          <span className="font-bold sm:inline-block font-headline">
-            Underwriting Platform
-          </span>
-        </Link>
-        <nav className="flex items-center space-x-2">
-          <Button variant="ghost" asChild className="text-sm font-medium text-muted-foreground hover:text-foreground">
-            <Link href="/">Home</Link>
-          </Button>
-          <Button variant="ghost" asChild className="text-sm font-medium text-muted-foreground hover:text-foreground">
-            <Link href="/quote-dashboard">Quote Dashboard</Link>
-          </Button>
-          {/* Add more navigation items here if needed */}
-        </nav>
+    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-14 items-center px-4 sm:px-6 lg:px-8 justify-between">
+        {/* Left Section */}
+        <div className="flex items-center space-x-2">
+          <SidebarTrigger />
+          <Link href="/" className="flex items-center space-x-2">
+            {/* You can add a logo here if you have one */}
+            {/* <Image src="https://logotyp.us/file/firebase.svg" alt="Logo" width={24} height={24} /> */}
+            <span className="font-bold sm:inline-block font-headline">
+              RiskPilot
+            </span>
+          </Link>
+        </div>
+
+        {/* Center Section - Search Bar */}
+        <div className="flex-1 flex justify-center px-4">
+          <div className="relative w-full max-w-md">
+            <Input
+              type="search"
+              placeholder="Search submissions, policies..."
+              className="pl-10 h-9"
+            />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
+        </div>
+
+        {/* Right Section - Placeholder for user profile/settings */}
+        <div className="flex items-center space-x-2">
+          {/* Example: <Button variant="ghost" size="icon"><UserIcon className="h-5 w-5" /></Button> */}
+        </div>
       </div>
     </header>
   );
