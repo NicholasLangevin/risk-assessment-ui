@@ -36,6 +36,7 @@ interface QuoteViewClientProps {
   initialQuoteDetails: QuoteDetails | null;
   initialAiProcessingData: AiProcessingData;
   initialAiUnderwritingActions: AiUnderwritingActions;
+  hideHeader?: boolean; // New prop
 }
 
 const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -45,12 +46,12 @@ const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     fill="currentColor"
     {...props}
   >
-    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714,6.31,13.408-13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
+    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714,6.31,13.408,13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
   </svg>
 );
 
 
-export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, initialAiUnderwritingActions }: QuoteViewClientProps) {
+export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, initialAiUnderwritingActions, hideHeader = false }: QuoteViewClientProps) {
   const [quoteDetails, setQuoteDetails] = useState<QuoteDetails | null>(initialQuoteDetails);
   const { toast } = useToast();
   const router = useRouter();
@@ -457,64 +458,77 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
-      <div className="flex justify-end items-center mb-4">
-        {/* Back button removed as per user request */}
-        <Button variant="outline" className="h-9" onClick={handleShowAiMonitor}>
-          <Activity className="mr-2 h-4 w-4" /> AI Chat & Monitor
-        </Button>
-      </div>
+      {!hideHeader && (
+        <div className="flex justify-end items-center mb-4">
+          <Button variant="outline" className="h-9" onClick={handleShowAiMonitor}>
+            <Activity className="mr-2 h-4 w-4" /> AI Chat & Monitor
+          </Button>
+        </div>
+      )}
 
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6 border">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-3xl font-bold font-headline mb-1">
-              Quote: {quoteDetails.id}
-            </h1>
-            <p className="text-muted-foreground">
-              Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}
-            </p>
-          </div>
-          <div className="flex items-center space-x-2 flex-shrink-0">
-            <Select
-              value={selectedDecision || ""}
-              onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
-            >
-              <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
-                <SelectValue placeholder="Select decision..." />
-              </SelectTrigger>
-              <SelectContent>
-                {decisionOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={handleConfirmAndGenerateEmail}
-              disabled={!selectedDecision || isGeneratingEmail}
-              size="sm"
-              className="h-9"
-            >
-              {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
-              Confirm & Generate Email
-            </Button>
-          </div>
-        </div>
-        
-        <div className="mt-4 p-3 border rounded-md bg-muted/30 shadow-sm">
-          <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
-            <AiSparkleIcon className="h-4 w-4 mr-2" />
-            AI Risk Assessment
-          </h4>
-          {isRiskStatementLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
+      {!hideHeader && (
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6 border">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-3xl font-bold font-headline mb-1">
+                Quote: {quoteDetails.id}
+              </h1>
+              <p className="text-muted-foreground">
+                Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}
+              </p>
             </div>
-          ) : (
-            <p className="text-sm text-foreground/90 whitespace-pre-wrap">{aiOverallRiskStatement}</p>
-          )}
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <Select
+                value={selectedDecision || ""}
+                onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
+              >
+                <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
+                  <SelectValue placeholder="Select decision..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {decisionOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={handleConfirmAndGenerateEmail}
+                disabled={!selectedDecision || isGeneratingEmail}
+                size="sm"
+                className="h-9"
+              >
+                {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
+                Confirm & Generate Email
+              </Button>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 border rounded-md bg-muted/30 shadow-sm">
+            <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
+              <AiSparkleIcon className="h-4 w-4 mr-2" />
+              AI Risk Assessment
+            </h4>
+            {isRiskStatementLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ) : (
+              <p className="text-sm text-foreground/90 whitespace-pre-wrap">{aiOverallRiskStatement}</p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Conditional rendering for AI Monitor button if header is hidden */}
+      {hideHeader && (
+         <div className="flex justify-end items-center mb-4">
+          <Button variant="outline" className="h-9" onClick={handleShowAiMonitor}>
+            <Activity className="mr-2 h-4 w-4" /> AI Chat & Monitor
+          </Button>
+        </div>
+      )}
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -581,4 +595,3 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     </div>
   );
 }
-

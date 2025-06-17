@@ -61,6 +61,7 @@ export default async function CaseRiskAssessmentPage({ params }: CaseRiskAssessm
         initialQuoteDetails={finalQuoteDetails}
         initialAiProcessingData={initialAiProcessingData}
         initialAiUnderwritingActions={initialAiUnderwritingActions}
+        hideHeader={true} // Pass the new prop here
       />
     );
   }
