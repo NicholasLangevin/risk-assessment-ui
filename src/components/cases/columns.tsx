@@ -39,15 +39,11 @@ export const columns: ColumnDef<CaseListItem>[] = [
     },
     cell: ({ row }) => {
       const caseItem = row.original;
-      // Link to quote if relatedQuoteId exists, otherwise just display ID
-      if (caseItem.relatedQuoteId) {
-        return (
-          <Button variant="link" asChild className="p-0 h-auto font-medium">
-            <Link href={`/quote/${caseItem.relatedQuoteId}`}>{caseItem.id}</Link>
-          </Button>
-        );
-      }
-      return <div className="font-medium">{caseItem.id}</div>;
+      return (
+        <Button variant="link" asChild className="p-0 h-auto font-medium">
+          <Link href={`/case/${caseItem.id}`}>{caseItem.id}</Link>
+        </Button>
+      );
     },
   },
   {
