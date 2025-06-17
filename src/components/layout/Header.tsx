@@ -1,14 +1,18 @@
-
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
-import { Search, Bell } from 'lucide-react'; // Changed UserCircle to Bell
+import { Search, Bell } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { NotificationList } from './NotificationList';
+import { mockNotifications } from '@/lib/mockData';
+import { useState } from 'react';
 
 export function Header() {
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between px-4 sm:px-6 lg:px-2">
@@ -17,8 +21,6 @@ export function Header() {
         <div className="flex items-center space-x-2">
           <SidebarTrigger />
           <Link href="/" className="flex items-center space-x-2">
-            {/* You can add a logo here if you have one */}
-            {/* <Image src="https://logotyp.us/file/firebase.svg" alt="Logo" width={24} height={24} /> */}
             <span className="font-bold sm:inline-block font-headline">
               RiskPilot
             </span>
@@ -37,11 +39,18 @@ export function Header() {
           </div>
         </div>
 
-        {/* Right Section: Notification Icon */}
+        {/* Right Section: Notification Icon & Popover */}
         <div className="flex items-center">
-          <Button variant="ghost" size="icon" aria-label="Notifications">
-            <Bell className="h-6 w-6" />
-          </Button>
+          <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Notifications">
+                <Bell className="h-6 w-6" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 border-border shadow-xl mt-2" align="end" sideOffset={8}>
+              <NotificationList notifications={mockNotifications} />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </header>

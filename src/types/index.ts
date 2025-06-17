@@ -236,3 +236,16 @@ export const EmailGenerationOutputSchema = z.object({
   emailBody: z.string().describe('The suggested body content for the email.'),
 });
 export type EmailGenerationOutput = z.infer<typeof EmailGenerationOutputSchema>;
+
+// --- Type for Notifications Popover ---
+export interface NotificationItem {
+  id: string;
+  avatarSrc: string;
+  avatarAlt: string;
+  message: string;
+  timestamp: string; // e.g., "13 hours ago", "3 days ago"
+  imageSrc?: string;
+  imageAlt?: string;
+  isRead: boolean;
+  category: 'Important' | 'More';
+}
