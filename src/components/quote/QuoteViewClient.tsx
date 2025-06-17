@@ -459,7 +459,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       <div className="flex justify-between items-center mb-4">
         <Button variant="outline" size="sm" asChild>
-          <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
+          <Link href="/quote-dashboard"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Quote Dashboard</Link>
         </Button>
         <Button variant="outline" className="h-9" onClick={handleShowAiMonitor}>
           <Activity className="mr-2 h-4 w-4" /> AI Chat & Monitor
@@ -583,3 +583,4 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     </div>
   );
 }
+
