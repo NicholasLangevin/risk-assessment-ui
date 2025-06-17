@@ -7,7 +7,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar'; // Import SidebarTrigg
 export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-14">
-      <div className="container flex h-full max-w-screen-2xl items-center">
+      <div className="flex h-full items-center px-4 sm:px-6 lg:px-8"> {/* Changed from container to direct padding */}
         <SidebarTrigger className="h-8 w-8 p-2 mr-4" /> {/* SidebarTrigger added to the left */}
         <Link href="/" className="flex items-center space-x-2">
           <span className="font-bold sm:inline-block font-headline">
