@@ -30,7 +30,7 @@ type SidebarContextValue = {
   setOpen: (open: boolean) => void
   openMobile: boolean
   setOpenMobile: (open: boolean) => void
-  isMobile: boolean | undefined; // Allow undefined for initial state
+  isMobile: boolean | undefined;
   toggleSidebar: () => void
 }
 
@@ -55,9 +55,35 @@ export function SidebarProvider({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
-  const isMobile = useIsMobile() // This returns boolean | undefined
-  const [_open, _setOpen] = React.useState(defaultOpen)
-  const [openMobile, setOpenMobile] = React.useState(false)
+  const isMobileHookValue = useIsMobile();
+
+  // Initialize _open with defaultOpen for SSR and initial client render consistency
+  const [_open, _setOpen] = React.useState(defaultOpen);
+  const [openMobile, setOpenMobile] = React.useState(false);
+
+  // Effect to read cookie and update state on client-side after hydration
+  React.useEffect(() => {
+    // This effect runs only on the client
+    const cookieValueString = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+      ?.split("=")[1];
+
+    if (cookieValueString) {
+      const cookieValueBoolean = cookieValueString === "true";
+      // Only update if the cookie value is different from the current state
+      // This handles the case where defaultOpen might match the cookie
+      if (cookieValueBoolean !== _open) {
+        if (setOpenProp) {
+          setOpenProp(cookieValueBoolean);
+        } else {
+          _setOpen(cookieValueBoolean);
+        }
+      }
+    }
+    // If no cookie, state remains as defaultOpen, ensuring consistency with SSR
+  }, [defaultOpen, setOpenProp]); // Dependencies: defaultOpen and setOpenProp
+                                  // _open is intentionally omitted to avoid re-running when _setOpen is called by this effect.
 
   const open = openProp !== undefined ? openProp : _open;
 
@@ -73,18 +99,18 @@ export function SidebarProvider({
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${newOpenState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
       }
     },
-    [open, setOpenProp, _setOpen] // Corrected dependencies
+    [open, setOpenProp]
   );
 
   const toggleSidebar = React.useCallback(() => {
-    if (isMobile === undefined) return; // Don't toggle if isMobile is not yet determined
-    return isMobile
+    if (isMobileHookValue === undefined) return;
+    return isMobileHookValue
       ? setOpenMobile((current) => !current)
       : setOpen((current) => !current)
-  }, [isMobile, setOpen, setOpenMobile])
+  }, [isMobileHookValue, setOpen, setOpenMobile]);
 
   React.useEffect(() => {
-    if (isMobile === undefined) return; // Don't attach listener if isMobile is not determined
+    if (isMobileHookValue === undefined) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -99,7 +125,7 @@ export function SidebarProvider({
       window.addEventListener("keydown", handleKeyDown)
       return () => window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [toggleSidebar, isMobile])
+  }, [toggleSidebar, isMobileHookValue]);
 
   const state = open ? "expanded" : "collapsed"
 
@@ -108,12 +134,12 @@ export function SidebarProvider({
       state,
       open,
       setOpen,
-      isMobile, // Pass the potentially undefined isMobile value
+      isMobile: isMobileHookValue,
       openMobile,
       setOpenMobile,
       toggleSidebar,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+    [state, open, setOpen, isMobileHookValue, openMobile, setOpenMobile, toggleSidebar]
   )
 
   return (
@@ -146,7 +172,6 @@ const Sidebar = React.forwardRef<
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
-    // Prevent hydration mismatch by rendering null until isMobile is determined client-side
     if (isMobile === undefined) {
       return null;
     }
@@ -208,7 +233,7 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "duration-200 fixed z-30 hidden w-[var(--sidebar-width)] transition-[left,right,width] ease-linear md:flex",
-            "top-14 h-[calc(100vh-3.5rem)]", // Position below header and set height
+            "top-14 h-[calc(100vh-3.5rem)]", 
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
@@ -293,7 +318,7 @@ const SidebarInset = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative flex flex-1 flex-col min-h-0", // Added min-h-0
+        "relative flex flex-1 flex-col min-h-0",
         "transition-[padding-left] duration-200 ease-in-out",
         "md:pl-[var(--sidebar-width-icon)]",
         "peer-data-[state=expanded]:md:pl-[var(--sidebar-width)]",
@@ -557,7 +582,7 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipContent
           side="right"
           align="center"
-          hidden={state !== "collapsed" || isMobile === undefined || isMobile} // Hide if isMobile is true or undefined
+          hidden={state !== "collapsed" || isMobile === undefined || isMobile}
           {...tooltip}
         />
       </Tooltip>
@@ -730,8 +755,16 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-}
-// Renamed export
-export { SidebarProvider as ActualSidebarProvider };
+  SidebarProvider, // Ensure SidebarProvider is directly exported
+};
+
+// Removed export: SidebarProvider as ActualSidebarProvider;
+// This was potentially problematic or confusing.
+// The `export function SidebarProvider` already makes it available.
+// If there was a specific need for an aliased export, it should be reviewed.
+// For now, relying on the direct function export is cleaner.
+// If this causes issues with how `ActualSidebarProvider` was used elsewhere,
+// those usages should be updated to `SidebarProvider`.
 
 
+    
