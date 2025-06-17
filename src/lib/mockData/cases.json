@@ -1,0 +1,91 @@
+
+[
+  {
+    "id": "C-20240701-001",
+    "caseType": "New Business",
+    "status": "Open",
+    "broker": "Marsh",
+    "insuredName": "Innovate Corp",
+    "receivedDate": "2024-07-01T10:00:00Z",
+    "description": "Request for new GL and Property coverage for tech company.",
+    "relatedQuoteId": "Q-20240701-001",
+    "priority": "High"
+  },
+  {
+    "id": "C-20240702-002",
+    "caseType": "Endorsement",
+    "status": "In Progress",
+    "broker": "Aon",
+    "insuredName": "Future Solutions Ltd.",
+    "receivedDate": "2024-07-02T14:30:00Z",
+    "description": "Add new vehicle to existing commercial auto policy.",
+    "relatedPolicyId": "P-20231001-001",
+    "priority": "Medium"
+  },
+  {
+    "id": "C-20240703-003",
+    "caseType": "Renewal",
+    "status": "Pending Information",
+    "broker": "Willis Towers Watson",
+    "insuredName": "Synergy Group",
+    "receivedDate": "2024-07-03T09:15:00Z",
+    "description": "Upcoming GL policy renewal, requires updated revenue figures.",
+    "relatedPolicyId": "P-20230915-002",
+    "priority": "High"
+  },
+  {
+    "id": "C-20240704-004",
+    "caseType": "New Business",
+    "status": "Action Required",
+    "broker": "Gallagher",
+    "insuredName": "Apex Enterprises",
+    "receivedDate": "2024-07-04T11:00:00Z",
+    "description": "Request for Cyber and E&O coverage for e-commerce business.",
+    "relatedQuoteId": "Q-20240704-002",
+    "priority": "Medium"
+  },
+  {
+    "id": "C-20240705-005",
+    "caseType": "Cancellation",
+    "status": "Completed",
+    "broker": "HUB International",
+    "insuredName": "Momentum Industries",
+    "receivedDate": "2024-07-05T16:45:00Z",
+    "description": "Request to cancel property policy mid-term due to sale of property.",
+    "relatedPolicyId": "P-20231110-003",
+    "priority": "Low"
+  },
+  {
+    "id": "C-20240708-006",
+    "caseType": "New Business",
+    "status": "Open",
+    "broker": "Marsh",
+    "insuredName": "GreenTech Innovations",
+    "receivedDate": "2024-07-08T10:30:00Z",
+    "description": "New venture, renewable energy sector, seeking package policy.",
+    "relatedQuoteId": "Q-20240708-003",
+    "priority": "High"
+  },
+  {
+    "id": "C-20240709-007",
+    "caseType": "Endorsement",
+    "status": "Pending Information",
+    "broker": "Aon",
+    "insuredName": "BuildRight Construction",
+    "receivedDate": "2024-07-09T11:00:00Z",
+    "description": "Increase liability limits on existing policy for new large project.",
+    "relatedPolicyId": "P-20231201-004",
+    "priority": "Medium"
+  },
+  {
+    "id": "C-20240710-008",
+    "caseType": "New Business",
+    "status": "In Progress",
+    "broker": "Willis Towers Watson",
+    "insuredName": "RetailMax Stores",
+    "receivedDate": "2024-07-10T15:00:00Z",
+    "description": "Chain of retail stores, BOP application.",
+    "relatedQuoteId": "Q-20240710-004",
+    "priority": "Low"
+  }
+]

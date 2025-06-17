@@ -4,15 +4,49 @@ import { z } from 'zod';
 // General Application Types
 export type PriorityLevel = 'High' | 'Medium' | 'Low';
 
-export interface Submission {
-  id: string;
+export type CaseType = 'New Business' | 'Endorsement' | 'Renewal' | 'Cancellation';
+export type CaseStatus = 'Open' | 'In Progress' | 'Pending Information' | 'Action Required' | 'Completed' | 'Closed';
+
+export interface Case {
+  id: string; // e.g., C-YYYYMMDD-001
+  caseType: CaseType;
+  status: CaseStatus;
+  broker: string;
+  insuredName: string;
+  receivedDate: string; // ISO date string
+  description?: string; // Brief description of the request
+  relatedQuoteId?: string; // Link to a Quote if CaseType is New Business or leads to a new quote
+  relatedPolicyId?: string; // Link to a Policy if CaseType is Endorsement, Renewal, Cancellation
+  priority: PriorityLevel;
+}
+
+export type PolicyStatus = 'Active' | 'Pending Endorsement' | 'Expired' | 'Cancelled' | 'Pending Renewal';
+
+export interface Policy {
+  id: string; // e.g., P-YYYYMMDD-001
+  policyNumber: string; // e.g., POL-XYZ-123456789
+  status: PolicyStatus;
   insuredName: string;
   broker: string;
-  status: 'New' | 'Pending Review' | 'Information Requested' | 'Quoted' | 'Bound' | 'Declined';
-  receivedDate: string; // ISO date string
-  premium?: number;
-  priority: PriorityLevel; // Added priority
+  effectiveDate: string; // ISO date string
+  expirationDate: string; // ISO date string
+  totalPremium: number;
+  originalQuoteId: string; // The quote that originated this policy
+  // Potentially add a list of endorsement case IDs or renewal case IDs if needed for history
 }
+
+// CaseListItem replaces the old Submission type for the dashboard
+export interface CaseListItem {
+  id: string; // This will be the Case ID
+  caseType: CaseType;
+  insuredName: string;
+  broker: string;
+  status: CaseStatus;
+  receivedDate: string; // ISO date string
+  priority: PriorityLevel;
+  relatedQuoteId?: string; // Link to a specific quote if applicable
+}
+
 
 export type RiskLevel = 'Very Low' | 'Low' | 'Normal' | 'High' | 'Very High' | 'Loading';
 
@@ -84,10 +118,11 @@ export interface AiToolAction {
 }
 
 export interface QuoteDetails {
-  id: string;
+  id: string; // Quote ID, e.g., Q-YYYYMMDD-001
+  caseId: string; // The parent Case ID
   insuredName: string;
   broker: string;
-  submissionDate: string; // ISO date string
+  submissionDate: string; // ISO date string (when the quote process started, from case receivedDate)
   premiumSummary: {
     recommendedPremium: number;
     status: 'Pass' | 'Missing Information from policy system';
@@ -107,9 +142,10 @@ export interface QuoteDetails {
   attachments: Attachment[];
   aiOverallRiskStatement?: string;
   rawSubmissionData: string;
-  subjectToOffers?: string[];
+  subjectToOffers?: string[]; // These are the final chosen ones
   subjectToOffersUpdatedAt?: string;
 }
+
 
 export interface AiProcessingData {
   aiToolActions: AiToolAction[];
@@ -140,7 +176,7 @@ export interface ManagedInformationRequest {
 export type UnderwritingDecision = 'Decline' | 'OfferWithSubjectTos' | 'InformationRequired';
 
 export type ActiveSheetItem =
-  | { type: 'aiMonitor'; submissionId: string }
+  | { type: 'aiMonitor'; submissionId: string } // submissionId could be a caseId or quoteId depending on context
   | { type: 'guideline'; data: Guideline }
   | { type: 'citation'; data: Citation }
   | { type: 'attachment'; data: Attachment; quoteId: string };
@@ -148,7 +184,7 @@ export type ActiveSheetItem =
 
 // --- Types and Schemas for Chat Underwriting Assistant (from chat-underwriting-assistant.ts) ---
 export const MessagePartSchema = z.object({
-  text: z.string(),
+  text: z.string().min(1).describe('The text content of the message part. Must be non-empty.'),
 });
 export type MessagePart = z.infer<typeof MessagePartSchema>;
 
@@ -159,20 +195,20 @@ export const ChatHistoryItemSchema = z.object({
 export type ChatHistoryItem = z.infer<typeof ChatHistoryItemSchema>;
 
 export const ChatAttachmentInfoSchema = z.object({
-  fileName: z.string().describe('The name of the attachment file.'),
-  fileType: z.string().describe('The type of the attachment file (e.g., pdf, docx).')
+  fileName: z.string().min(1).describe('The name of the attachment file. Must be non-empty.'),
+  fileType: z.string().min(1).describe('The type of the attachment file (e.g., pdf, docx). Must be non-empty.')
 });
 export type ChatAttachmentInfo = z.infer<typeof ChatAttachmentInfoSchema>;
 
 export const ChatUnderwritingAssistantInputSchema = z.object({
-  submissionId: z.string().describe('The ID of the submission being discussed.'),
-  insuredName: z.string().describe('The name of the insured party.'),
-  brokerName: z.string().describe('The name of the broker.'),
+  submissionId: z.string().min(1).describe('The ID of the submission (e.g., Case ID or Quote ID) being discussed. Must be non-empty.'),
+  insuredName: z.string().min(1).describe('The name of the insured party. Must be non-empty.'),
+  brokerName: z.string().min(1).describe('The name of the broker. Must be non-empty.'),
   attachments: z.array(ChatAttachmentInfoSchema).describe('A list of attachments available for this submission.'),
   userQuery: z.string().describe('The user’s current question or message.'),
-  chatHistory: z.array(ChatHistoryItemSchema).optional().describe('The history of the conversation so far.'),
 });
 export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
+
 
 export const ChatUnderwritingAssistantOutputSchema = z.object({
   aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),

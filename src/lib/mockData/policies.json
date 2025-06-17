@@ -1,0 +1,47 @@
+
+[
+  {
+    "id": "P-20231001-001",
+    "policyNumber": "POL-FS-00123-01",
+    "status": "Active",
+    "insuredName": "Future Solutions Ltd.",
+    "broker": "Aon",
+    "effectiveDate": "2023-10-01T00:00:00Z",
+    "expirationDate": "2024-10-01T00:00:00Z",
+    "totalPremium": 22500,
+    "originalQuoteId": "Q-20230915-010"
+  },
+  {
+    "id": "P-20230915-002",
+    "policyNumber": "POL-SG-00456-01",
+    "status": "Pending Renewal",
+    "insuredName": "Synergy Group",
+    "broker": "Willis Towers Watson",
+    "effectiveDate": "2023-09-15T00:00:00Z",
+    "expirationDate": "2024-09-15T00:00:00Z",
+    "totalPremium": 45000,
+    "originalQuoteId": "Q-20230830-011"
+  },
+  {
+    "id": "P-20231110-003",
+    "policyNumber": "POL-MI-00789-01",
+    "status": "Cancelled",
+    "insuredName": "Momentum Industries",
+    "broker": "HUB International",
+    "effectiveDate": "2023-11-10T00:00:00Z",
+    "expirationDate": "2024-11-10T00:00:00Z",
+    "totalPremium": 15000,
+    "originalQuoteId": "Q-20231020-012"
+  },
+  {
+    "id": "P-20231201-004",
+    "policyNumber": "POL-BRC-00050-02",
+    "status": "Active",
+    "insuredName": "BuildRight Construction",
+    "broker": "Aon",
+    "effectiveDate": "2023-12-01T00:00:00Z",
+    "expirationDate": "2024-12-01T00:00:00Z",
+    "totalPremium": 120000,
+    "originalQuoteId": "Q-20231110-025"
+  }
+]

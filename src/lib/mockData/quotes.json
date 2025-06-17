@@ -1,0 +1,103 @@
+
+[
+  {
+    "id": "Q-20240701-001",
+    "caseId": "C-20240701-001",
+    "insuredName": "Innovate Corp",
+    "broker": "Marsh",
+    "submissionDate": "2024-07-01T10:00:00Z",
+    "premiumSummary": {
+      "recommendedPremium": 55000,
+      "status": "Pass",
+      "policySystemLink": "https://mock.policy.system.com/policy/Q-20240701-001"
+    },
+    "capacityCheck": {
+      "status": "Available",
+      "percentageUsed": 30,
+      "notes": ""
+    },
+    "businessSummary": {
+      "buildingsDescription": [{ "type": "text", "content": "Main office is a 5-story modern building, built in 2018. Steel frame, fully sprinklered."}],
+      "operationsDescription": [{ "type": "text", "content": "Software development services for enterprise clients. Focus on cloud solutions and AI."}],
+      "productDescription": [{ "type": "text", "content": "SaaS platform for supply chain management. Custom AI model development."}],
+      "completedOperationsRisk": [{ "type": "text", "content": "Potential for errors in software leading to client business interruption. Data breach risks."}]
+    },
+    "underwritingGuidelines": [
+      {"id": "GUIDE-100", "name": "Exposure Limits", "status": "Compliant", "details": "Within standard exposure limits for tech sector."},
+      {"id": "GUIDE-101", "name": "Geographical Restrictions", "status": "Compliant", "details": "Operations primarily in North America."},
+      {"id": "GUIDE-102", "name": "Claims History Review", "status": "Needs Clarification", "details": "Loss run for 2022 missing."},
+      {"id": "GUIDE-103", "name": "Financial Stability Check", "status": "Compliant", "details": "Strong financial performance in last fiscal year."}
+    ],
+    "managedSubjectToOffers": [
+      {"id": "sto-q1-1", "originalText": "Subject to satisfactory cyber security audit.", "currentText": "Subject to satisfactory cyber security audit within 60 days.", "isRemoved": false, "isEdited": true }
+    ],
+    "managedInformationRequests": [
+      {"id": "ir-q1-1", "originalText": "Provide latest cyber security audit report.", "currentText": "Provide latest SOC 2 Type II report.", "isRemoved": false, "isEdited": true },
+      {"id": "ir-q1-2", "originalText": "Provide loss run for 2022.", "currentText": "Provide loss run for 2022.", "isRemoved": false, "isEdited": false }
+    ],
+    "coveragesRequested": [
+      {"type": "General Liability", "limits": "$2M/$4M", "aiRiskEvaluation": "Standard GL exposure for office-based tech company. Ensure contractual liability is reviewed.", "riskLevel": "Low"},
+      {"type": "Property", "limits": "$10M Building, $5M BPP", "aiRiskEvaluation": "Modern building, good protections. Confirm COPE details and business continuity plan.", "riskLevel": "Normal"},
+      {"type": "Cyber Insurance", "limits": "$5M", "aiRiskEvaluation": "High inherent risk due to data handling. Audit is critical.", "riskLevel": "High"}
+    ],
+    "citations": [
+      {"id": "innovate-cyber-policy", "sourceType": "attachment", "quickDescription": "InnovateCorp Cyber Policy Draft", "sourceNameOrUrl": "InnovateCorp_CyberPolicy_v1.pdf", "attachmentMockContent": "This is a mock PDF content for InnovateCorp's draft cybersecurity policy."}
+    ],
+    "attachments": [
+       {"id": "attach-form-q1", "fileName": "Application_InnovateCorp.pdf", "fileType": "pdf", "fileSize": "1.3MB", "mockContent": "Application form content for Innovate Corp..."},
+       {"id": "innovate-cyber-policy", "fileName": "InnovateCorp_CyberPolicy_v1.pdf", "fileType": "pdf", "fileSize": "450KB", "mockContent": "Details of internal cyber security policies and procedures for Innovate Corp."}
+    ],
+    "aiOverallRiskStatement": "AI Overall Risk Statement: Innovate Corp presents a moderate risk profile typical for a tech services firm. Key areas for review are cybersecurity practices (pending audit) and contractual liabilities. Standard terms likely, contingent on satisfactory information for missing loss run and cyber audit.",
+    "rawSubmissionData": "Raw submission data for Innovate Corp... Includes details on revenue, employee count, specific services, and past claims if any.",
+    "subjectToOffers": ["Subject to satisfactory cyber security audit within 60 days."],
+    "subjectToOffersUpdatedAt": "2024-07-02T10:00:00Z"
+  },
+  {
+    "id": "Q-20240704-002",
+    "caseId": "C-20240704-004",
+    "insuredName": "Apex Enterprises",
+    "broker": "Gallagher",
+    "submissionDate": "2024-07-04T11:00:00Z",
+    "premiumSummary": {
+      "recommendedPremium": 75000,
+      "status": "Pass",
+      "policySystemLink": "https://mock.policy.system.com/policy/Q-20240704-002"
+    },
+    "capacityCheck": {
+      "status": "Limited",
+      "percentageUsed": 85,
+      "notes": "Approaching aggregate limit for Cyber in this industry."
+    },
+     "businessSummary": {
+      "buildingsDescription": [{ "type": "text", "content": "Leased office space in a multi-tenant building, Class A."}],
+      "operationsDescription": [{ "type": "text", "content": "E-commerce platform provider and digital marketing services. Manages online stores for SMBs."}],
+      "productDescription": [{ "type": "text", "content": "Platform handles client PII and payment information (PCI-DSS compliance asserted)."}],
+      "completedOperationsRisk": [{ "type": "text", "content": "High risk of data breach affecting multiple clients. Potential for service outages. Contractual indemnities to clients are a key exposure."}]
+    },
+    "underwritingGuidelines": [
+      {"id": "GUIDE-104", "name": "Financial Stability Check", "status": "Compliant", "details": "Recent funding round improves financial outlook."},
+      {"id": "GUIDE-108", "name": "Cybersecurity Protocols", "status": "Issue Found", "details": "MFA not fully implemented for all admin accounts. PCI compliance self-attested, needs verification."},
+      {"id": "GUIDE-105", "name": "Regulatory Compliance", "status": "Needs Clarification", "details": "Confirm CCPA/CPRA applicability and compliance measures."}
+    ],
+    "managedSubjectToOffers": [
+      {"id": "sto-q2-1", "originalText": "Subject to full MFA implementation on all admin accounts within 30 days.", "currentText": "Subject to full MFA implementation on all admin accounts within 30 days.", "isRemoved": false, "isEdited": false },
+      {"id": "sto-q2-2", "originalText": "Subject to third-party PCI-DSS compliance validation.", "currentText": "Subject to third-party PCI-DSS compliance validation.", "isRemoved": false, "isEdited": false }
+    ],
+    "managedInformationRequests": [
+      {"id": "ir-q2-1", "originalText": "Details on MFA implementation plan and timeline.", "currentText": "Details on MFA implementation plan and timeline.", "isRemoved": false, "isEdited": false },
+      {"id": "ir-q2-2", "originalText": "Provide current third-party PCI-DSS Report on Compliance (ROC).", "currentText": "Provide current third-party PCI-DSS Report on Compliance (ROC).", "isRemoved": false, "isEdited": false },
+      {"id": "ir-q2-3", "originalText": "Statement on CCPA/CPRA compliance approach.", "currentText": "Statement on CCPA/CPRA compliance approach.", "isRemoved": false, "isEdited": false }
+    ],
+    "coveragesRequested": [
+      {"type": "Cyber Liability", "limits": "$5M", "aiRiskEvaluation": "High inherent risk due to PII and payment data. MFA gap and PCI verification are critical.", "riskLevel": "Very High"},
+      {"type": "Errors & Omissions", "limits": "$5M", "aiRiskEvaluation": "Standard E&O for tech services, but cyber weaknesses significantly increase exposure to service interruption claims.", "riskLevel": "High"}
+    ],
+    "citations": [],
+    "attachments": [
+       {"id": "attach-form-q2", "fileName": "Application_ApexEnt.pdf", "fileType": "pdf", "fileSize": "1.1MB", "mockContent": "Application form content for Apex Enterprises..."}
+    ],
+    "aiOverallRiskStatement": "AI Overall Risk Statement: Apex Enterprises represents a very high risk for Cyber and a high risk for E&O due to the nature of its business and identified MFA deficiencies and PCI compliance needing verification. Proceed with extreme caution and strong subjectivities if offering terms. Declination may be warranted if requirements are not met swiftly.",
+    "rawSubmissionData": "Raw submission data for Apex Enterprises... E-commerce focus, handling sensitive data.",
+    "subjectToOffers": ["Subject to full MFA implementation on all admin accounts within 30 days.", "Subject to third-party PCI-DSS compliance validation."]
+  }
+]

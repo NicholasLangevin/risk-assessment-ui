@@ -12,30 +12,28 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Submission, PriorityLevel } from '@/types';
+import type { CaseListItem, PriorityLevel, CaseStatus } from '@/types';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface SubmissionsTableProps {
-  submissions: Submission[];
+  caseListItems: CaseListItem[];
 }
 
-export function SubmissionsTable({ submissions }: SubmissionsTableProps) {
-  const getStatusVariant = (status: Submission['status']): 'default' | 'secondary' | 'destructive' | 'outline' => {
+export function SubmissionsTable({ caseListItems }: SubmissionsTableProps) {
+  const getStatusVariant = (status: CaseStatus): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (status) {
-      case 'New':
+      case 'Open':
         return 'default';
-      case 'Pending Review':
+      case 'In Progress':
         return 'secondary';
-      case 'Information Requested':
+      case 'Pending Information':
+      case 'Action Required':
         return 'outline';
-      case 'Quoted':
-        return 'default';
-      case 'Bound':
-        return 'default';
-      case 'Declined':
-        return 'destructive';
+      case 'Completed':
+      case 'Closed':
+        return 'default'; // Or a more neutral color like 'secondary'
       default:
         return 'secondary';
     }
@@ -60,54 +58,63 @@ export function SubmissionsTable({ submissions }: SubmissionsTableProps) {
     'Low': 3,
   };
 
-  const sortedSubmissions = [...submissions].sort((a, b) => {
+  const sortedCaseListItems = [...caseListItems].sort((a, b) => {
     return priorityOrder[a.priority] - priorityOrder[b.priority];
   });
 
   return (
     <Card className="mt-6">
       <CardHeader>
-        <CardTitle>Inbox</CardTitle>
-        <CardDescription>Manage incoming underwriting submissions.</CardDescription>
+        <CardTitle>Case Inbox</CardTitle>
+        <CardDescription>Manage incoming underwriting cases.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Submission ID</TableHead>
+              <TableHead>Case ID</TableHead>
+              <TableHead>Case Type</TableHead>
               <TableHead>Insured Name</TableHead>
               <TableHead>Broker</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead><TableHead className="text-right">Actions</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedSubmissions.length === 0 ? (
+            {sortedCaseListItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-24">
-                  No submissions found.
+                <TableCell colSpan={7} className="text-center h-24">
+                  No cases found.
                 </TableCell>
               </TableRow>
             ) : (
-              sortedSubmissions.map((submission) => (
-                <TableRow key={submission.id}>
-                  <TableCell className="font-medium">{submission.id}</TableCell>
-                  <TableCell>{submission.insuredName}</TableCell>
-                  <TableCell>{submission.broker}</TableCell>
+              sortedCaseListItems.map((caseItem) => (
+                <TableRow key={caseItem.id}>
+                  <TableCell className="font-medium">{caseItem.id}</TableCell>
+                  <TableCell>{caseItem.caseType}</TableCell>
+                  <TableCell>{caseItem.insuredName}</TableCell>
+                  <TableCell>{caseItem.broker}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(submission.status)}>{submission.status}</Badge>
+                    <Badge variant={getStatusVariant(caseItem.status)}>{caseItem.status}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn("font-semibold", getPriorityBadgeClass(submission.priority))}>
-                      {submission.priority}
+                    <Badge variant="outline" className={cn("font-semibold", getPriorityBadgeClass(caseItem.priority))}>
+                      {caseItem.priority}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button asChild variant="ghost" size="sm">
-                      <Link href={`/quote/${submission.id}`}>
-                        View <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
+                    {caseItem.relatedQuoteId ? (
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href={`/quote/${caseItem.relatedQuoteId}`}>
+                          View Quote <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="sm" disabled>
+                        View Case {/* Placeholder for future Case Detail View */}
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

@@ -1,276 +1,165 @@
 
-import type { Submission, QuoteDetails, Guideline, BusinessSummaryDetails, ManagedSubjectToOffer, AiUnderwritingActions, ManagedInformationRequest, CoverageItem, RiskLevel, Citation, RichTextSegment, Attachment, AiToolAction, PriorityLevel } from '@/types';
-import { addMinutes, formatISO } from 'date-fns';
+import type {
+  Case,
+  CaseListItem,
+  QuoteDetails,
+  Policy,
+  Guideline,
+  BusinessSummaryDetails,
+  ManagedSubjectToOffer,
+  AiUnderwritingActions,
+  ManagedInformationRequest,
+  CoverageItem,
+  RiskLevel,
+  Citation,
+  RichTextSegment,
+  Attachment,
+  AiToolAction,
+  PriorityLevel,
+  CaseType,
+  CaseStatus,
+} from '@/types';
+import { formatISO, addDays, addMinutes, subDays } from 'date-fns';
 
-const insuredNames = ["Innovate Corp", "Future Solutions Ltd.", "Synergy Group", "Apex Enterprises", "Momentum Industries"];
-const brokers = ["Marsh", "Aon", "Willis Towers Watson", "Gallagher", "HUB International"];
-const statuses: Submission['status'][] = ['New', 'Pending Review', 'Information Requested', 'Quoted', 'Bound', 'Declined'];
-const priorities: PriorityLevel[] = ['High', 'Medium', 'Low'];
-const guidelineNames = [
-  "Exposure Limits", "Geographical Restrictions", "Claims History Review",
-  "Financial Stability Check", "Regulatory Compliance", "Specific Industry Exclusions"
-];
-const guidelineStatuses: Guideline['status'][] = ['Compliant', 'Needs Clarification', 'Issue Found', 'Not Applicable'];
+// Import the JSON data
+import mockCasesData from './mockData/cases.json';
+import mockQuotesData from './mockData/quotes.json';
+import mockPoliciesData from './mockData/policies.json';
 
-const mockCoverageTypes = [
-  { type: "Property", limits: "$5,000,000 Building / $2,000,000 Contents" },
-  { type: "General Liability", limits: "$2,000,000 Each Occurrence / $4,000,000 Aggregate" },
-  { type: "Equipment Breakdown", limits: "$1,000,000 Per Breakdown" },
-  { type: "Crime", limits: "$500,000 Employee Theft / $250,000 Forgery" },
-  { type: "Floaters (Inland Marine)", limits: "$150,000 Scheduled Equipment" }
-];
+// Cast the imported JSON data to the defined types
+const allMockCases: Case[] = mockCasesData as Case[];
+export const allMockQuotes: QuoteDetails[] = mockQuotesData as QuoteDetails[]; // Export for generateStaticParams
+const allMockPolicies: Policy[] = mockPoliciesData as Policy[];
 
-export const mockSubmissions: Submission[] = Array.from({ length: 10 }, (_, i) => ({
-  id: `Q${String(1000000 + i).padStart(7, '0')}`,
-  insuredName: insuredNames[i % insuredNames.length],
-  broker: brokers[i % brokers.length],
-  status: statuses[i % statuses.length],
-  receivedDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-  premium: Math.floor(Math.random() * 50000) + 5000,
-  priority: priorities[i % priorities.length], // Assign priority
+// This will be used by the dashboard
+export const mockCaseListItems: CaseListItem[] = allMockCases.map(c => ({
+  id: c.id,
+  caseType: c.caseType,
+  insuredName: c.insuredName,
+  broker: c.broker,
+  status: c.status,
+  receivedDate: c.receivedDate, // keep for potential future use or if other components need it
+  priority: c.priority,
+  relatedQuoteId: c.relatedQuoteId, // Ensure this is mapped
 }));
 
+
+export const getMockQuoteDetails = (quoteId: string): QuoteDetails | null => {
+  const quote = allMockQuotes.find(q => q.id === quoteId);
+  if (!quote) {
+    console.warn(`Mock quote with ID ${quoteId} not found in quotes.json.`);
+    return null;
+  }
+
+  // Ensure attachments and guidelines are present, even if empty arrays, to match type
+  // Also provide default empty arrays for optional fields if they are undefined in JSON
+  return {
+    ...quote,
+    attachments: quote.attachments || [],
+    underwritingGuidelines: quote.underwritingGuidelines || [],
+    citations: quote.citations || [],
+    managedSubjectToOffers: quote.managedSubjectToOffers || [],
+    managedInformationRequests: quote.managedInformationRequests || [],
+    coveragesRequested: quote.coveragesRequested || [],
+    aiOverallRiskStatement: quote.aiOverallRiskStatement || "AI overall risk statement not available.",
+    rawSubmissionData: quote.rawSubmissionData || "Raw submission data not available.",
+    subjectToOffers: quote.subjectToOffers || [],
+  };
+};
+
+export const getMockPolicyDetails = (policyId: string): Policy | null => {
+  return allMockPolicies.find(p => p.id === policyId) || null;
+}
+
+export const getMockCaseDetails = (caseId: string): Case | null => {
+  return allMockCases.find(c => c.id === caseId) || null;
+}
+
+
+// Keep existing mock data for things not yet migrated to JSON or if needed as fallback
+const constantBaseDateForMocking = new Date(2024, 0, 1); // Jan 1, 2024
+
+// Default attachments (can be overridden by quote specific data if that quote is in quotes.json)
 export const mockAttachments: Attachment[] = [
   {
-    id: 'attach-001-pdf',
-    fileName: 'Submission_Form_Completed.pdf',
+    id: 'attach-generic-pdf',
+    fileName: 'Generic_Document.pdf',
     fileType: 'pdf',
-    fileSize: '1.2MB',
-    mockContent: 'This is the mock content for the completed submission form PDF. It contains all the initial details provided by the broker regarding the insured and the requested coverages. Section A: Insured Information. Section B: Coverage Details. Section C: Loss History...',
+    fileSize: '500KB',
+    mockContent: 'This is generic mock PDF content. Specific attachments should be defined in quotes.json.',
   },
   {
-    id: 'attach-002-xlsx',
-    fileName: 'Business_Financials_FY2023.xlsx',
+    id: 'attach-generic-xlsx',
+    fileName: 'Generic_Spreadsheet.xlsx',
     fileType: 'xlsx',
-    fileSize: '780KB',
-    mockContent: 'Mock Excel Content: Financial statements for Fiscal Year 2023. Includes Balance Sheet, Income Statement, and Cash Flow Statement. Revenue: $XXX, Net Profit: $YYY. Assets: $ZZZ.',
-  },
-  {
-    id: 'attach-003-docx',
-    fileName: 'Loss_Control_Report_Q1_2024.docx',
-    fileType: 'docx',
-    fileSize: '2.5MB',
-    mockContent: 'Mock Word Document Content: Loss Control Inspection Report from Q1 2024. Inspector: John Doe. Findings: Premises in good condition. Recommendations: Update fire extinguishers in warehouse section. Overall risk: Low.',
-  },
-  {
-    id: 'attach-004-jpg',
-    fileName: 'Site_Overview_Main_Building.jpg',
-    fileType: 'jpg',
-    fileSize: '4.1MB',
-    mockContent: 'Mock Image Content: This is a photo of the main building at the insureds primary location. Shows a modern, well-maintained structure. (Imagine an image here)',
-  },
-   {
-    id: 'attach-005-zip',
-    fileName: 'Property_Inspection_Photos.zip',
-    fileType: 'zip',
-    fileSize: '15.3MB',
-    mockContent: 'This is a ZIP archive containing multiple JPEG images of the insured property. (Mock viewer would typically show "Cannot preview ZIP content directly" or list files if advanced)',
-  },
-  {
-    id: 'attach-006-txt',
-    fileName: 'Additional_Notes.txt',
-    fileType: 'txt',
-    fileSize: '5KB',
-    mockContent: 'Additional notes from the broker:\n- Insured is planning an expansion in Q3.\n- Interested in discussing cyber liability limits further.\n- Please expedite review if possible.',
+    fileSize: '300KB',
+    mockContent: 'Mock Excel Content: Column A, Column B...',
   },
 ];
 
+export const getMockAiToolActions = (idInput: string): AiToolAction[] => {
+  let numericIdPart = parseInt(idInput.replace(/[^0-9]/g, ''), 10) || 0;
+  if (numericIdPart === 0 && idInput.length > 0) { 
+    numericIdPart = idInput.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  }
 
-export const getMockQuoteDetails = (id: string): QuoteDetails | null => {
-  const submission = mockSubmissions.find(s => s.id === id);
-  if (!submission) return null;
+  const baseTime = addMinutes(constantBaseDateForMocking, numericIdPart % 1440); 
 
-  const currentPremium = submission.premium || Math.floor(Math.random() * (100000 - 10000 + 1)) + 10000;
-
-  const guidelines: Guideline[] = guidelineNames.map((name, index) => ({
-    id: `GUIDE-${100 + index}`,
-    name: name,
-    status: guidelineStatuses[index % guidelineStatuses.length],
-    details: guidelineStatuses[index % guidelineStatuses.length] === 'Issue Found' ? 'Requires underwriter attention for XYZ reason.' : (guidelineStatuses[index % guidelineStatuses.length] === 'Needs Clarification' ? 'Please provide document ABC.' : undefined)
-  }));
-
-  const mockCitations: Citation[] = [
+  const predeterminedActions: AiToolAction[] = [
     {
-      id: 'building-spec-2015',
-      sourceType: 'attachment',
-      quickDescription: 'Building Specifications (PDF, 2015)',
-      sourceNameOrUrl: 'building_specs_final_2015.pdf',
-      attachmentMockContent: 'Mock PDF Content: This document contains detailed architectural and engineering specifications for the office complex completed in 2015. It includes materials used, safety compliance certificates, and floor plans.'
-    },
-    {
-      id: 'nfpa-13',
-      sourceType: 'web',
-      quickDescription: 'NFPA 13 Sprinkler Standards',
-      sourceNameOrUrl: 'https://www.nfpa.org/codes-and-standards/all-codes-and-standards/list-of-codes-and-standards/detail?code=13',
-    },
-    {
-      id: 'cybersecurity-policy-v3',
-      sourceType: 'attachment',
-      quickDescription: 'Internal Cybersecurity Policy v3.0 (DOCX)',
-      sourceNameOrUrl: 'cyber_policy_v3_internal.docx',
-      attachmentMockContent: 'Mock DOCX Content: Our company\'s comprehensive cybersecurity policy, version 3.0. Covers data handling, access control, incident response, and employee training.'
-    },
-    {
-      id: 'gdpr-compliance-overview',
-      sourceType: 'web',
-      quickDescription: 'GDPR Overview (Official EU Site)',
-      sourceNameOrUrl: 'https://gdpr-info.eu/',
-    }
-  ];
-
-  const businessSummary: BusinessSummaryDetails = {
-    buildingsDescription: [
-      { type: 'text', content: 'Modern office complex with 3 buildings, steel frame construction, built in 2015 ' },
-      { type: 'citationLink', citationId: 'building-spec-2015', markerText: '[1]' },
-      { type: 'text', content: '. Fully sprinklered to ' },
-      { type: 'citationLink', citationId: 'nfpa-13', markerText: '[2]' },
-      { type: 'text', content: ' standards with central station alarm.' }
-    ],
-    operationsDescription: [
-      { type: 'text', content: 'Software development, cloud hosting services, and 24/7 customer support. Includes management of sensitive client data as per internal '},
-      { type: 'citationLink', citationId: 'cybersecurity-policy-v3', markerText: '[3]'},
-      { type: 'text', content: ' and relevant regulations like GDPR '},
-      { type: 'citationLink', citationId: 'gdpr-compliance-overview', markerText: '[4]'},
-      { type: 'text', content: '.'}
-    ],
-    productDescription: [
-      { type: 'text', content: "Suite of SaaS products for enterprise resource planning and data analytics. Also offers custom AI model development for B2B clients." }
-    ],
-    completedOperationsRisk: [
-      { type: 'text', content: "Potential liability from data breaches post-service, software implementation errors leading to client business interruption, or failure of AI models causing financial loss. All service agreements include liability caps." }
-    ]
-  };
-
-  const mockAiActions: AiUnderwritingActions = {
-    suggestedActions: ["Review loss control report", "Verify financial statements"],
-    informationRequests: ["Latest audited financials for 3 years", "Details of current cybersecurity measures", "Loss runs for the past 5 years"],
-    potentialSubjectToOffers: [
-      "Subject to satisfactory building inspection.",
-      "Subject to exclusion for prior acts.",
-      "Subject to $10,000 deductible for water damage."
-    ]
-  };
-
-  const managedSubjectToOffers: ManagedSubjectToOffer[] = mockAiActions.potentialSubjectToOffers.map((offer, index) => ({
-    id: `sto-${index}-${Date.now()}`,
-    originalText: offer,
-    currentText: offer,
-    isRemoved: false,
-    isEdited: false,
-  }));
-
-  const managedInformationRequests: ManagedInformationRequest[] = mockAiActions.informationRequests.map((request, index) => ({
-    id: `ir-${index}-${Date.now()}`,
-    originalText: request,
-    currentText: request,
-    isRemoved: false,
-    isEdited: false,
-  }));
-
-  const coveragesRequested: CoverageItem[] = mockCoverageTypes.map((cov) => ({
-    type: cov.type,
-    limits: cov.limits,
-    aiRiskEvaluation: "Awaiting AI evaluation...",
-    riskLevel: "Normal" as RiskLevel,
-  })).slice(0, Math.floor(Math.random() * 3) + 3); // Show 3 to 5 coverages
-
-  const aiOverallRiskStatementText = `The AI assesses ${submission.insuredName}'s overall risk as moderate. Primary drivers include its operations in the ${submission.broker === 'Aon' || submission.broker === 'Gallagher' ? 'emerging tech' : 'established software'} sector, which inherently carries cyber and E&O exposures. Positive factors are the modern infrastructure and (assumed) adherence to standard compliance protocols. However, a detailed review of their specific cybersecurity measures, recent loss history, and any contractual liabilities (especially around data protection and service uptime) is essential. The recommended actions aim to clarify these points to enable a more precise risk quantification and appropriate pricing/terms.`;
-
-
-  return {
-    id: submission.id,
-    insuredName: submission.insuredName,
-    broker: submission.broker,
-    submissionDate: submission.receivedDate,
-    premiumSummary: {
-      recommendedPremium: currentPremium,
-      status: Math.random() < 0.7 ? 'Pass' : 'Missing Information from policy system',
-      policySystemLink: `https://mock.policy.system.com/policy/${submission.id}`,
-    },
-    capacityCheck: {
-      status: Math.random() > 0.7 ? 'Limited' : (Math.random() > 0.9 ? 'Exceeded' : 'Available'),
-      percentageUsed: Math.floor(Math.random() * 100),
-      notes: Math.random() > 0.8 ? "Approaching aggregate limit for this sector." : undefined,
-    },
-    businessSummary: businessSummary,
-    underwritingGuidelines: guidelines,
-    managedSubjectToOffers,
-    managedInformationRequests,
-    coveragesRequested,
-    citations: mockCitations,
-    attachments: mockAttachments.slice(0, Math.floor(Math.random() * (mockAttachments.length -1)) + 2), // show 2 to all attachments
-    aiOverallRiskStatement: aiOverallRiskStatementText,
-    rawSubmissionData: `Submission ID: ${submission.id}\nInsured: ${submission.insuredName}\nBroker: ${submission.broker}\nIndustry: Technology Services\nRevenue: $${currentPremium * 20}M\nEmployees: ${Math.floor(Math.random() * 200) + 50}\nRequesting coverage for General Liability and Cyber Risk.\nClaims history: Minor property damage claim 3 years ago, $5,000. Recent security audit: Passed with minor recommendations.\nBuildings: ${businessSummary.buildingsDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nOperations: ${businessSummary.operationsDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nProducts: ${businessSummary.productDescription.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}\nCompleted Operations Risk: ${businessSummary.completedOperationsRisk.map(s => s.type === 'text' ? s.content : (s.type === 'citationLink' ? s.markerText : '')).join('')}`
-  };
-};
-
-export const getMockAiToolActions = (submissionId: string): AiToolAction[] => {
-  const baseTime = new Date();
-  const actions: AiToolAction[] = [
-    {
-      id: 'step-1',
+      id: `step-${numericIdPart}-1`,
       type: 'ReadingAttachment',
-      timestamp: formatISO(addMinutes(baseTime, 0)),
-      description: "AI analyzed the 'Submission_Form_Completed.pdf' for initial risk factors.",
-      details: { targetName: "Submission_Form_Completed.pdf" }
+      timestamp: formatISO(addMinutes(baseTime, (numericIdPart % 3) * 2)), // Vary timestamp slightly
+      description: "AI analyzed the primary submission document for initial risk factors.",
+      details: { targetName: "Application.pdf" } // Generic name
     },
     {
-      id: 'step-2',
+      id: `step-${numericIdPart}-2`,
       type: 'SearchingWeb',
-      timestamp: formatISO(addMinutes(baseTime, 2)),
-      description: `AI searched for recent news and financial health of '${insuredNames[Math.floor(Math.random()*insuredNames.length)]}'.`,
-      details: { url: "https://financialnews.example.com/search?q=Innovate+Corp+financials", query: `${insuredNames[Math.floor(Math.random()*insuredNames.length)]} financial health news`, targetName: "financialnews.example.com" }
+      timestamp: formatISO(addMinutes(baseTime, ((numericIdPart % 3) * 2) + 2)),
+      description: `AI searched for public news and financial overviews.`,
+      details: { url: "https://financialnews.example.com/search", query: `Company background check`, targetName: "financialnews.example.com" }
     },
     {
-      id: 'step-3',
+      id: `step-${numericIdPart}-3`,
       type: 'ReadingGuideline',
-      timestamp: formatISO(addMinutes(baseTime, 5)),
-      description: "AI consulted the 'Financial Stability Check' underwriting guideline.",
-      details: { targetName: "Guideline: Financial Stability Check" }
+      timestamp: formatISO(addMinutes(baseTime, ((numericIdPart % 3) * 2) + 5)),
+      description: "AI consulted the 'Financial Stability Check' and 'Exposure Limits' underwriting guidelines.",
+      details: { targetName: "Guideline: Financial Stability & Exposure" }
     },
     {
-      id: 'step-4',
+      id: `step-${numericIdPart}-4`,
       type: 'PerformingAction',
-      timestamp: formatISO(addMinutes(baseTime, 8)),
-      description: "AI proposed a subject-to offer regarding a satisfactory loss control report.",
-      details: { actionSummary: "Proposed Subject-To: Satisfactory loss control inspection.", targetName: "Subject-To: Satisfactory loss control inspection." }
-    },
-    {
-      id: 'step-5',
-      type: 'ReadingAttachment',
-      timestamp: formatISO(addMinutes(baseTime, 10)),
-      description: "AI reviewed 'Loss_Control_Report_Q1_2024.docx'.",
-      details: { targetName: "Loss_Control_Report_Q1_2024.docx" }
+      timestamp: formatISO(addMinutes(baseTime, ((numericIdPart % 3) * 2) + 8)),
+      description: "AI identified key areas needing clarification based on initial data.",
+      details: { actionSummary: "Flagged missing financial statements for last year.", targetName: "Missing Financials" }
     },
      {
-      id: 'step-6',
-      type: 'SearchingWeb',
-      timestamp: formatISO(addMinutes(baseTime, 12)),
-      description: "AI performed a sanctions check on the insured entity.",
-      details: { url: "https://sanctionschecker.example.gov/check", query: "Innovate Corp sanctions", targetName: "sanctionschecker.example.gov" }
+      id: `step-${numericIdPart}-5`,
+      type: 'ReadingAttachment',
+      timestamp: formatISO(addMinutes(baseTime, ((numericIdPart % 3) * 2) + 10)),
+      description: "AI cross-referenced loss history attachment with application.",
+      details: { targetName: "Loss_Runs.pdf" }
     },
   ];
-  return actions.slice(0, Math.floor(Math.random() * 3) + 3); // Return 3 to 5 actions
+  // Return a deterministic slice of actions
+  return predeterminedActions.slice(0, (numericIdPart % 3) + 3); // Return 3 to 5 actions
 };
 
-
 export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
-  { id: 'ALL-001', name: 'Exposure Limits' },
-  { id: 'ALL-002', name: 'Geographical Restrictions' },
-  { id: 'ALL-003', name: 'Claims History Review' },
-  { id: 'ALL-004', name: 'Financial Stability Check' },
-  { id: 'ALL-005', name: 'Regulatory Compliance' },
-  { id: 'ALL-006', name: 'Specific Industry Exclusions' },
-  { id: 'ALL-007', name: 'Property Valuation Standards' },
-  { id: 'ALL-008', name: 'Liability Coverage Minimums' },
-  { id: 'ALL-009', name: 'Cybersecurity Protocols' },
-  { id: 'ALL-010', name: 'Environmental Impact Assessment' },
-  { id: 'ALL-011', name: 'Business Continuity Plan Review' },
-  { id: 'ALL-012', name: 'Employee Safety Standards' },
-  { id: 'ALL-013', name: 'Product Liability Assessment' },
-  { id: 'ALL-014', name: 'Professional Indemnity Requirements' },
-  { id: 'ALL-015', name: 'Supply Chain Risk Analysis' },
+  { id: 'GUIDE-100', name: 'Exposure Limits' },
+  { id: 'GUIDE-101', name: 'Geographical Restrictions' },
+  { id: 'GUIDE-102', name: 'Claims History Review' },
+  { id: 'GUIDE-103', name: 'Financial Stability Check' },
+  { id: 'GUIDE-104', name: 'Regulatory Compliance' },
+  { id: 'GUIDE-105', name: 'Specific Industry Exclusions' },
+  { id: 'GUIDE-106', name: 'Property Valuation Standards' },
+  { id: 'GUIDE-107', name: 'Liability Coverage Minimums' },
+  { id: 'GUIDE-108', name: 'Cybersecurity Protocols' },
+  { id: 'GUIDE-109', name: 'Environmental Impact Assessment' },
+  { id: 'GUIDE-110', name: 'Business Continuity Plan Review' },
+  { id: 'GUIDE-111', name: 'Employee Safety Standards' },
+  { id: 'GUIDE-112', name: 'Product Liability Assessment' },
+  { id: 'GUIDE-113', name: 'Professional Indemnity Requirements' },
+  { id: 'GUIDE-114', name: 'Supply Chain Risk Analysis' },
 ];
-
-
-    
