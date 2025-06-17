@@ -1,20 +1,20 @@
 
 import type React from 'react';
 import Link from 'next/link';
-import { Header } from './Header';
+// Header import removed as it's now in RootLayout
 import {
   SidebarProvider,
   Sidebar,
   SidebarHeader,
   SidebarContent,
-  SidebarFooter,
+  // SidebarFooter, // Removed if not used
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-  SidebarTrigger
+  // SidebarTrigger // Removed as it's in Header
 } from '@/components/ui/sidebar';
-import { HomeIcon, LayoutDashboard as LayoutDashboardIcon, SettingsIcon, UserCircle } from 'lucide-react'; 
+import { HomeIcon, LayoutDashboard as LayoutDashboardIcon } from 'lucide-react'; 
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -23,40 +23,40 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar collapsible="icon">
-        <SidebarHeader className="p-2 flex items-center group-data-[state=expanded]:justify-end group-data-[state=collapsed]:justify-center">
-          <SidebarTrigger className="h-8 w-8 p-2" /> 
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/">
-                  <HomeIcon />
-                  Home
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/quote-dashboard">
-                  <LayoutDashboardIcon />
-                  Quote Dashboard
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-          </SidebarMenu>
-        </SidebarContent>
-        
-      </Sidebar>
-      <SidebarInset>
-        <Header />
-        <main className="flex-1 bg-background"> 
-          {children}
-        </main>
-        
-      </SidebarInset>
+      <div className="flex flex-1"> {/* This div helps manage the layout below the global Header */}
+        <Sidebar collapsible="icon" className="h-[calc(100vh-3.5rem)] fixed top-14 left-0 z-30"> {/* Adjust height and position if Header is 3.5rem (h-14) */}
+          <SidebarHeader className="p-4 flex items-center group-data-[state=expanded]:justify-start group-data-[state=collapsed]:justify-center">
+            {/* Content for the sidebar's own header, e.g., logo or title when expanded */}
+             <span className="font-bold group-data-[state=expanded]:inline-block group-data-[state=collapsed]:hidden">RiskPilot</span>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/">
+                    <HomeIcon />
+                    Home
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/quote-dashboard">
+                    <LayoutDashboardIcon />
+                    Quote Dashboard
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+        </Sidebar>
+        <SidebarInset className="pt-14"> {/* Add padding top to account for fixed Header height */}
+          {/* Header component is no longer here */}
+          <main className="flex-1 bg-background"> 
+            {children}
+          </main>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }
