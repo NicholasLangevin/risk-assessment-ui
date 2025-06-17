@@ -57,13 +57,10 @@ export function SidebarProvider({
 }) {
   const isMobileHookValue = useIsMobile();
 
-  // Initialize _open with defaultOpen for SSR and initial client render consistency
   const [_open, _setOpen] = React.useState(defaultOpen);
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  // Effect to read cookie and update state on client-side after hydration
   React.useEffect(() => {
-    // This effect runs only on the client
     const cookieValueString = document.cookie
       .split("; ")
       .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
@@ -71,9 +68,7 @@ export function SidebarProvider({
 
     if (cookieValueString) {
       const cookieValueBoolean = cookieValueString === "true";
-      // Only update if the cookie value is different from the current state
-      // This handles the case where defaultOpen might match the cookie
-      if (cookieValueBoolean !== _open) {
+      if (cookieValueBoolean !== _open) { // Check against current state, not just defaultOpen
         if (setOpenProp) {
           setOpenProp(cookieValueBoolean);
         } else {
@@ -81,9 +76,7 @@ export function SidebarProvider({
         }
       }
     }
-    // If no cookie, state remains as defaultOpen, ensuring consistency with SSR
-  }, [defaultOpen, setOpenProp]); // Dependencies: defaultOpen and setOpenProp
-                                  // _open is intentionally omitted to avoid re-running when _setOpen is called by this effect.
+  }, [_open, setOpenProp]); // Depend on _open to re-evaluate if defaultOpen changes or prop changes
 
   const open = openProp !== undefined ? openProp : _open;
 
@@ -221,7 +214,8 @@ const Sidebar = React.forwardRef<
         {/* Placeholder div to push content when sidebar is fixed */}
         <div
           className={cn(
-            "duration-200 relative h-full w-[var(--sidebar-width)] bg-transparent transition-[width] ease-linear",
+            "duration-200 relative h-full bg-transparent transition-[width] ease-linear",
+            "w-[var(--sidebar-width)]",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -318,12 +312,9 @@ const SidebarInset = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative flex flex-1 flex-col min-h-0",
-        "transition-[padding-left] duration-200 ease-in-out",
-        "md:pl-[var(--sidebar-width-icon)]",
-        "peer-data-[state=expanded]:md:pl-[var(--sidebar-width)]",
-        "peer-data-[collapsible=offcanvas]:peer-data-[state=collapsed]:md:pl-0",
-        "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
+        "flex-1 bg-background h-full overflow-y-auto", // Handles layout within AppLayout.tsx
+        "w-full max-w-screen-2xl mx-auto", // Centering for very wide screens
+        "px-4 sm:px-6 lg:px-8 py-8", // Consistent content padding
         className
       )}
       {...props}
@@ -755,16 +746,5 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  SidebarProvider, // Ensure SidebarProvider is directly exported
+  SidebarProvider,
 };
-
-// Removed export: SidebarProvider as ActualSidebarProvider;
-// This was potentially problematic or confusing.
-// The `export function SidebarProvider` already makes it available.
-// If there was a specific need for an aliased export, it should be reviewed.
-// For now, relying on the direct function export is cleaner.
-// If this causes issues with how `ActualSidebarProvider` was used elsewhere,
-// those usages should be updated to `SidebarProvider`.
-
-
-    
