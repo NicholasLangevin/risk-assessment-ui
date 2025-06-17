@@ -21,13 +21,9 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-// CSS variables are now set in MainLayoutClient.tsx
-// const SIDEBAR_WIDTH = "16rem"
-// const SIDEBAR_WIDTH_MOBILE = "18rem"
-// const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
-type SidebarContextType = { // Renamed from SidebarContext to avoid conflict with the context object
+type SidebarContextValue = {
   state: "expanded" | "collapsed"
   open: boolean
   setOpen: (open: boolean) => void
@@ -37,7 +33,7 @@ type SidebarContextType = { // Renamed from SidebarContext to avoid conflict wit
   toggleSidebar: () => void
 }
 
-const SidebarContext = React.createContext<SidebarContextType | null>(null)
+const SidebarContext = React.createContext<SidebarContextValue | null>(null)
 
 export function useSidebar() {
   const context = React.useContext(SidebarContext)
@@ -47,7 +43,6 @@ export function useSidebar() {
   return context
 }
 
-// Simplified SidebarProvider - no longer a forwardRef, no longer renders the main structural div
 export const SidebarProvider = ({
   children,
   defaultOpen = true,
@@ -103,7 +98,7 @@ export const SidebarProvider = ({
 
   const state = open ? "expanded" : "collapsed"
 
-  const contextValue = React.useMemo<SidebarContextType>(
+  const contextValue = React.useMemo<SidebarContextValue>(
     () => ({
       state,
       open,
@@ -170,9 +165,8 @@ const Sidebar = React.forwardRef<
             data-sidebar="sidebar"
             data-mobile="true"
             className="w-[var(--sidebar-width-mobile)] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-            // style set by parent div in MainLayoutClient
             side={side}
-            {...props} // Pass remaining props to Sheet, not SheetContent directly if they are for the wrapper
+            {...props} 
           >
             <SheetHeader className="p-4 border-b">
               <SheetTitle className="sr-only">Main Navigation</SheetTitle>
@@ -212,7 +206,6 @@ const Sidebar = React.forwardRef<
             variant === "floating" || variant === "inset"
               ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
               : "group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)] group-data-[side=left]:border-r group-data-[side=right]:border-l"
-            // className prop was here, moved to outer div for clarity
           )}
         >
           <div
@@ -284,14 +277,24 @@ const SidebarRail = React.forwardRef<
 SidebarRail.displayName = "SidebarRail"
 
 const SidebarInset = React.forwardRef<
-  HTMLDivElement, // Changed from main to HTMLDivElement to match common usage for this kind of component
-  React.ComponentProps<"div"> // Using div props
+  HTMLDivElement,
+  React.ComponentProps<"div">
 >(({ className, ...props }, ref) => {
   return (
-    <div // Changed from main to div
+    <div
       ref={ref}
       className={cn(
-        "relative flex min-h-svh flex-1 flex-col bg-background", // Simplified classes for now
+        "relative flex flex-1 flex-col min-h-0", // Grow, allow scroll, use min-h-0 for flex children
+        "transition-[padding-left] duration-200 ease-in-out",
+        // Default left padding for md screens and up, assumes icon sidebar width.
+        // This applies when the peer is present and not 'expanded'.
+        // If peer is collapsible="icon", this will be the padding for collapsed state.
+        "md:pl-[var(--sidebar-width-icon)]",
+        // When peer (Sidebar) has data-state="expanded", increase left padding.
+        "peer-data-[state=expanded]:md:pl-[var(--sidebar-width)]",
+        // If peer (Sidebar) has data-collapsible="offcanvas" AND data-state="collapsed", remove padding.
+        "peer-data-[collapsible=offcanvas]:peer-data-[state=collapsed]:md:pl-0",
+        // Classes for styling if the sidebar itself is 'inset' variant (less relevant for this main content area)
         "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
         className
       )}
@@ -702,8 +705,6 @@ const SidebarMenuSubButton = React.forwardRef<
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
 export {
-  // Re-export SidebarProvider (which is now the simplified internal version)
-  // SidebarProvider, // This was previously SidebarProviderInternal
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -723,12 +724,8 @@ export {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  // SidebarProvider, // This needs to be the actual component now
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  // useSidebar, // Already exported
 }
-// Make sure the main SidebarProvider is exported with that name
-export { SidebarProvider as ActualSidebarProvider }; // Temporary if SidebarProvider name is reused above for the new pure provider.
-// Best to just rename the main provider component to SidebarProvider. I've done this in the component definition.
+export { SidebarProvider as ActualSidebarProvider };

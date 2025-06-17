@@ -37,7 +37,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <div
-          className="group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar"
+          className="group/sidebar-wrapper flex flex-col min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH,
