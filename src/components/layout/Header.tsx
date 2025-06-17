@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
-import { Search, Bell, UserCircle } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { NotificationList } from './NotificationList';
 import { mockNotifications } from '@/lib/mockData';
@@ -52,12 +52,9 @@ export function Header() {
               <NotificationList notifications={mockNotifications} />
             </PopoverContent>
           </Popover>
-          <Button variant="ghost" size="icon" aria-label="User Profile">
-            <UserCircle className="h-6 w-6" />
-          </Button>
+          {/* User Profile button removed from here */}
         </div>
       </div>
     </header>
   );
 }
-
