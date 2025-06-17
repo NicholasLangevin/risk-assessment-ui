@@ -187,9 +187,10 @@ const Sidebar = React.forwardRef<
         data-side={side}
         {...props}
       >
+        {/* Placeholder div to push content when sidebar is fixed */}
         <div
           className={cn(
-            "duration-200 relative h-[calc(100vh-3.5rem)] top-14 w-[var(--sidebar-width)] bg-transparent transition-[width] ease-linear", // Adjusted height and top for placeholder
+            "duration-200 relative h-full w-[var(--sidebar-width)] bg-transparent transition-[width] ease-linear",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -197,9 +198,10 @@ const Sidebar = React.forwardRef<
               : "group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)]"
           )}
         />
+        {/* Actual sidebar panel */}
         <div
           className={cn(
-            "duration-200 fixed z-30 hidden w-[var(--sidebar-width)] transition-[left,right,width] ease-linear md:flex", // Main fixed panel for desktop
+            "duration-200 fixed z-30 hidden w-[var(--sidebar-width)] transition-[left,right,width] ease-linear md:flex",
             "top-14 h-[calc(100vh-3.5rem)]", // Position below header and set height
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
@@ -285,7 +287,7 @@ const SidebarInset = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative flex flex-1 flex-col min-h-0", 
+        "relative flex flex-1 flex-col min-h-0",
         "transition-[padding-left] duration-200 ease-in-out",
         "md:pl-[var(--sidebar-width-icon)]",
         "peer-data-[state=expanded]:md:pl-[var(--sidebar-width)]",
@@ -478,7 +480,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:[&>span:last-child]:hidden [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -725,3 +727,4 @@ export {
 }
 // Renamed export
 export { SidebarProvider as ActualSidebarProvider };
+
