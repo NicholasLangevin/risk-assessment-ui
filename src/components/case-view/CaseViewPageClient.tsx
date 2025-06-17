@@ -19,9 +19,6 @@ export function CaseViewPageClient({ caseDetails }: CaseViewPageClientProps) {
         <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8 text-center">
             <h1 className="text-2xl font-bold mb-4">Case Not Found</h1>
             <p className="text-muted-foreground">The case you are looking for does not exist or could not be loaded.</p>
-            <Button variant="outline" size="sm" asChild className="mt-4">
-                <Link href="/cases"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Cases</Link>
-            </Button>
         </div>
     );
   }
@@ -29,7 +26,7 @@ export function CaseViewPageClient({ caseDetails }: CaseViewPageClientProps) {
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       {/* Case Header Information */}
-      <div className="mb-6">
+      <div className="mb-6 pb-2">
         <h1 className="text-2xl font-bold font-headline">Case: {caseDetails.id}</h1>
         <p className="text-md text-muted-foreground mt-1">
             Insured: {caseDetails.insuredName} | Broker: {caseDetails.broker} | Type: {caseDetails.caseType}
