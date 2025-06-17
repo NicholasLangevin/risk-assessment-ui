@@ -35,7 +35,7 @@ export function CaseViewPageClient({ caseDetails }: CaseViewPageClientProps) {
         <Link href="/cases"><ChevronLeft className="mr-2 h-4 w-4" /> Back to All Cases</Link>
       </Button>
       <Card className="shadow-lg">
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div>
                 <CardTitle className="text-2xl font-bold font-headline">Case: {caseDetails.id}</CardTitle>
