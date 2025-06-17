@@ -1,18 +1,15 @@
 
 import type React from 'react';
 import Link from 'next/link';
-// Header import removed as it's now in RootLayout
 import {
-  SidebarProvider,
+  // SidebarProvider, // Removed from here
   Sidebar,
   SidebarHeader,
   SidebarContent,
-  // SidebarFooter, // Removed if not used
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-  // SidebarTrigger // Removed as it's in Header
 } from '@/components/ui/sidebar';
 import { HomeIcon, LayoutDashboard as LayoutDashboardIcon } from 'lucide-react'; 
 
@@ -22,7 +19,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
-    <SidebarProvider defaultOpen={true}>
+    // SidebarProvider removed from here
       <div className="flex flex-1"> {/* This div helps manage the layout below the global Header */}
         <Sidebar collapsible="icon" className="h-[calc(100vh-3.5rem)] fixed top-14 left-0 z-30"> {/* Adjust height and position if Header is 3.5rem (h-14) */}
           <SidebarHeader className="p-4 flex items-center group-data-[state=expanded]:justify-start group-data-[state=collapsed]:justify-center">
@@ -51,12 +48,11 @@ export function AppLayout({ children }: AppLayoutProps) {
           </SidebarContent>
         </Sidebar>
         <SidebarInset className="pt-14"> {/* Add padding top to account for fixed Header height */}
-          {/* Header component is no longer here */}
           <main className="flex-1 bg-background"> 
             {children}
           </main>
         </SidebarInset>
       </div>
-    </SidebarProvider>
+    // SidebarProvider removed from here
   );
 }

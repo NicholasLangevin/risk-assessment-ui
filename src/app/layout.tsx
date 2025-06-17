@@ -1,8 +1,10 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Header } from '@/components/layout/Header'; // Import Header
+import { Header } from '@/components/layout/Header';
 import { Toaster } from "@/components/ui/toaster";
+import { SidebarProvider } from '@/components/ui/sidebar'; // Import SidebarProvider
 
 export const metadata: Metadata = {
   title: 'RiskPilot',
@@ -22,10 +24,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <Header /> {/* Header is rendered first and outside AppLayout */}
-        <AppLayout> {/* AppLayout will contain SidebarProvider, Sidebar, and SidebarInset > children */}
-          {children}
-        </AppLayout>
+        <SidebarProvider defaultOpen={true}> {/* Wrap Header and AppLayout */}
+          <Header />
+          <AppLayout>
+            {children}
+          </AppLayout>
+        </SidebarProvider>
         <Toaster />
       </body>
     </html>
