@@ -55,12 +55,6 @@ export function UserHomePageClient() {
           </CardContent>
         </Card>
       </div>
-
-      <div className="text-center mt-12">
-        <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-          <Link href="/quote-dashboard">View Full Quote Dashboard</Link>
-        </Button>
-      </div>
     </>
   );
 }
