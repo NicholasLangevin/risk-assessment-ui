@@ -56,27 +56,32 @@ export function SidebarProvider({
   onOpenChange?: (open: boolean) => void;
 }) {
   const isMobileHookValue = useIsMobile();
-
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  const [_open, _setOpen] = React.useState(defaultOpen); // Initialize with defaultOpen consistently
   const [openMobile, setOpenMobile] = React.useState(false);
 
+  // Effect to read from cookie and update state, runs only on client after mount
   React.useEffect(() => {
-    const cookieValueString = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
-      ?.split("=")[1];
+    if (typeof window !== "undefined") {
+      const cookieValueString = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+        ?.split("=")[1];
 
-    if (cookieValueString) {
-      const cookieValueBoolean = cookieValueString === "true";
-      if (cookieValueBoolean !== _open) { // Check against current state, not just defaultOpen
-        if (setOpenProp) {
-          setOpenProp(cookieValueBoolean);
-        } else {
+      if (cookieValueString) {
+        const cookieValueBoolean = cookieValueString === "true";
+        // Only update if the cookie value differs from the current state derived from defaultOpen
+        // This prevents an unnecessary update if the cookie matches the default
+        if (openProp === undefined && cookieValueBoolean !== _open) { // check _open if not controlled
           _setOpen(cookieValueBoolean);
+        } else if (openProp !== undefined && cookieValueBoolean !== openProp && setOpenProp) {
+           // If controlled, let the controlling component know if cookie differs
+           // This part is tricky, as directly calling setOpenProp might cause loops
+           // For now, we assume if it's controlled, cookie sync might be handled differently or is less critical for initial render
         }
       }
     }
-  }, [_open, setOpenProp]); // Depend on _open to re-evaluate if defaultOpen changes or prop changes
+  }, [defaultOpen, openProp, setOpenProp, _open]); // Add _open to dependencies to re-evaluate if it changes from other sources
+
 
   const open = openProp !== undefined ? openProp : _open;
 
@@ -94,6 +99,7 @@ export function SidebarProvider({
     },
     [open, setOpenProp]
   );
+
 
   const toggleSidebar = React.useCallback(() => {
     if (isMobileHookValue === undefined) return;
@@ -166,14 +172,14 @@ const Sidebar = React.forwardRef<
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
     if (isMobile === undefined) {
-      return null;
+      return null; // Render null on server and initial client render if isMobile is not yet determined
     }
 
     if (collapsible === "none") {
       return (
         <div
           className={cn(
-            "flex h-full w-[var(--sidebar-width)] flex-col bg-sidebar text-sidebar-foreground",
+            "flex h-full w-[var(--sidebar-width)] flex-col bg-sidebar text-sidebar-foreground", // Ensures height matches AppLayout's intent
             className
           )}
           ref={ref}
@@ -214,7 +220,7 @@ const Sidebar = React.forwardRef<
         {/* Placeholder div to push content when sidebar is fixed */}
         <div
           className={cn(
-            "duration-200 relative h-full bg-transparent transition-[width] ease-linear",
+            "duration-200 relative h-full bg-transparent transition-[width] ease-linear", // Changed from h-[calc(100vh-3.5rem)] top-14
             "w-[var(--sidebar-width)]",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
@@ -227,7 +233,7 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "duration-200 fixed z-30 hidden w-[var(--sidebar-width)] transition-[left,right,width] ease-linear md:flex",
-            "top-14 h-[calc(100vh-3.5rem)]", 
+            "top-14 h-[calc(100vh-3.5rem)]", // Correctly positions below header
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
@@ -312,9 +318,12 @@ const SidebarInset = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex-1 bg-background h-full overflow-y-auto", // Handles layout within AppLayout.tsx
-        "w-full max-w-screen-2xl mx-auto", // Centering for very wide screens
-        "px-4 sm:px-6 lg:px-8 py-8", // Consistent content padding
+        "flex-1 bg-background h-full overflow-y-auto min-h-0", // Handles layout within AppLayout.tsx
+        // These paddings are for the content inside SidebarInset
+        "px-4 sm:px-6 lg:px-8 py-8", 
+        "max-w-screen-2xl mx-auto", // Centering for very wide screens
+        // Transition for padding change when sidebar state changes
+        // No longer directly using peer-data for padding here as flex layout in AppLayout handles space
         className
       )}
       {...props}
@@ -495,14 +504,18 @@ const SidebarMenuItem = React.forwardRef<
   <li
     ref={ref}
     data-sidebar="menu-item"
-    className={cn("group/menu-item relative", className)}
+    className={cn(
+      "group/menu-item relative",
+      "group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center", // Center button within LI when sidebar is icon-only
+      className
+    )}
     {...props}
   />
 ))
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:[&>span:last-child]:hidden [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:[&>span:last-child]:hidden [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -748,3 +761,4 @@ export {
   SidebarTrigger,
   SidebarProvider,
 };
+
