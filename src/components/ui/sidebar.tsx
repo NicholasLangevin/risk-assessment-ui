@@ -78,6 +78,7 @@ export function SidebarProvider({
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Runs once on mount client-side
 
   // Effect to sync prop changes or update cookie
@@ -180,7 +181,7 @@ const Sidebar = React.forwardRef<
     {
       side = "left",
       variant = "sidebar",
-      collapsible = "icon", // Default to "icon" as per most recent user preference
+      collapsible = "icon",
       className,
       children,
       ...props
@@ -190,8 +191,6 @@ const Sidebar = React.forwardRef<
     const { isMobile, state, openMobile, setOpenMobile, open } = useSidebar();
 
     if (isMobile === undefined && collapsible !== "none") {
-      // For SSR and initial client render before mobile check, render nothing to avoid hydration mismatch
-      // Or render a consistent placeholder skeleton if preferred
       return null;
     }
     
@@ -238,48 +237,43 @@ const Sidebar = React.forwardRef<
       )
     }
 
-    // Desktop
     const isIconCollapsible = currentCollapsibleMode === 'icon';
 
-    // This is the placeholder div that pushes content
     const placeholderWidthClass = currentViewMode === "expanded"
-      ? "w-[var(--sidebar-width)]" // e.g., 16rem
+      ? "w-[var(--sidebar-width)]"
       : isIconCollapsible
-        ? "w-[var(--sidebar-width-icon)]" // e.g., 3rem
-        : "w-0"; // For offcanvas collapsed
+        ? "w-[var(--sidebar-width-icon)]"
+        : "w-0"; 
 
-    // This is for the actual sidebar panel
     const panelWidthClass = currentViewMode === "expanded"
         ? "w-[var(--sidebar-width)]"
         : isIconCollapsible
             ? "w-[var(--sidebar-width-icon)]"
-            : "w-[var(--sidebar-width)]"; // Offcanvas starts full width then translates
+            : "w-[var(--sidebar-width)]";
 
     const panelTransformClass = (currentViewMode === "collapsed" && currentCollapsibleMode === "offcanvas")
         ? (side === "left" ? "-translate-x-full" : "translate-x-full")
         : "";
 
     return (
-      // This is the placeholder element
       <div
         ref={ref}
         className={cn(
             "group peer hidden md:block text-sidebar-foreground",
-            placeholderWidthClass, // This makes space in the document flow
+            placeholderWidthClass, 
             "transition-[width] duration-200 ease-linear relative h-full", 
             className
         )}
-        data-state={currentViewMode} // expanded or collapsed
-        data-collapsible={currentCollapsibleMode} // icon or offcanvas (for desktop)
+        data-state={currentViewMode} 
+        data-collapsible={currentCollapsibleMode}
         data-variant={variant}
         data-side={side}
         {...props}
       >
-        {/* This is the actual visual sidebar panel */}
         <div
           className={cn(
             "fixed z-30 flex flex-col bg-sidebar transition-[width,transform] duration-200 ease-linear",
-            "top-14 h-[calc(100vh-3.5rem)]", // Positioned below header
+            "top-14 h-[calc(100vh-3.5rem)]", 
             panelWidthClass,
             panelTransformClass,
             side === "left" ? "left-0" : "right-0",
@@ -361,10 +355,10 @@ const SidebarInset = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex-1 bg-background h-full overflow-y-auto min-h-0", // Takes remaining space
-        "px-4 sm:px-6 lg:px-8 py-8", // Internal padding for content
-        "max-w-screen-2xl mx-auto w-full", // Centering and max-width for content page
-        "transition-[padding-left] duration-200 ease-linear", 
+        "flex-1 bg-background h-full overflow-y-auto min-h-0",
+        "px-4 sm:px-6 lg:px-8 py-8",
+        "max-w-screen-2xl mx-auto w-full",
+        "transition-[padding-left] duration-200 ease-linear",
         className
       )}
       {...props}
@@ -460,7 +454,7 @@ const SidebarContent = React.forwardRef<
     ref={ref}
     data-sidebar="content"
     className={cn(
-      "flex min-h-0 flex-1 flex-col gap-2 overflow-auto",
+      "flex min-h-0 flex-1 flex-col gap-2 overflow-auto pt-2",
       className
     )}
     {...props}
@@ -581,7 +575,7 @@ const SidebarMenu = React.forwardRef<
   >
     {React.Children.map(children, child =>
       React.isValidElement(child)
-        ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode }) // Pass down sidebarViewMode
+        ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode }) 
         : child
     )}
   </ul>
@@ -593,7 +587,6 @@ const SidebarMenuItem = React.forwardRef<
   React.ComponentProps<"li"> & { sidebarViewMode?: 'expanded' | 'collapsed' }
 >(({ className, children, sidebarViewMode: propViewMode, ...props }, ref) => {
   const contextViewMode = useSidebarView();
-  // Prop takes precedence, then context, then default to expanded (though context should always provide a value)
   const currentViewMode = propViewMode || contextViewMode || 'expanded';
   const isCollapsed = currentViewMode === 'collapsed';
 
@@ -603,7 +596,7 @@ const SidebarMenuItem = React.forwardRef<
       data-sidebar="menu-item"
       className={cn(
         "group/menu-item relative",
-        isCollapsed && "flex justify-center", // Center button when item is collapsed
+        isCollapsed && "flex justify-center", 
         className
       )}
       {...props}
@@ -673,28 +666,34 @@ const SidebarMenuButton = React.forwardRef<
     let childrenToRender: React.ReactNode = children;
 
     if (isCollapsed) {
-      if (asChild && React.isValidElement(children)) {
-        // If asChild, children is the Link component. We need its children.
-        const linkElement = children as React.ReactElement<any>;
-        const linkChildrenArray = React.Children.toArray(linkElement.props.children);
-        if (linkChildrenArray.length > 0) {
-          // The first child of Link is assumed to be the icon or icon wrapper
-          const iconOrWrapper = linkChildrenArray[0];
-          childrenToRender = React.cloneElement(linkElement, { children: iconOrWrapper });
-        } else {
-          // No children in Link, pass it as is (though unlikely for a button)
-          childrenToRender = React.cloneElement(linkElement, { children: null });
+        if (asChild && React.isValidElement(children)) {
+            // Child is a Link component
+            const linkElement = children as React.ReactElement<any>;
+            const linkChildrenArray = React.Children.toArray(linkElement.props.children);
+            
+            // The first child of Link (which is the span wrapper for the icon)
+            const iconWrapper = linkChildrenArray.find(child => 
+              React.isValidElement(child) && (child as React.ReactElement<any>).type === 'span' && React.Children.toArray((child as React.ReactElement<any>).props.children).some(
+                (grandChild: any) => React.isValidElement(grandChild) && ['HomeIcon', 'LayoutDashboardIcon'].includes((grandChild.type as any).displayName || grandChild.type.name)
+              )
+            );
+
+            if (iconWrapper) {
+                 childrenToRender = React.cloneElement(linkElement, { children: iconWrapper });
+            } else {
+                 // Fallback: render the first child of Link if specific icon wrapper not found
+                 const firstChildOfLink = linkChildrenArray[0];
+                 childrenToRender = React.cloneElement(linkElement, { children: firstChildOfLink || null });
+            }
+
+        } else if (!asChild) {
+            // Direct children of SidebarMenuButton (not via Link)
+            const directChildrenArray = React.Children.toArray(children);
+            const iconChild = directChildrenArray.find(child => 
+                React.isValidElement(child) && ['HomeIcon', 'LayoutDashboardIcon', 'span'].includes((child.type as any).displayName || child.type.name)
+            ); // Look for icon or its span wrapper
+             childrenToRender = iconChild || null;
         }
-      } else {
-        // Not asChild, direct children of SidebarMenuButton
-        const directChildrenArray = React.Children.toArray(children);
-        if (directChildrenArray.length > 0) {
-           // The first child is assumed to be the icon or icon wrapper
-          childrenToRender = directChildrenArray[0];
-        } else {
-          childrenToRender = null;
-        }
-      }
     }
 
 
