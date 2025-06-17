@@ -13,7 +13,7 @@ import { HomeIcon, LayoutDashboardIcon } from 'lucide-react';
 
 export function AppSidebar() {
   return (
-    <Sidebar collapsible="icon" className="h-[calc(100vh-3.5rem)] fixed top-14 left-0 z-30">
+    <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>

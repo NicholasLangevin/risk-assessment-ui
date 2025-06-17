@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react"
@@ -43,6 +44,7 @@ export function useSidebar() {
   return context
 }
 
+// Renamed to avoid conflict with the actual Sidebar component
 export const SidebarProvider = ({
   children,
   defaultOpen = true,
@@ -168,9 +170,7 @@ const Sidebar = React.forwardRef<
             side={side}
             {...props} 
           >
-            <SheetHeader className="p-4 border-b">
-              <SheetTitle className="sr-only">Main Navigation</SheetTitle>
-            </SheetHeader>
+            {/* SheetHeader can be added here if needed for mobile, e.g., with a title or close button */}
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
@@ -189,7 +189,7 @@ const Sidebar = React.forwardRef<
       >
         <div
           className={cn(
-            "duration-200 relative h-svh w-[var(--sidebar-width)] bg-transparent transition-[width] ease-linear",
+            "duration-200 relative h-[calc(100vh-3.5rem)] top-14 w-[var(--sidebar-width)] bg-transparent transition-[width] ease-linear", // Adjusted height and top for placeholder
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -199,7 +199,8 @@ const Sidebar = React.forwardRef<
         />
         <div
           className={cn(
-            "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[var(--sidebar-width)] transition-[left,right,width] ease-linear md:flex",
+            "duration-200 fixed z-30 hidden w-[var(--sidebar-width)] transition-[left,right,width] ease-linear md:flex", // Main fixed panel for desktop
+            "top-14 h-[calc(100vh-3.5rem)]", // Position below header and set height
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
@@ -284,17 +285,11 @@ const SidebarInset = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative flex flex-1 flex-col min-h-0", // Grow, allow scroll, use min-h-0 for flex children
+        "relative flex flex-1 flex-col min-h-0", 
         "transition-[padding-left] duration-200 ease-in-out",
-        // Default left padding for md screens and up, assumes icon sidebar width.
-        // This applies when the peer is present and not 'expanded'.
-        // If peer is collapsible="icon", this will be the padding for collapsed state.
         "md:pl-[var(--sidebar-width-icon)]",
-        // When peer (Sidebar) has data-state="expanded", increase left padding.
         "peer-data-[state=expanded]:md:pl-[var(--sidebar-width)]",
-        // If peer (Sidebar) has data-collapsible="offcanvas" AND data-state="collapsed", remove padding.
         "peer-data-[collapsible=offcanvas]:peer-data-[state=collapsed]:md:pl-0",
-        // Classes for styling if the sidebar itself is 'inset' variant (less relevant for this main content area)
         "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
         className
       )}
@@ -728,4 +723,5 @@ export {
   SidebarSeparator,
   SidebarTrigger,
 }
+// Renamed export
 export { SidebarProvider as ActualSidebarProvider };
