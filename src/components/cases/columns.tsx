@@ -10,34 +10,6 @@ import { ClientFormattedDate } from '@/components/common/ClientFormattedDate';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-const getStatusBadgeVariant = (status: CaseStatus): 'default' | 'secondary' | 'destructive' | 'outline' => {
-  switch (status) {
-    case 'Untouched':
-      return 'outline';
-    case 'Triage':
-      return 'secondary';
-    case 'Open':
-      return 'default'; // Using primary color
-    case 'In Progress':
-      return 'secondary'; // Could be a specific 'info' or 'warning' color
-    case 'Pending Information':
-      return 'outline'; // Example: Yellowish/Orange using accent if configured
-    case 'Action Required':
-      return 'destructive'; // Example: Red
-    case 'Completed':
-      return 'default'; // Using a less prominent primary or specific 'success' color (e.g. green)
-    case 'Closed':
-      return 'outline'; // Muted
-    default:
-      return 'secondary';
-  }
-};
-// Use a specific class for 'Completed' if default primary is not suitable (e.g. if primary is blue, completed might be green)
-const completedBadgeClass = "bg-green-100 text-green-700 border-green-300 dark:bg-green-700/30 dark:text-green-300 dark:border-green-600";
-const openBadgeClass = "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-700/30 dark:text-blue-300 dark:border-blue-600";
-const pendingInfoBadgeClass = "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-600/30 dark:text-yellow-300 dark:border-yellow-500";
-
-
 const getPriorityBadgeClass = (priority: PriorityLevel): string => {
   switch (priority) {
     case 'High':
@@ -165,32 +137,7 @@ export const columns: ColumnDef<CaseListItem>[] = [
     },
     cell: ({ row }) => {
       const status = row.getValue('status') as CaseStatus;
-      let badgeClass = '';
-      if (status === 'Completed') badgeClass = completedBadgeClass;
-      else if (status === 'Open') badgeClass = openBadgeClass;
-      else if (status === 'Pending Information') badgeClass = pendingInfoBadgeClass;
-      
-      return <Badge variant={getStatusBadgeVariant(status)} className={cn(badgeClass)}>{status}</Badge>;
+      return <div className="text-sm">{status}</div>;
     },
   },
-  // Removed the 'actions' column
-  // {
-  //   id: 'actions',
-  //   cell: ({ row }) => {
-  //     const caseItem = row.original;
-  //     if (caseItem.relatedQuoteId) {
-  //       return (
-  //         <Button variant="ghost" asChild size="sm">
-  //           <Link href={`/quote/${caseItem.relatedQuoteId}`}>View Quote</Link>
-  //         </Button>
-  //       );
-  //     }
-  //     // Placeholder for future case detail view or other actions
-  //     return (
-  //       <Button variant="ghost" size="sm" disabled>
-  //         View Case
-  //       </Button>
-  //     );
-  //   },
-  // },
 ];
