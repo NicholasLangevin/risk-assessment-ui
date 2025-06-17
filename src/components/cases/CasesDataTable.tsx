@@ -46,6 +46,7 @@ export function CasesDataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = React.useState('');
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
@@ -60,9 +61,11 @@ export function CasesDataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       columnFilters,
+      globalFilter,
       columnVisibility,
       rowSelection,
     },
@@ -72,18 +75,9 @@ export function CasesDataTable<TData, TValue>({
     <div>
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter cases by any text..."
-          value={(table.getColumn('insuredName')?.getFilterValue() as string) ?? ''} 
-          onChange={(event) => {
-            // This basic filter setup applies the input value to multiple columns.
-            // For true global filtering, you might set a globalFilter state and filterFn.
-            table.getColumn('id')?.setFilterValue(event.target.value);
-            table.getColumn('insuredName')?.setFilterValue(event.target.value);
-            table.getColumn('broker')?.setFilterValue(event.target.value);
-            table.getColumn('assignedTo')?.setFilterValue(event.target.value);
-            table.getColumn('caseType')?.setFilterValue(event.target.value);
-            table.getColumn('status')?.setFilterValue(event.target.value);
-          }}
+          placeholder="Filter by Case #, Insured, Broker..."
+          value={globalFilter ?? ''}
+          onChange={(event) => setGlobalFilter(String(event.target.value))}
           className="max-w-sm"
         />
         <DropdownMenu>
@@ -98,28 +92,14 @@ export function CasesDataTable<TData, TValue>({
               .filter((column) => column.getCanHide())
               .map((column) => {
                 let displayName = column.id;
-                switch (column.id) {
-                  case 'id':
-                    displayName = 'Case Number';
-                    break;
-                  case 'insuredName':
-                    displayName = 'Insured Name';
-                    break;
-                  case 'broker':
-                    displayName = 'Broker';
-                    break;
-                  case 'caseType':
-                    displayName = 'Transaction Type';
-                    break;
-                  case 'receivedDate':
-                    displayName = 'Date Received';
-                    break;
-                  case 'assignedTo':
-                    displayName = 'Assigned To';
-                    break;
-                  // 'priority' and 'status' will use their default id as display name, which is fine.
-                  // 'actions' column is usually not toggleable for visibility or has a specific name.
-                }
+                // Simple mapping for display names, can be expanded
+                if (column.id === 'id') displayName = 'Case Number';
+                if (column.id === 'insuredName') displayName = 'Insured Name';
+                if (column.id === 'broker') displayName = 'Broker';
+                if (column.id === 'caseType') displayName = 'Transaction Type';
+                if (column.id === 'receivedDate') displayName = 'Date Received';
+                if (column.id === 'assignedTo') displayName = 'Assigned To';
+                
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
