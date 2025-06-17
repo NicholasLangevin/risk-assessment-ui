@@ -65,7 +65,6 @@ export function SidebarProvider({
 
   React.useEffect(() => {
     // Initialize from cookie only on the client after mount
-    // This effect runs once after initial client render.
     if (typeof window !== "undefined" && openProp === undefined) {
       const cookieValueString = document.cookie
         .split("; ")
@@ -74,15 +73,14 @@ export function SidebarProvider({
 
       if (cookieValueString) {
         const cookieValueBoolean = cookieValueString === "true";
-        // Only update if the cookie value differs from the current state
-        // to avoid unnecessary re-renders or loops if defaultOpen matches cookie.
-        if (_open !== cookieValueBoolean) {
+        if (_open !== cookieValueBoolean) { // Only update if state differs from cookie
           _setOpenInternal(cookieValueBoolean);
         }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openProp]); // Dependency on openProp to re-evaluate if it's provided/removed.
+  }, []); // Run once on mount to initialize from cookie
+
 
   // Effect to sync prop changes or update cookie when internal state changes
   React.useEffect(() => {
@@ -93,18 +91,16 @@ export function SidebarProvider({
       }
     } else {
       // If uncontrolled, update cookie when _open changes
-      if (typeof window !== "undefined") {
+      // This check ensures we don't write the cookie if _open was just set from it
+       if (typeof window !== "undefined") {
          const currentCookieValue = document.cookie
           .split("; ")
           .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
           ?.split("=")[1] === "true";
-
-        // Check if internal state _open differs from current cookie value before writing
-        // This avoids writing the cookie if _open was just set from the cookie in the other useEffect
         if (_open !== currentCookieValue) {
             document.cookie = `${SIDEBAR_COOKIE_NAME}=${_open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
         }
-      }
+       }
     }
   }, [openProp, _open]);
 
@@ -197,12 +193,11 @@ const Sidebar = React.forwardRef<
     const { isMobile, state, openMobile, setOpenMobile, open } = useSidebar();
 
     if (isMobile === undefined && collapsible !== "none") {
-      return null; // Render nothing until mobile status is known to prevent hydration mismatch
+      return null;
     }
-    
+
     const currentCollapsibleMode = isMobile ? "offcanvas" : collapsible;
-    // The 'state' from useSidebar is already 'expanded' or 'collapsed'
-    const currentViewMode = state; 
+    const currentViewMode = state;
 
 
     if (collapsible === "none") {
@@ -210,7 +205,7 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "flex h-full w-[var(--sidebar-width)] flex-col bg-sidebar text-sidebar-foreground",
-            "fixed top-14 h-[calc(100vh-3.5rem)] z-30", 
+            "fixed top-14 h-[calc(100vh-3.5rem)] z-30",
             side === "left" ? "left-0 border-r" : "right-0 border-l",
             className
           )}
@@ -235,7 +230,7 @@ const Sidebar = React.forwardRef<
             {...props}
           >
             <div className="flex h-full w-full flex-col">
-              <SidebarViewContext.Provider value="expanded"> 
+              <SidebarViewContext.Provider value="expanded">
                 {children}
               </SidebarViewContext.Provider>
             </div>
@@ -246,19 +241,17 @@ const Sidebar = React.forwardRef<
 
     const isIconCollapsible = currentCollapsibleMode === 'icon';
 
-    // Placeholder width adjusts based on the overall 'open' state (currentViewMode)
     const placeholderWidthClass = currentViewMode === "expanded"
       ? "w-[var(--sidebar-width)]"
       : isIconCollapsible
         ? "w-[var(--sidebar-width-icon)]"
-        : "w-0"; 
+        : "w-0";
 
-    // Panel width also adjusts based on the overall 'open' state
     const panelWidthClass = currentViewMode === "expanded"
         ? "w-[var(--sidebar-width)]"
         : isIconCollapsible
             ? "w-[var(--sidebar-width-icon)]"
-            : "w-[var(--sidebar-width)]"; // Fallback for other collapsible modes if any
+            : "w-[var(--sidebar-width)]";
 
     const panelTransformClass = (currentViewMode === "collapsed" && currentCollapsibleMode === "offcanvas")
         ? (side === "left" ? "-translate-x-full" : "translate-x-full")
@@ -269,28 +262,28 @@ const Sidebar = React.forwardRef<
         ref={ref}
         className={cn(
             "group peer hidden md:block text-sidebar-foreground",
-            placeholderWidthClass, 
-            "transition-[width] duration-200 ease-linear relative h-full", 
+            placeholderWidthClass,
+            "transition-[width] duration-200 ease-linear relative h-full",
             className
         )}
-        data-state={currentViewMode} 
-        data-collapsible={currentCollapsibleMode} // Keep this for potential specific styling if needed
+        data-state={currentViewMode}
+        data-collapsible={currentCollapsibleMode}
         data-variant={variant}
         data-side={side}
         {...props}
       >
         <div
           className={cn(
-            "fixed z-30 flex flex-col bg-sidebar transition-[width,transform] duration-200 ease-linear",
-            "top-14 h-[calc(100vh-3.5rem)]", 
+            "fixed z-30 flex flex-col bg-sidebar transition-[width] duration-200 ease-linear",
+            "top-14 h-[calc(100vh-3.5rem)]",
             panelWidthClass,
             panelTransformClass,
             side === "left" ? "left-0" : "right-0",
             (variant === "floating" || variant === "inset") && "p-2",
             (variant === "floating" || variant === "inset") && currentViewMode === "collapsed" && isIconCollapsible
-              ? "w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]" 
+              ? "w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
               : "",
-            (variant !== "floating" && variant !== "inset") && (side === "left" ? "border-r" : "border-l"), 
+            (variant !== "floating" && variant !== "inset") && (side === "left" ? "border-r" : "border-l"),
             (variant === "floating" || variant === "inset") && "group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           )}
         >
@@ -365,8 +358,8 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "flex-1 bg-background h-full overflow-y-auto min-h-0",
-        "px-4 sm:px-6 lg:px-8 py-8", // Main content padding
-        "max-w-screen-2xl mx-auto w-full", // Centering content
+        "px-4 sm:px-6 lg:px-8 py-8",
+        "max-w-screen-2xl mx-auto w-full",
         className
       )}
       {...props}
@@ -393,48 +386,53 @@ const SidebarInput = React.forwardRef<
 })
 SidebarInput.displayName = "SidebarInput"
 
-const SidebarHeader = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, children, ...props }, ref) => {
-  const currentViewMode = useSidebarView();
-  return (
-    <div
-      ref={ref}
-      data-sidebar="header"
-      className={cn("flex flex-col gap-2 p-2", className)}
-      {...props}
-    >
-      {React.Children.map(children, child =>
-        React.isValidElement(child)
-          ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
-          : child
-      )}
-    </div>
-  )
-})
+interface SidebarHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  sidebarViewMode?: 'expanded' | 'collapsed';
+}
+const SidebarHeader = React.forwardRef<HTMLDivElement, SidebarHeaderProps>(
+  ({ className, children, sidebarViewMode: _ignored, ...props }, ref) => {
+    const currentViewMode = useSidebarView();
+    return (
+      <div
+        ref={ref}
+        data-sidebar="header"
+        className={cn("flex flex-col gap-2 p-2", className)}
+        {...props} // sidebarViewMode is not passed to DOM
+      >
+        {React.Children.map(children, child =>
+          React.isValidElement(child)
+            ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
+            : child
+        )}
+      </div>
+    );
+  }
+);
 SidebarHeader.displayName = "SidebarHeader"
 
-const SidebarFooter = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, children, ...props }, ref) => {
-  const currentViewMode = useSidebarView();
-  return (
-    <div
-      ref={ref}
-      data-sidebar="footer"
-      className={cn("flex flex-col gap-2 p-2", className)}
-      {...props}
-    >
-     {React.Children.map(children, child =>
-        React.isValidElement(child)
-          ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
-          : child
-      )}
-    </div>
-  )
-})
+
+interface SidebarFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+  sidebarViewMode?: 'expanded' | 'collapsed';
+}
+const SidebarFooter = React.forwardRef<HTMLDivElement, SidebarFooterProps>(
+  ({ className, children, sidebarViewMode: _ignored, ...props }, ref) => {
+    const currentViewMode = useSidebarView();
+    return (
+      <div
+        ref={ref}
+        data-sidebar="footer"
+        className={cn("flex flex-col gap-2 p-2", className)}
+        {...props} // sidebarViewMode is not passed to DOM
+      >
+      {React.Children.map(children, child =>
+          React.isValidElement(child)
+            ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
+            : child
+        )}
+      </div>
+    );
+  }
+);
 SidebarFooter.displayName = "SidebarFooter"
 
 const SidebarSeparator = React.forwardRef<
@@ -452,50 +450,55 @@ const SidebarSeparator = React.forwardRef<
 })
 SidebarSeparator.displayName = "SidebarSeparator"
 
-const SidebarContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, children, ...props }, ref) => {
-  const currentViewMode = useSidebarView();
-  return (
-  <div
-    ref={ref}
-    data-sidebar="content"
-    className={cn(
-      "flex min-h-0 flex-1 flex-col gap-2 overflow-auto pt-2 px-2",
-      className
-    )}
-    {...props}
-  >
-    {React.Children.map(children, child =>
-        React.isValidElement(child)
-          ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
-          : child
-      )}
-  </div>
-)})
-SidebarContent.displayName = "SidebarContent"
-
-const SidebarGroup = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, children, ...props }, ref) => {
-  const currentViewMode = useSidebarView();
-  return (
+interface SidebarContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  sidebarViewMode?: 'expanded' | 'collapsed';
+}
+const SidebarContent = React.forwardRef<HTMLDivElement, SidebarContentProps>(
+  ({ className, children, sidebarViewMode: _ignored, ...props }, ref) => {
+    const currentViewMode = useSidebarView();
+    return (
     <div
       ref={ref}
-      data-sidebar="group"
-      className={cn("relative flex w-full min-w-0 flex-col p-2", className)}
-      {...props}
+      data-sidebar="content"
+      className={cn(
+        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto pt-2 px-2",
+        className
+      )}
+      {...props} // sidebarViewMode is not passed to DOM
     >
       {React.Children.map(children, child =>
-        React.isValidElement(child)
-          ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
-          : child
-      )}
+          React.isValidElement(child)
+            ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
+            : child
+        )}
     </div>
-  )
-})
+  )}
+);
+SidebarContent.displayName = "SidebarContent"
+
+
+interface SidebarGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+  sidebarViewMode?: 'expanded' | 'collapsed';
+}
+const SidebarGroup = React.forwardRef<HTMLDivElement, SidebarGroupProps>(
+  ({ className, children, sidebarViewMode: _ignored, ...props }, ref) => {
+    const currentViewMode = useSidebarView();
+    return (
+      <div
+        ref={ref}
+        data-sidebar="group"
+        className={cn("relative flex w-full min-w-0 flex-col p-2", className)}
+        {...props} // sidebarViewMode is not passed to DOM
+      >
+        {React.Children.map(children, child =>
+          React.isValidElement(child)
+            ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
+            : child
+        )}
+      </div>
+    );
+  }
+);
 SidebarGroup.displayName = "SidebarGroup"
 
 
@@ -550,74 +553,80 @@ const SidebarGroupAction = React.forwardRef<
 })
 SidebarGroupAction.displayName = "SidebarGroupAction"
 
-const SidebarGroupContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, children, ...props }, ref) => {
-  const currentViewMode = useSidebarView();
-  return (
-  <div
-    ref={ref}
-    data-sidebar="group-content"
-    className={cn("w-full text-sm", className)}
-    {...props}
-  >
-    {React.Children.map(children, child =>
-        React.isValidElement(child)
-          ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
-          : child
-      )}
-  </div>
-)})
+interface SidebarGroupContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  sidebarViewMode?: 'expanded' | 'collapsed';
+}
+const SidebarGroupContent = React.forwardRef<HTMLDivElement, SidebarGroupContentProps>(
+  ({ className, children, sidebarViewMode: _ignored, ...props }, ref) => {
+    const currentViewMode = useSidebarView();
+    return (
+    <div
+      ref={ref}
+      data-sidebar="group-content"
+      className={cn("w-full text-sm", className)}
+      {...props} // sidebarViewMode is not passed to DOM
+    >
+      {React.Children.map(children, child =>
+          React.isValidElement(child)
+            ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
+            : child
+        )}
+    </div>
+  )}
+);
 SidebarGroupContent.displayName = "SidebarGroupContent"
 
-const SidebarMenu = React.forwardRef<
-  HTMLUListElement,
-  React.ComponentProps<"ul">
->(({ className, children, ...props }, ref) => {
-  const currentViewMode = useSidebarView();
-  return (
-  <ul
-    ref={ref}
-    data-sidebar="menu"
-    className={cn("flex w-full min-w-0 flex-col gap-1", className)}
-    {...props}
-  >
-    {React.Children.map(children, child =>
-      React.isValidElement(child)
-        ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
-        : child
-    )}
-  </ul>
-)})
-SidebarMenu.displayName = "SidebarMenu"
-
-const SidebarMenuItem = React.forwardRef<
-  HTMLLIElement,
-  React.ComponentProps<"li">
->(({ className, children, ...props }, ref) => {
-  const currentViewMode = useSidebarView();
-  const isCollapsed = currentViewMode === 'collapsed';
-
-  return (
-    <li
+interface SidebarMenuProps extends React.HTMLAttributes<HTMLUListElement> {
+  sidebarViewMode?: 'expanded' | 'collapsed';
+}
+const SidebarMenu = React.forwardRef<HTMLUListElement, SidebarMenuProps>(
+  ({ className, children, sidebarViewMode: _ignored, ...props }, ref) => {
+    const currentViewMode = useSidebarView();
+    return (
+    <ul
       ref={ref}
-      data-sidebar="menu-item"
-      className={cn(
-        "group/menu-item relative",
-        isCollapsed && "flex justify-center", 
-        className
-      )}
-      {...props}
+      data-sidebar="menu"
+      className={cn("flex w-full min-w-0 flex-col gap-1", className)}
+      {...props} // sidebarViewMode is not passed to DOM
     >
       {React.Children.map(children, child =>
         React.isValidElement(child)
           ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
           : child
       )}
-    </li>
-  )
-})
+    </ul>
+  )}
+);
+SidebarMenu.displayName = "SidebarMenu"
+
+interface SidebarMenuItemProps extends React.HTMLAttributes<HTMLLIElement> {
+  sidebarViewMode?: 'expanded' | 'collapsed';
+}
+const SidebarMenuItem = React.forwardRef<HTMLLIElement, SidebarMenuItemProps>(
+  ({ className, children, sidebarViewMode: _ignored, ...props }, ref) => {
+    const currentViewMode = useSidebarView();
+    const isCollapsed = currentViewMode === 'collapsed';
+
+    return (
+      <li
+        ref={ref}
+        data-sidebar="menu-item"
+        className={cn(
+          "group/menu-item relative",
+          isCollapsed && "flex justify-center",
+          className
+        )}
+        {...props} // sidebarViewMode is not passed to DOM
+      >
+        {React.Children.map(children, child =>
+          React.isValidElement(child)
+            ? React.cloneElement(child as React.ReactElement<any>, { sidebarViewMode: currentViewMode })
+            : child
+        )}
+      </li>
+    );
+  }
+);
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
@@ -648,7 +657,7 @@ const SidebarMenuButton = React.forwardRef<
     asChild?: boolean
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
-    sidebarViewMode?: 'expanded' | 'collapsed' // Explicitly accept from parent
+    sidebarViewMode?: 'expanded' | 'collapsed'
   } & VariantProps<typeof sidebarMenuButtonVariants>
 >(
   (
@@ -660,40 +669,34 @@ const SidebarMenuButton = React.forwardRef<
       tooltip,
       className,
       children,
-      sidebarViewMode: propSidebarViewMode, // Renamed to avoid conflict
+      sidebarViewMode: propSidebarViewMode,
       ...props
     },
     ref
   ) => {
     const Comp = asChild ? Slot : "button";
     const { isMobile } = useSidebar();
-    const contextSidebarViewMode = useSidebarView(); // Get view mode from context
-
-    // Prioritize prop, then context, then default to 'expanded'
+    const contextSidebarViewMode = useSidebarView();
     const currentViewMode = propSidebarViewMode || contextSidebarViewMode || 'expanded';
     const isCollapsed = currentViewMode === 'collapsed';
 
     let childrenToRender: React.ReactNode = children;
 
     if (isCollapsed) {
-      if (asChild && React.isValidElement(children)) { // Typically a Link
+      if (asChild && React.isValidElement(children)) {
         const linkElement = children as React.ReactElement<any>;
-        // The first child of the Link is expected to be the icon wrapper (span)
-        const iconWrapperOrIcon = React.Children.toArray(linkElement.props.children)[0];
-        if (React.isValidElement(iconWrapperOrIcon)) {
-           // If Link's child is the span wrapper, render that wrapper.
-           // If Link's child is directly the icon, render that.
-           childrenToRender = React.cloneElement(linkElement, { children: iconWrapperOrIcon });
+        const linkChildrenArray = React.Children.toArray(linkElement.props.children);
+        // The first child of Link should be the icon wrapper span or the icon itself
+        const iconOrWrapper = linkChildrenArray[0];
+        if (React.isValidElement(iconOrWrapper)) {
+          childrenToRender = React.cloneElement(linkElement, { children: iconOrWrapper });
         } else {
-           childrenToRender = React.cloneElement(linkElement, { children: null }); // Fallback
+          childrenToRender = React.cloneElement(linkElement, { children: null });
         }
-
-      } else if (!asChild) { // Direct button, not a Link
+      } else if (!asChild) {
         const directChildrenArray = React.Children.toArray(children);
-        // Find the icon or its wrapper span among direct children
         const iconOrWrapper = directChildrenArray.find(child => {
           if (React.isValidElement(child)) {
-            // Check if it's the span wrapper (like in AppSidebar) or directly an icon component
             return (child.type === 'span' || (typeof child.type === 'function' && /Icon/i.test((child.type as Function).name)));
           }
           return false;
@@ -705,7 +708,7 @@ const SidebarMenuButton = React.forwardRef<
 
     const finalButtonClasses = cn(
       sidebarMenuButtonVariants({ variant, size, className }),
-      isCollapsed && "!size-8 !p-0 flex items-center justify-center" // Ensure centering and size for collapsed
+      isCollapsed && "!size-8 !p-0 flex items-center justify-center"
     );
 
     const buttonElement = (
@@ -731,8 +734,7 @@ const SidebarMenuButton = React.forwardRef<
     } else {
       tooltipProps = tooltip;
     }
-    
-    // Show tooltip only when collapsed and not on mobile
+
     const showTooltip = isCollapsed && (isMobile === false);
 
     return (
