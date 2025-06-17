@@ -39,9 +39,10 @@ export const mockCaseListItems: CaseListItem[] = allMockCases.map(c => ({
   insuredName: c.insuredName,
   broker: c.broker,
   status: c.status,
-  receivedDate: c.receivedDate, // keep for potential future use or if other components need it
+  receivedDate: c.receivedDate, 
   priority: c.priority,
-  relatedQuoteId: c.relatedQuoteId, // Ensure this is mapped
+  relatedQuoteId: c.relatedQuoteId,
+  assignedTo: c.assignedTo, // Ensure assignedTo is mapped
 }));
 
 

@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarFooter, // Added SidebarFooter
 } from '@/components/ui/sidebar';
-import { HomeIcon, LayoutDashboardIcon, UserCircle } from 'lucide-react'; // Added UserCircle
+import { HomeIcon, LayoutDashboardIcon, UserCircle, FolderKanban } from 'lucide-react'; // Added FolderKanban
 import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
@@ -38,6 +38,16 @@ export function AppSidebar() {
                   <LayoutDashboardIcon className="h-4 w-4" />
                 </span>
                 <span>Quote Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Cases" isActive={pathname === '/cases'}>
+              <Link href="/cases">
+                <span className={cn("inline-flex items-center justify-center")}>
+                  <FolderKanban className="h-4 w-4" />
+                </span>
+                <span>Cases</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -3,24 +3,26 @@
   {
     "id": "C-20240701-001",
     "caseType": "New Business",
-    "status": "Open",
+    "status": "In Progress",
     "broker": "Marsh",
     "insuredName": "Innovate Corp",
     "receivedDate": "2024-07-01T10:00:00Z",
     "description": "Request for new GL and Property coverage for tech company.",
     "relatedQuoteId": "Q-20240701-001",
-    "priority": "High"
+    "priority": "High",
+    "assignedTo": "Alex Underwriter"
   },
   {
     "id": "C-20240702-002",
     "caseType": "Endorsement",
-    "status": "In Progress",
+    "status": "Triage",
     "broker": "Aon",
     "insuredName": "Future Solutions Ltd.",
     "receivedDate": "2024-07-02T14:30:00Z",
     "description": "Add new vehicle to existing commercial auto policy.",
     "relatedPolicyId": "P-20231001-001",
-    "priority": "Medium"
+    "priority": "Medium",
+    "assignedTo": "Support Team"
   },
   {
     "id": "C-20240703-003",
@@ -31,7 +33,8 @@
     "receivedDate": "2024-07-03T09:15:00Z",
     "description": "Upcoming GL policy renewal, requires updated revenue figures.",
     "relatedPolicyId": "P-20230915-002",
-    "priority": "High"
+    "priority": "High",
+    "assignedTo": "Sarah Miller"
   },
   {
     "id": "C-20240704-004",
@@ -42,7 +45,8 @@
     "receivedDate": "2024-07-04T11:00:00Z",
     "description": "Request for Cyber and E&O coverage for e-commerce business.",
     "relatedQuoteId": "Q-20240704-002",
-    "priority": "Medium"
+    "priority": "Medium",
+    "assignedTo": "Alex Underwriter"
   },
   {
     "id": "C-20240705-005",
@@ -53,7 +57,8 @@
     "receivedDate": "2024-07-05T16:45:00Z",
     "description": "Request to cancel property policy mid-term due to sale of property.",
     "relatedPolicyId": "P-20231110-003",
-    "priority": "Low"
+    "priority": "Low",
+    "assignedTo": "System"
   },
   {
     "id": "C-20240708-006",
@@ -64,7 +69,8 @@
     "receivedDate": "2024-07-08T10:30:00Z",
     "description": "New venture, renewable energy sector, seeking package policy.",
     "relatedQuoteId": "Q-20240708-003",
-    "priority": "High"
+    "priority": "High",
+    "assignedTo": "Unassigned"
   },
   {
     "id": "C-20240709-007",
@@ -75,7 +81,8 @@
     "receivedDate": "2024-07-09T11:00:00Z",
     "description": "Increase liability limits on existing policy for new large project.",
     "relatedPolicyId": "P-20231201-004",
-    "priority": "Medium"
+    "priority": "Medium",
+    "assignedTo": "John Davis"
   },
   {
     "id": "C-20240710-008",
@@ -86,6 +93,43 @@
     "receivedDate": "2024-07-10T15:00:00Z",
     "description": "Chain of retail stores, BOP application.",
     "relatedQuoteId": "Q-20240710-004",
-    "priority": "Low"
+    "priority": "Low",
+    "assignedTo": "AI Assistant"
+  },
+  {
+    "id": "C-20240711-009",
+    "caseType": "Renewal",
+    "status": "Untouched",
+    "broker": "Gallagher",
+    "insuredName": "Global Logistics Inc.",
+    "receivedDate": "2024-07-11T08:00:00Z",
+    "description": "Renewal application for cargo and warehouse liability.",
+    "relatedPolicyId": "P-20230801-005",
+    "priority": "High",
+    "assignedTo": "Unassigned"
+  },
+  {
+    "id": "C-20240712-010",
+    "caseType": "New Business",
+    "status": "Triage",
+    "broker": "Marsh",
+    "insuredName": "Quick Eats Delivery",
+    "receivedDate": "2024-07-12T13:20:00Z",
+    "description": "Food delivery service seeking commercial auto and GL.",
+    "relatedQuoteId": "Q-20240712-005",
+    "priority": "Medium",
+    "assignedTo": "Support Team"
+  },
+  {
+    "id": "C-20240715-011",
+    "caseType": "Endorsement",
+    "status": "Closed",
+    "broker": "Aon",
+    "insuredName": "TechServe Solutions",
+    "receivedDate": "2024-07-15T10:00:00Z",
+    "description": "Minor address change on existing E&O policy.",
+    "relatedPolicyId": "P-20230501-006",
+    "priority": "Low",
+    "assignedTo": "System"
   }
 ]

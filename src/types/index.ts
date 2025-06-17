@@ -5,7 +5,8 @@ import { z } from 'zod';
 export type PriorityLevel = 'High' | 'Medium' | 'Low';
 
 export type CaseType = 'New Business' | 'Endorsement' | 'Renewal' | 'Cancellation';
-export type CaseStatus = 'Open' | 'In Progress' | 'Pending Information' | 'Action Required' | 'Completed' | 'Closed';
+// Updated CaseStatus to include 'Untouched' and 'Triage'
+export type CaseStatus = 'Open' | 'In Progress' | 'Pending Information' | 'Action Required' | 'Completed' | 'Closed' | 'Untouched' | 'Triage';
 
 export interface Case {
   id: string; // e.g., C-YYYYMMDD-001
@@ -18,6 +19,7 @@ export interface Case {
   relatedQuoteId?: string; // Link to a Quote if CaseType is New Business or leads to a new quote
   relatedPolicyId?: string; // Link to a Policy if CaseType is Endorsement, Renewal, Cancellation
   priority: PriorityLevel;
+  assignedTo: string; // Added assignedTo
 }
 
 export type PolicyStatus = 'Active' | 'Pending Endorsement' | 'Expired' | 'Cancelled' | 'Pending Renewal';
@@ -41,10 +43,11 @@ export interface CaseListItem {
   caseType: CaseType;
   insuredName: string;
   broker: string;
-  status: CaseStatus;
+  status: CaseStatus; // Uses updated CaseStatus
   receivedDate: string; // ISO date string
   priority: PriorityLevel;
   relatedQuoteId?: string; // Link to a specific quote if applicable
+  assignedTo: string; // Added assignedTo
 }
 
 
@@ -206,6 +209,7 @@ export const ChatUnderwritingAssistantInputSchema = z.object({
   brokerName: z.string().min(1).describe('The name of the broker. Must be non-empty.'),
   attachments: z.array(ChatAttachmentInfoSchema).describe('A list of attachments available for this submission.'),
   userQuery: z.string().describe('The user’s current question or message.'),
+  chatHistory: z.array(ChatHistoryItemSchema).optional().describe('The history of the conversation so far.') // Added optional chatHistory
 });
 export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
 
