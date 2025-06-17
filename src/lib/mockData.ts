@@ -18,9 +18,10 @@ import type {
   PriorityLevel,
   CaseType,
   CaseStatus,
-  NotificationItem, // Added NotificationItem
+  NotificationItem, 
+  NotificationType,
 } from '@/types';
-import { formatISO, addMinutes, subDays, subHours } from 'date-fns'; // Added subHours
+import { formatISO, addMinutes, subDays, subHours } from 'date-fns'; 
 
 // Import the JSON data
 import mockCasesData from './mockData/cases.json';
@@ -171,8 +172,7 @@ const now = new Date();
 export const mockNotifications: NotificationItem[] = [
   {
     id: 'notif-newcase-1',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'Sys',
+    type: 'newCase',
     message: 'New case C-20240715-011 (TechServe Solutions) has been assigned to you.',
     timestamp: formatISO(subHours(now, 2)),
     isRead: false,
@@ -180,8 +180,7 @@ export const mockNotifications: NotificationItem[] = [
   },
   {
     id: 'notif-broker-resp-1',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'Broker',
+    type: 'brokerResponse',
     message: 'Broker (Marsh) responded with additional documents for Case C-20240701-001 (Innovate Corp).',
     timestamp: formatISO(subHours(now, 5)),
     isRead: false,
@@ -189,8 +188,7 @@ export const mockNotifications: NotificationItem[] = [
   },
   {
     id: 'notif-newcase-2',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'Sys',
+    type: 'newCase',
     message: 'New case C-20240712-010 (Quick Eats Delivery) created and is in Triage.',
     timestamp: formatISO(subDays(now, 1)),
     isRead: true,
@@ -198,8 +196,7 @@ export const mockNotifications: NotificationItem[] = [
   },
   {
     id: 'notif-broker-resp-2',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'Broker',
+    type: 'brokerResponse',
     message: 'Information received from Broker (Aon) for Case C-20240709-007 (BuildRight Construction).',
     timestamp: formatISO(subDays(now, 2)),
     isRead: true,
@@ -207,8 +204,7 @@ export const mockNotifications: NotificationItem[] = [
   },
   {
     id: 'notif-newcase-3',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'Sys',
+    type: 'newCase',
     message: 'New Business case C-20240708-006 (GreenTech Innovations) requires assignment.',
     timestamp: formatISO(subDays(now, 3)),
     isRead: false,
@@ -216,8 +212,7 @@ export const mockNotifications: NotificationItem[] = [
   },
    {
     id: 'notif-broker-resp-3',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'Broker',
+    type: 'brokerResponse',
     message: 'Broker (Gallagher) uploaded requested financials for Case C-20240704-004 (Apex Enterprises).',
     timestamp: formatISO(subHours(now, 26)), // Just over a day ago
     isRead: true,
@@ -229,4 +224,3 @@ export const mockNotifications: NotificationItem[] = [
 mockNotifications.forEach(n => {
   n.timestamp = n.timestamp; // Already a string from formatISO, but reinforces if logic changes
 });
-
