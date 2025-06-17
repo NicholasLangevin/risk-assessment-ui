@@ -33,19 +33,17 @@ export function CasePageLayoutClient({ caseDetails, children }: CasePageLayoutCl
     setActiveSheetItem({ type: 'aiMonitor', submissionId: caseDetails.id });
   };
 
-  // Prepare attachments for AiProcessingMonitorContent if needed (currently passing empty)
-  // In a real scenario, you might fetch related quote attachments or have case-level attachments
   const caseAttachmentsForChat: ChatAttachmentInfo[] = []; 
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       {/* Case Header Information */}
       <div className="mb-6 pb-2">
-        <div className="flex items-center space-x-3 mb-2">
+        <div className="flex justify-between items-center mb-2">
+            <h1 className="text-2xl font-bold font-headline">Case: {caseDetails.id}</h1>
             <Button variant="outline" className="h-9" onClick={handleShowAiMonitor}>
                 <Activity className="mr-2 h-4 w-4" /> AI Chat & Monitor
             </Button>
-            <h1 className="text-2xl font-bold font-headline">Case: {caseDetails.id}</h1>
         </div>
         <p className="text-md text-muted-foreground mt-1">
           Insured: {caseDetails.insuredName} | Broker: {caseDetails.broker} | Type: {caseDetails.caseType}
@@ -90,7 +88,7 @@ export function CasePageLayoutClient({ caseDetails, children }: CasePageLayoutCl
                 submissionId={caseDetails.id}
                 insuredName={caseDetails.insuredName}
                 brokerName={caseDetails.broker}
-                attachmentsList={caseAttachmentsForChat} // Using case-level (currently empty) attachments
+                attachmentsList={caseAttachmentsForChat} 
               />
             )}
           </div>
