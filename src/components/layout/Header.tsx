@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
-import { Search, UserCircle } from 'lucide-react'; // Added UserCircle
+import { Search, UserCircle } from 'lucide-react';
 
 export function Header() {
   return (
@@ -26,8 +26,6 @@ export function Header() {
         </div>
 
         {/* Center Section: Search Bar */}
-        {/* flex-1 allows this section to grow, justify-center centers the content within it */}
-        {/* px-4 on this div provides the "padding layer" between title/search and search/user icon */}
         <div className="flex-1 flex justify-center px-4">
           <div className="relative w-full max-w-md">
             <Input
@@ -42,7 +40,7 @@ export function Header() {
         {/* Right Section: User Icon */}
         <div className="flex items-center">
           <Button variant="ghost" size="icon" aria-label="User Profile">
-            <UserCircle className="h-6 w-6" /> {/* User icon, size adjusted to be slightly larger */}
+            <UserCircle className="h-6 w-6" />
           </Button>
         </div>
       </div>
