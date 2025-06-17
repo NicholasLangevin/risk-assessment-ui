@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
-import { Search, UserCircle } from 'lucide-react';
+import { Search, Bell } from 'lucide-react'; // Changed UserCircle to Bell
 
 export function Header() {
   return (
@@ -37,10 +37,10 @@ export function Header() {
           </div>
         </div>
 
-        {/* Right Section: User Icon */}
+        {/* Right Section: Notification Icon */}
         <div className="flex items-center">
-          <Button variant="ghost" size="icon" aria-label="User Profile">
-            <UserCircle className="h-6 w-6" />
+          <Button variant="ghost" size="icon" aria-label="Notifications">
+            <Bell className="h-6 w-6" />
           </Button>
         </div>
       </div>
