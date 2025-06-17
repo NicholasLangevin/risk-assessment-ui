@@ -1,3 +1,4 @@
+
 'use client'; // Make RootLayout a Client Component
 
 import './globals.css';
@@ -19,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>RiskPilot</title>
+        <title>CL Underwriting Assist</title>
         <meta name="description" content="AI-Powered Underwriting Assistance" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -49,3 +50,4 @@ export default function RootLayout({
     </html>
   );
 }
+

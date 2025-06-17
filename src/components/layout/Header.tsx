@@ -1,10 +1,11 @@
+
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, UserCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { NotificationList } from './NotificationList';
 import { mockNotifications } from '@/lib/mockData';
@@ -22,7 +23,7 @@ export function Header() {
           <SidebarTrigger />
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold sm:inline-block font-headline">
-              RiskPilot
+              CL Underwriting Assist
             </span>
           </Link>
         </div>
@@ -40,8 +41,8 @@ export function Header() {
         </div>
 
         {/* Right Section: Notification Icon & Popover */}
-        <div className="flex items-center">
-          <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+        <div className="flex items-center space-x-2">
+           <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Notifications">
                 <Bell className="h-6 w-6" />
@@ -51,8 +52,12 @@ export function Header() {
               <NotificationList notifications={mockNotifications} />
             </PopoverContent>
           </Popover>
+          <Button variant="ghost" size="icon" aria-label="User Profile">
+            <UserCircle className="h-6 w-6" />
+          </Button>
         </div>
       </div>
     </header>
   );
 }
+

@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
     isDecline: z.boolean().optional(),
   })},
   output: {schema: EmailGenerationOutputSchema},
-  prompt: `You are an expert underwriting support assistant for RiskPilot.
+  prompt: `You are an expert underwriting support assistant for CL Underwriting Assist.
 Your task is to draft a professional email to the broker ({{brokerName}}) regarding quote ID {{quoteId}} for the insured ({{insuredName}}).
 The decision made is: {{decision}}.
 
@@ -80,7 +80,7 @@ Do not list specific guideline failures.
 The subject line should be: "Update on Quote {{quoteId}} - {{insuredName}}"
 {{/if}}
 
-The email should be professional, concise, and addressed to the broker. Start with "Dear {{brokerName}}," and end with a professional closing like "Sincerely,\nThe RiskPilot Underwriting Team".
+The email should be professional, concise, and addressed to the broker. Start with "Dear {{brokerName}}," and end with a professional closing like "Sincerely,\nThe CL Underwriting Assist Team".
 Structure the email with clear paragraphs.
 Return the subject line and body in the specified JSON format.
 `,
@@ -105,7 +105,7 @@ const generateUnderwritingEmailFlow = ai.defineFlow(
       // Fallback in case AI fails
       return {
         emailSubject: `Regarding Quote ${input.quoteId}`,
-        emailBody: `Dear ${input.brokerName},\n\nWe are writing to you regarding quote ${input.quoteId} for ${input.insuredName}.\n\n[AI failed to generate specific content based on decision: ${input.decision}. Please draft manually.]\n\nSincerely,\nThe RiskPilot Underwriting Team`,
+        emailBody: `Dear ${input.brokerName},\n\nWe are writing to you regarding quote ${input.quoteId} for ${input.insuredName}.\n\n[AI failed to generate specific content based on decision: ${input.decision}. Please draft manually.]\n\nSincerely,\nThe CL Underwriting Assist Team`,
       };
     }
     return output;
