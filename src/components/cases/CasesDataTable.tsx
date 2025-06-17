@@ -73,18 +73,16 @@ export function CasesDataTable<TData, TValue>({
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter cases by any text..."
-          value={(table.getColumn('insuredName')?.getFilterValue() as string) ?? ''} // Example: filter by insuredName globally
+          value={(table.getColumn('insuredName')?.getFilterValue() as string) ?? ''} 
           onChange={(event) => {
-            // This is a basic global filter setup. For more specific filtering,
-            // you might want to filter on multiple columns or use a dedicated global filter state.
-            // For now, filtering a specific column like 'insuredName' or 'id'.
-            // Or set a global filter: table.setGlobalFilter(event.target.value) if configured
-             table.getColumn('id')?.setFilterValue(event.target.value)
-             table.getColumn('insuredName')?.setFilterValue(event.target.value)
-             table.getColumn('broker')?.setFilterValue(event.target.value)
-             table.getColumn('assignedTo')?.setFilterValue(event.target.value)
-             // You might need a more sophisticated way to apply a single input to multiple columns
-             // or use table.setGlobalFilter (which requires filterFns to be setup generally)
+            // This basic filter setup applies the input value to multiple columns.
+            // For true global filtering, you might set a globalFilter state and filterFn.
+            table.getColumn('id')?.setFilterValue(event.target.value);
+            table.getColumn('insuredName')?.setFilterValue(event.target.value);
+            table.getColumn('broker')?.setFilterValue(event.target.value);
+            table.getColumn('assignedTo')?.setFilterValue(event.target.value);
+            table.getColumn('caseType')?.setFilterValue(event.target.value);
+            table.getColumn('status')?.setFilterValue(event.target.value);
           }}
           className="max-w-sm"
         />
@@ -99,6 +97,29 @@ export function CasesDataTable<TData, TValue>({
               .getAllColumns()
               .filter((column) => column.getCanHide())
               .map((column) => {
+                let displayName = column.id;
+                switch (column.id) {
+                  case 'id':
+                    displayName = 'Case Number';
+                    break;
+                  case 'insuredName':
+                    displayName = 'Insured Name';
+                    break;
+                  case 'broker':
+                    displayName = 'Broker';
+                    break;
+                  case 'caseType':
+                    displayName = 'Transaction Type';
+                    break;
+                  case 'receivedDate':
+                    displayName = 'Date Received';
+                    break;
+                  case 'assignedTo':
+                    displayName = 'Assigned To';
+                    break;
+                  // 'priority' and 'status' will use their default id as display name, which is fine.
+                  // 'actions' column is usually not toggleable for visibility or has a specific name.
+                }
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
@@ -108,11 +129,7 @@ export function CasesDataTable<TData, TValue>({
                       column.toggleVisibility(!!value)
                     }
                   >
-                    {column.id === 'id' ? 'Case Number' : 
-                     column.id === 'caseType' ? 'Transaction Type' : 
-                     column.id === 'receivedDate' ? 'Date Received' : 
-                     column.id === 'assignedTo' ? 'Assigned To' : 
-                     column.id}
+                    {displayName}
                   </DropdownMenuCheckboxItem>
                 );
               })}
