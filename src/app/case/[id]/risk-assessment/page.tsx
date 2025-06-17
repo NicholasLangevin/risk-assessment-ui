@@ -1,8 +1,8 @@
 
 import { getMockCaseDetails, getMockQuoteDetails, getMockAiToolActions, allMockQuotes } from '@/lib/mockData';
-import type { Case, QuoteDetails, AiProcessingData, AiUnderwritingActions, RiskLevel } from '@/types';
+import type { Case, QuoteDetails, AiUnderwritingActions, RiskLevel } from '@/types'; // Removed AiProcessingData
 import { notFound } from 'next/navigation';
-import { QuoteViewClient } from '@/components/quote/QuoteViewClient'; // Adjust path as necessary
+import { QuoteViewClient } from '@/components/quote/QuoteViewClient'; 
 
 interface CaseRiskAssessmentPageProps {
   params: {
@@ -22,7 +22,6 @@ export default async function CaseRiskAssessmentPage({ params }: CaseRiskAssessm
     const quoteDetailsData: QuoteDetails | null = getMockQuoteDetails(caseDetails.relatedQuoteId);
 
     if (!quoteDetailsData) {
-      // This case means the relatedQuoteId in case data points to a non-existent quote in mockQuotes
       return (
         <div>
           <h3 className="text-xl font-semibold mb-3 text-primary">Risk Assessment</h3>
@@ -33,15 +32,10 @@ export default async function CaseRiskAssessmentPage({ params }: CaseRiskAssessm
       );
     }
 
-    // Prepare data for QuoteViewClient, similar to src/app/quote/[id]/page.tsx
     const initialAiUnderwritingActions: AiUnderwritingActions = {
       suggestedActions: quoteDetailsData.managedInformationRequests && quoteDetailsData.managedInformationRequests.length > 0 ? ["Review provided information"] : ["Assess overall risk"],
       informationRequests: quoteDetailsData.managedInformationRequests?.map(ir => ir.currentText) || ["Confirm key business activities."],
       potentialSubjectToOffers: quoteDetailsData.managedSubjectToOffers?.map(sto => sto.currentText) || ["Standard terms and conditions apply."]
-    };
-
-    const initialAiProcessingData: AiProcessingData = {
-      aiToolActions: getMockAiToolActions(quoteDetailsData.id),
     };
     
     const finalCoverages = quoteDetailsData.coveragesRequested.map(cov => ({
@@ -59,9 +53,9 @@ export default async function CaseRiskAssessmentPage({ params }: CaseRiskAssessm
     return (
       <QuoteViewClient
         initialQuoteDetails={finalQuoteDetails}
-        initialAiProcessingData={initialAiProcessingData}
+        // initialAiProcessingData prop removed
         initialAiUnderwritingActions={initialAiUnderwritingActions}
-        hideHeader={true} // Pass the new prop here
+        hideHeader={true}
       />
     );
   }
@@ -75,12 +69,3 @@ export default async function CaseRiskAssessmentPage({ params }: CaseRiskAssessm
     </div>
   );
 }
-
-// Optional: If you want to pre-render these pages at build time for known cases
-// This might need to be in the layout if layout fetches primary data
-// For now, keeping it here. If build errors occur, move to layout.
-// export async function generateStaticParams() {
-//   return mockCaseListItems.map((caseItem) => ({
-//     id: caseItem.id,
-//   }));
-// }

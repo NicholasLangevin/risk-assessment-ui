@@ -2,11 +2,16 @@
 'use client';
 
 import type React from 'react';
+import { useState } from 'react'; // Added useState
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { Case } from '@/types';
+import type { Case, ActiveSheetItem, ChatAttachmentInfo } from '@/types'; // Added ActiveSheetItem
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'; // Added Sheet components
+import { AiProcessingMonitorContent } from '@/components/quote/AiProcessingMonitorContent'; // Added AI Monitor Content
+import { getMockAiToolActions } from '@/lib/mockData'; // Added mock data import
+import { Activity } from 'lucide-react'; // Added Activity icon
 
 interface CasePageLayoutClientProps {
   caseDetails: Case;
@@ -15,6 +20,7 @@ interface CasePageLayoutClientProps {
 
 export function CasePageLayoutClient({ caseDetails, children }: CasePageLayoutClientProps) {
   const pathname = usePathname();
+  const [activeSheetItem, setActiveSheetItem] = useState<ActiveSheetItem | null>(null);
 
   const navItems = [
     { href: `/case/${caseDetails.id}`, label: 'Case Detail' },
@@ -23,11 +29,24 @@ export function CasePageLayoutClient({ caseDetails, children }: CasePageLayoutCl
     { href: `/case/${caseDetails.id}/risk-assessment`, label: 'Risk Assessment' },
   ];
 
+  const handleShowAiMonitor = () => {
+    setActiveSheetItem({ type: 'aiMonitor', submissionId: caseDetails.id });
+  };
+
+  // Prepare attachments for AiProcessingMonitorContent if needed (currently passing empty)
+  // In a real scenario, you might fetch related quote attachments or have case-level attachments
+  const caseAttachmentsForChat: ChatAttachmentInfo[] = []; 
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
       {/* Case Header Information */}
       <div className="mb-6 pb-2">
-        <h1 className="text-2xl font-bold font-headline">Case: {caseDetails.id}</h1>
+        <div className="flex items-center space-x-3 mb-2">
+            <Button variant="outline" className="h-9" onClick={handleShowAiMonitor}>
+                <Activity className="mr-2 h-4 w-4" /> AI Chat & Monitor
+            </Button>
+            <h1 className="text-2xl font-bold font-headline">Case: {caseDetails.id}</h1>
+        </div>
         <p className="text-md text-muted-foreground mt-1">
           Insured: {caseDetails.insuredName} | Broker: {caseDetails.broker} | Type: {caseDetails.caseType}
         </p>
@@ -57,6 +76,26 @@ export function CasePageLayoutClient({ caseDetails, children }: CasePageLayoutCl
       <div className="mt-2 py-6 px-4 border bg-background/50 rounded-md min-h-[300px] shadow-sm">
         {children}
       </div>
+
+      <Sheet open={activeSheetItem?.type === 'aiMonitor'} onOpenChange={(isOpen) => !isOpen && setActiveSheetItem(null)}>
+        <SheetContent side="right" className="w-full max-w-md sm:max-w-xl lg:max-w-2xl p-0 flex flex-col">
+          <SheetHeader className="p-6 border-b flex-shrink-0">
+            <SheetTitle>AI Processing Monitor & Chat</SheetTitle>
+            <SheetDescription>Monitor AI actions for case {caseDetails.id} and chat with the AI assistant.</SheetDescription>
+          </SheetHeader>
+          <div className="flex-grow overflow-y-auto">
+            {activeSheetItem?.type === 'aiMonitor' && (
+              <AiProcessingMonitorContent
+                aiToolActions={getMockAiToolActions(caseDetails.id)}
+                submissionId={caseDetails.id}
+                insuredName={caseDetails.insuredName}
+                brokerName={caseDetails.broker}
+                attachmentsList={caseAttachmentsForChat} // Using case-level (currently empty) attachments
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
