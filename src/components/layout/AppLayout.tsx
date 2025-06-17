@@ -26,10 +26,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <Sidebar collapsible="icon"> {/* Changed collapsible to "icon" */}
         <SidebarHeader className="p-4">
           
-          <Link href="/" className="flex items-center space-x-2">
-            
-            <span className="font-bold text-lg text-sidebar-primary-foreground">RiskPilot</span>
-          </Link>
+          {/* Link component removed as requested */}
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
