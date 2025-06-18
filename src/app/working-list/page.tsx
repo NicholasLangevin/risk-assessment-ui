@@ -9,8 +9,8 @@ export default async function WorkingListPage() {
   // potentially with a filter for the current user.
   const allCaseListItems: CaseListItem[] = mockCaseListItems;
 
-  // Filter cases assigned to "Alex Underwriter"
-  const currentUser = "Alex Underwriter"; // This could come from user session
+  // Filter cases assigned to "Alex Miller"
+  const currentUser = "Alex Miller"; // This could come from user session
   const filteredCaseListItems = allCaseListItems.filter(
     (item) => item.assignedTo === currentUser
   );

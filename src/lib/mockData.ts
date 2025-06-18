@@ -185,7 +185,7 @@ export const mockNotifications: NotificationItem[] = [
   {
     id: 'notif-newcase-1',
     type: 'newCase',
-    message: 'New case C-20240715-011 (TechServe Solutions) has been assigned to Alex Underwriter.',
+    message: 'New case C-20240715-011 (TechServe Solutions) has been assigned to Alex Miller.',
     timestamp: formatISO(subHours(now, 2)),
     isRead: false,
     category: 'Important',

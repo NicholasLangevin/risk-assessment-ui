@@ -43,7 +43,7 @@ export function UserHomePageClient() {
            // Optionally, also set this as the default in localStorage
           localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, allProfiles[0].id);
         } else {
-          setUserName("Alex Underwriter"); // Absolute fallback
+          setUserName("Alex Miller"); // Absolute fallback
         }
       }
     }
