@@ -10,7 +10,7 @@
     "description": "Request for new GL and Property coverage for tech company.",
     "relatedQuoteId": "Q-20240701-001",
     "priority": "High",
-    "assignedTo": "Alex Underwriter"
+    "assignedTo": "Alex Miller"
   },
   {
     "id": "C-20240702-002",
@@ -22,7 +22,7 @@
     "description": "Add new vehicle to existing commercial auto policy.",
     "relatedPolicyId": "P-20231001-001",
     "priority": "Medium",
-    "assignedTo": "Support Team"
+    "assignedTo": "John Davis"
   },
   {
     "id": "C-20240703-003",
@@ -34,7 +34,7 @@
     "description": "Upcoming GL policy renewal, requires updated revenue figures.",
     "relatedPolicyId": "P-20230915-002",
     "priority": "High",
-    "assignedTo": "Sarah Miller"
+    "assignedTo": "Emily Carter"
   },
   {
     "id": "C-20240704-004",
@@ -46,7 +46,7 @@
     "description": "Request for Cyber and E&O coverage for e-commerce business.",
     "relatedQuoteId": "Q-20240704-002",
     "priority": "Medium",
-    "assignedTo": "Alex Underwriter"
+    "assignedTo": "Alex Miller"
   },
   {
     "id": "C-20240705-005",
@@ -58,7 +58,7 @@
     "description": "Request to cancel property policy mid-term due to sale of property.",
     "relatedPolicyId": "P-20231110-003",
     "priority": "Low",
-    "assignedTo": "System"
+    "assignedTo": "Emily Carter"
   },
   {
     "id": "C-20240708-006",
@@ -70,7 +70,7 @@
     "description": "New venture, renewable energy sector, seeking package policy.",
     "relatedQuoteId": "Q-20240708-003",
     "priority": "High",
-    "assignedTo": "Unassigned"
+    "assignedTo": "Alex Miller"
   },
   {
     "id": "C-20240709-007",
@@ -94,7 +94,7 @@
     "description": "Chain of retail stores, BOP application.",
     "relatedQuoteId": "Q-20240710-004",
     "priority": "Low",
-    "assignedTo": "AI Assistant"
+    "assignedTo": "John Davis"
   },
   {
     "id": "C-20240711-009",
@@ -106,7 +106,7 @@
     "description": "Renewal application for cargo and warehouse liability.",
     "relatedPolicyId": "P-20230801-005",
     "priority": "High",
-    "assignedTo": "Unassigned"
+    "assignedTo": "Emily Carter"
   },
   {
     "id": "C-20240712-010",
@@ -118,7 +118,7 @@
     "description": "Food delivery service seeking commercial auto and GL.",
     "relatedQuoteId": "Q-20240712-005",
     "priority": "Medium",
-    "assignedTo": "Support Team"
+    "assignedTo": "Alex Miller"
   },
   {
     "id": "C-20240715-011",
@@ -130,6 +130,6 @@
     "description": "Minor address change on existing E&O policy.",
     "relatedPolicyId": "P-20230501-006",
     "priority": "Low",
-    "assignedTo": "System"
+    "assignedTo": "John Davis"
   }
 ]
