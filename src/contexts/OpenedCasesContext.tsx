@@ -22,42 +22,33 @@ export function OpenedCasesProvider({ children }: { children: ReactNode }) {
   const openCase = useCallback((caseInfo: OpenedCaseInfo) => {
     setOpenedCases(prevCases => {
       if (prevCases.find(c => c.id === caseInfo.id)) {
-        return prevCases; // Already open, no change
+        // If already open, move it to the front (most recently accessed)
+        return [caseInfo, ...prevCases.filter(c => c.id !== caseInfo.id)];
       }
-      const MAX_OPENED_CASES = 5;
+      const MAX_OPENED_CASES = 5; // Example limit
       const updatedCases = [caseInfo, ...prevCases];
       return updatedCases.slice(0, MAX_OPENED_CASES);
     });
   }, []);
 
   const closeCase = useCallback((caseId: string, currentPathname?: string) => {
-    let newCasesList: OpenedCaseInfo[] = [];
+    let newCasesListAfterRemoval: OpenedCaseInfo[] = [];
     
     setOpenedCases(prevCases => {
-      newCasesList = prevCases.filter(c => c.id !== caseId);
-      return newCasesList;
+      newCasesListAfterRemoval = prevCases.filter(c => c.id !== caseId);
+      return newCasesListAfterRemoval;
     });
-
-    // Perform navigation as a side effect after the state update
-    // We use a microtask (Promise.resolve().then()) or useEffect to ensure navigation happens after render.
-    // For simplicity with router, direct call after setOpenedCases might often work,
-    // but useEffect is safer for such side effects tied to state changes.
-    // However, since closeCase can be called from various places,
-    // managing this with a useEffect listening to openedCases might be complex.
-    // A direct call after the state update, outside the updater, is a common pattern.
     
-    // Defer navigation to ensure it's not part of the current render cycle.
-    // This is a common way to handle side effects that depend on state updates.
+    // Perform navigation after state update
     Promise.resolve().then(() => {
-        if (currentPathname && currentPathname.includes(`/case/${caseId}`)) {
-            if (newCasesList.length > 0) {
-            router.push(`/case/${newCasesList[0].id}`);
-            } else {
-            router.push('/');
-            }
+      if (currentPathname && (currentPathname === `/case/${caseId}` || currentPathname.startsWith(`/case/${caseId}/`))) {
+        if (newCasesListAfterRemoval.length > 0) {
+          router.push(`/case/${newCasesListAfterRemoval[0].id}`);
+        } else {
+          router.push('/working-list'); // Navigate to Working List if no cases are left open
         }
+      }
     });
-
   }, [router]);
 
   const isCaseOpen = useCallback((caseId: string) => {
@@ -66,7 +57,6 @@ export function OpenedCasesProvider({ children }: { children: ReactNode }) {
 
   const clearAllCases = useCallback(() => {
     setOpenedCases([]);
-    // Defer navigation similarly
     Promise.resolve().then(() => {
         router.push('/'); 
     });
@@ -86,3 +76,4 @@ export function useOpenedCases(): OpenedCasesContextType {
   }
   return context;
 }
+
