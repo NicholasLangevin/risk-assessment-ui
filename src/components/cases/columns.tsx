@@ -2,13 +2,16 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import type { CaseListItem, CaseStatus, PriorityLevel } from '@/types';
+import type { CaseListItem, CaseStatus, PriorityLevel, OpenedCaseInfo } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown } from 'lucide-react';
 import { ClientFormattedDate } from '@/components/common/ClientFormattedDate';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
+// Link is no longer directly used for navigation for case ID, useRouter is used instead
+// import Link from 'next/link'; 
+import { useRouter } from 'next/navigation';
+import { useOpenedCases } from '@/contexts/OpenedCasesContext';
 
 const getPriorityBadgeClass = (priority: PriorityLevel): string => {
   switch (priority) {
@@ -39,9 +42,22 @@ export const columns: ColumnDef<CaseListItem>[] = [
     },
     cell: ({ row }) => {
       const caseItem = row.original;
+      const router = useRouter();
+      const { openCase } = useOpenedCases();
+
+      const handleOpenCase = () => {
+        const caseInfo: OpenedCaseInfo = {
+          id: caseItem.id,
+          insuredName: caseItem.insuredName,
+          broker: caseItem.broker,
+        };
+        openCase(caseInfo);
+        router.push(`/case/${caseItem.id}`);
+      };
+
       return (
-        <Button variant="link" asChild className="p-0 h-auto font-medium">
-          <Link href={`/case/${caseItem.id}`}>{caseItem.id}</Link>
+        <Button variant="link" onClick={handleOpenCase} className="p-0 h-auto font-medium">
+          {caseItem.id}
         </Button>
       );
     },

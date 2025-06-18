@@ -50,6 +50,11 @@ export interface CaseListItem {
   assignedTo: string;
 }
 
+export interface OpenedCaseInfo {
+  id: string;
+  insuredName: string;
+  broker: string;
+}
 
 export type RiskLevel = 'Very Low' | 'Low' | 'Normal' | 'High' | 'Very High' | 'Loading';
 

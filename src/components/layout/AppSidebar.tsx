@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; 
+import { usePathname, useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import {
   Sidebar,
@@ -11,18 +11,26 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { HomeIcon, UserCircle, FolderKanban, ListChecksIcon, Users } from 'lucide-react';
+import { HomeIcon, UserCircle, FolderKanban, ListChecksIcon, Users, X, Archive } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { UserProfile } from '@/types';
+import type { UserProfile, OpenedCaseInfo } from '@/types';
 import { getUserProfileById } from '@/lib/mockData';
+import { useOpenedCases } from '@/contexts/OpenedCasesContext';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
 
 export function AppSidebar() {
-  const pathname = usePathname(); 
+  const pathname = usePathname();
+  const router = useRouter();
   const [currentUserRole, setCurrentUserRole] = useState<UserProfile['role'] | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const { openedCases, closeCase, clearAllCases } = useOpenedCases();
 
   useEffect(() => {
     setIsMounted(true);
@@ -40,24 +48,30 @@ export function AppSidebar() {
       if (profileToSet) {
         setCurrentUserRole(profileToSet.role);
       } else {
-        // If storedProfileId was invalid or not found, or if no storedProfileId
         if (storedProfileId) {
-            // Clear invalid ID
             localStorage.removeItem(LOCAL_STORAGE_PROFILE_KEY);
         }
-        // Default to Alex Miller
-        const defaultProfile = getUserProfileById("user-alex-uw"); // Alex Miller's ID
+        const defaultProfile = getUserProfileById("user-alex-uw");
         if (defaultProfile) {
           setCurrentUserRole(defaultProfile.role);
-          // Optionally, set this default in localStorage if it was empty/invalid and you want to ensure a default is set
-          // localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, defaultProfile.id); 
         } else {
-            setCurrentUserRole(null); // Should not happen with current mock data setup
+            setCurrentUserRole(null);
         }
       }
     }
-  }, [isMounted, pathname]); // Added pathname to dependency array
+  }, [isMounted, pathname]);
 
+  const handleCloseCaseTab = (e: React.MouseEvent, caseId: string) => {
+    e.stopPropagation(); // Prevent navigation if clicking on X within a link
+    e.preventDefault();
+    closeCase(caseId, pathname);
+  };
+
+  const handleClearAllTabs = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    clearAllCases();
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -83,6 +97,53 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+
+          {openedCases.length > 0 && (
+            <>
+              <SidebarSeparator className="my-1 mx-0" />
+              <SidebarGroup className="!p-0">
+                <div className="flex justify-between items-center px-2 pt-1">
+                    <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground !p-0 !h-auto">Open Cases</SidebarGroupLabel>
+                    <Button variant="ghost" size="icon" onClick={handleClearAllTabs} className="h-6 w-6" tooltip="Close All Tabs">
+                        <Archive className="h-3.5 w-3.5" />
+                        <span className="sr-only">Close All Tabs</span>
+                    </Button>
+                </div>
+                 <ScrollArea className="max-h-[200px] pl-2 pr-1 py-1"> {/* Adjust max-h as needed */}
+                  <SidebarMenu className="pl-2 border-l border-border ml-1">
+                    {openedCases.map((caseInfo) => (
+                      <SidebarMenuItem key={caseInfo.id} className="relative group/tab">
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={`${caseInfo.insuredName} - ${caseInfo.broker}`}
+                          isActive={pathname === `/case/${caseInfo.id}`}
+                          className="!py-1.5 !text-xs !h-auto !pl-1.5 !pr-6 w-full"
+                          size="sm"
+                        >
+                          <Link href={`/case/${caseInfo.id}`} className="truncate">
+                            <span className="truncate w-full block" title={`${caseInfo.id}: ${caseInfo.insuredName}`}>
+                                {caseInfo.id}
+                            </span>
+                          </Link>
+                        </SidebarMenuButton>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 opacity-50 group-hover/tab:opacity-100 focus:opacity-100"
+                          onClick={(e) => handleCloseCaseTab(e, caseInfo.id)}
+                        >
+                          <X className="h-3 w-3" />
+                          <span className="sr-only">Close tab {caseInfo.id}</span>
+                        </Button>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </ScrollArea>
+              </SidebarGroup>
+              <SidebarSeparator className="my-1 mx-0" />
+            </>
+          )}
+
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="All Cases" isActive={pathname === '/cases'}>
               <Link href="/cases">
