@@ -1,16 +1,30 @@
+
 'use client';
 
-import type { NotificationItem } from '@/types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import type { NotificationItem, NotificationType } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import Image from 'next/image';
-import { MoreHorizontal, Cog } from 'lucide-react';
+import { MoreHorizontal, Cog, FilePlus2, MessagesSquare, BellRing } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 interface NotificationListProps {
   notifications: NotificationItem[];
 }
+
+const getNotificationIcon = (type: NotificationType) => {
+  switch (type) {
+    case 'newCase':
+      return <FilePlus2 className="h-6 w-6 text-blue-500" />;
+    case 'brokerResponse':
+      return <MessagesSquare className="h-6 w-6 text-green-500" />;
+    case 'systemUpdate':
+      return <BellRing className="h-6 w-6 text-orange-500" />;
+    case 'generic':
+    default:
+      return <BellRing className="h-6 w-6 text-muted-foreground" />;
+  }
+};
 
 export function NotificationList({ notifications }: NotificationListProps) {
   const importantNotifications = notifications.filter(n => n.category === 'Important');
@@ -57,30 +71,20 @@ function NotificationCard({ notification }: { notification: NotificationItem }) 
   return (
     <div className="flex items-start p-3 hover:bg-muted/70 rounded-md cursor-pointer space-x-3">
       {!notification.isRead && (
-        <div className="w-2.5 h-2.5 bg-primary rounded-full mt-1.5 flex-shrink-0" title="Unread"></div>
+        <div className="w-2.5 h-2.5 bg-primary rounded-full mt-1.5 flex-shrink-0 self-center" title="Unread"></div>
       )}
-      <Avatar className={`h-10 w-10 flex-shrink-0 ${notification.isRead && !notification.imageSrc ? 'ml-[22px]' : ''} ${notification.isRead && notification.imageSrc ? 'ml-[22px]' : ''}`}>
-        <AvatarImage src={notification.avatarSrc} alt={notification.avatarAlt} data-ai-hint="profile person" />
-        <AvatarFallback>{notification.avatarAlt.substring(0, 2).toUpperCase()}</AvatarFallback>
-      </Avatar>
+      <div className={cn(
+        "flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-muted/50",
+        notification.isRead && "ml-[22px]" // Maintain margin if read and no dot
+      )}>
+        {getNotificationIcon(notification.type)}
+      </div>
       <div className="flex-grow overflow-hidden">
         <p className="text-sm text-popover-foreground leading-snug">
           {notification.message}
         </p>
         <p className="text-xs text-muted-foreground mt-1">{notification.timestamp}</p>
       </div>
-      {notification.imageSrc && (
-        <div className="w-28 h-16 relative flex-shrink-0">
-          <Image
-            src={notification.imageSrc}
-            alt={notification.imageAlt || 'Notification image'}
-            fill
-            className="rounded-md object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            data-ai-hint="thumbnail video"
-          />
-        </div>
-      )}
       <Button variant="ghost" size="icon" className="ml-1 h-8 w-8 self-center flex-shrink-0 text-muted-foreground hover:text-foreground">
         <MoreHorizontal className="h-4 w-4" />
         <span className="sr-only">More options</span>

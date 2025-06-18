@@ -9,9 +9,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter, // Added SidebarFooter
+  SidebarFooter,
 } from '@/components/ui/sidebar';
-import { HomeIcon, LayoutDashboardIcon, UserCircle, FolderKanban } from 'lucide-react'; // Added FolderKanban
+import { HomeIcon, UserCircle, FolderKanban, ListChecksIcon } from 'lucide-react'; // Added ListChecksIcon
 import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
@@ -32,22 +32,22 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Quote Dashboard" isActive={pathname === '/quote-dashboard'}>
-              <Link href="/quote-dashboard">
+            <SidebarMenuButton asChild tooltip="Working List" isActive={pathname === '/working-list'}>
+              <Link href="/working-list">
                 <span className={cn("inline-flex items-center justify-center")}>
-                  <LayoutDashboardIcon className="h-4 w-4" />
+                  <ListChecksIcon className="h-4 w-4" />
                 </span>
-                <span>Quote Dashboard</span>
+                <span>Working List</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Cases" isActive={pathname === '/cases'}>
+            <SidebarMenuButton asChild tooltip="All Cases" isActive={pathname === '/cases'}>
               <Link href="/cases">
                 <span className={cn("inline-flex items-center justify-center")}>
                   <FolderKanban className="h-4 w-4" />
                 </span>
-                <span>Cases</span>
+                <span>All Cases</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

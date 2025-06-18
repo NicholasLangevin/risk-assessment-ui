@@ -242,14 +242,13 @@ export const EmailGenerationOutputSchema = z.object({
 export type EmailGenerationOutput = z.infer<typeof EmailGenerationOutputSchema>;
 
 // --- Type for Notifications Popover ---
+export type NotificationType = 'newCase' | 'brokerResponse' | 'systemUpdate' | 'generic';
+
 export interface NotificationItem {
   id: string;
-  avatarSrc: string;
-  avatarAlt: string;
+  type: NotificationType;
   message: string;
   timestamp: string; // e.g., "13 hours ago", "3 days ago"
-  imageSrc?: string;
-  imageAlt?: string;
   isRead: boolean;
   category: 'Important' | 'More';
 }

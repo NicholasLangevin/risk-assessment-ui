@@ -3,12 +3,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { QuoteDetails, AiProcessingData, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput, Citation, ActiveSheetItem, Attachment, RiskLevel } from '@/types';
+import type { QuoteDetails, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput, Citation, ActiveSheetItem, Attachment, RiskLevel } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
 import { BusinessSummaryCard } from './BusinessSummaryCard';
 import { GuidelineStatusList } from './GuidelineStatusList';
-import { AiProcessingMonitorContent } from './AiProcessingMonitorContent';
+// AIProcessingMonitorContent is no longer used directly here for its own sheet
 import { SubjectToOffersCard } from './SubjectToOffersCard';
 import { InformationRequestsCard } from './InformationRequestsCard';
 import { CoverageRequestedCard } from './CoverageRequestedCard';
@@ -28,15 +28,23 @@ import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Info, 
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getMockAiToolActions } from '@/lib/mockData';
-import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput } from '@/ai/flows/chat-underwriting-assistant';
+// getMockAiToolActions is no longer needed here if AiProcessingMonitor is handled by layout
+// import { chatWithUnderwritingAssistant, type ChatUnderwritingAssistantInput } from '@/ai/flows/chat-underwriting-assistant';
 
 
 interface QuoteViewClientProps {
   initialQuoteDetails: QuoteDetails | null;
-  initialAiProcessingData: AiProcessingData;
+  // initialAiProcessingData prop removed
   initialAiUnderwritingActions: AiUnderwritingActions;
+  hideHeader?: boolean;
 }
+
+// Type for active sheet item within QuoteViewClient, excluding 'aiMonitor'
+type QuoteViewActiveSheetItem =
+  | { type: 'guideline'; data: Guideline }
+  | { type: 'citation'; data: Citation }
+  | { type: 'attachment'; data: Attachment; quoteId: string };
+
 
 const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -45,12 +53,12 @@ const AiSparkleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     fill="currentColor"
     {...props}
   >
-    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714,6.31,13.408-13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
+    <path d="M15.142,1.451L15.142,1.451c0.693,7.098,6.31,12.714,13.408,13.408l0,0c0.171,0.017,0.171,0.267,0,0.283l0,0	c-7.098,0.693-12.714,6.31-13.408,13.408l0,0c-0.017,0.171-0.267,0.171-0.283,0l0,0c-0.693-7.098-6.31-12.714-13.408-13.408l0,0	c-0.171-0.017-0.171-0.267,0-0.283l0,0c7.098-0.693,12.714-6.31,13.408-13.408l0,0C14.875,1.279,15.125,1.279,15.142,1.451z"></path>
   </svg>
 );
 
 
-export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, initialAiUnderwritingActions }: QuoteViewClientProps) {
+export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActions, hideHeader = false }: QuoteViewClientProps) {
   const [quoteDetails, setQuoteDetails] = useState<QuoteDetails | null>(initialQuoteDetails);
   const { toast } = useToast();
   const router = useRouter();
@@ -66,7 +74,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSavingToDB, setIsSavingToDB] = useState(false);
 
-  const [activeSheetItem, setActiveSheetItem] = useState<ActiveSheetItem>(null);
+  const [activeSheetItem, setActiveSheetItem] = useState<QuoteViewActiveSheetItem | null>(null); // Updated type
 
   const [aiOverallRiskStatement, setAiOverallRiskStatement] = useState<string>("Mock AI Overall Risk Statement: Based on the initial review, the risk profile appears moderate. Key areas to investigate include financial stability and claims history. Recommend further due diligence on operational risks.");
   const [isRiskStatementLoading, setIsRiskStatementLoading] = useState(false);
@@ -78,7 +86,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
   const [isInfoRequestsLoading, setIsInfoRequestsLoading] = useState(false);
 
   const [currentCoveragesRequested, setCurrentCoveragesRequested] = useState<CoverageItem[]>([]);
-  const [aiProcessingData, setAiProcessingData] = useState<AiProcessingData>(initialAiProcessingData);
+  // aiProcessingData state removed as it was for the AI monitor sheet
 
 
   useEffect(() => {
@@ -125,12 +133,12 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
             }))
         );
         
-        setAiProcessingData(initialAiProcessingData);
+        // setAiProcessingData removed
     }
-  }, [initialQuoteDetails, initialAiUnderwritingActions, initialAiProcessingData]);
+  }, [initialQuoteDetails, initialAiUnderwritingActions]);
 
 
-  const syncSubjectToOffersToDB = async (updatedOffers: ManagedSubjectToOffer[]) => {
+  const syncSubjectToOffersToDB = useCallback(async (updatedOffers: ManagedSubjectToOffer[]) => {
     if (!quoteDetails?.id) return;
     setIsSavingToDB(true);
     const offerTexts = updatedOffers.filter(offer => !offer.isRemoved).map(offer => offer.currentText);
@@ -155,9 +163,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     } finally {
       setIsSavingToDB(false);
     }
-  };
+  }, [quoteDetails?.id, toast]);
 
-  const handleAddGuideline = (guidelineInfo: { id: string; name: string }) => {
+  const handleAddGuideline = useCallback((guidelineInfo: { id: string; name: string }) => {
     setQuoteDetails(prevDetails => {
       if (!prevDetails) return null;
       const newGuideline: Guideline = {
@@ -188,9 +196,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
         underwritingGuidelines: [...prevDetails.underwritingGuidelines, newGuideline],
       };
     });
-  };
+  }, [toast]);
 
-  const handleUpdateGuideline = (id: string, status: Guideline['status'], details?: string) => {
+  const handleUpdateGuideline = useCallback((id: string, status: Guideline['status'], details?: string) => {
     setQuoteDetails(prevDetails => {
       if (!prevDetails) return null;
       const updatedGuidelines = prevDetails.underwritingGuidelines.map(g =>
@@ -211,18 +219,17 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
         underwritingGuidelines: updatedGuidelines,
       };
     });
-  };
+  }, [toast]);
 
-  const handleUpdateSubjectToOffer = (id: string, newText: string) => {
+  const handleUpdateSubjectToOffer = useCallback((id: string, newText: string) => {
     const updated = managedSubjectToOffers.map(offer =>
         offer.id === id ? { ...offer, currentText: newText, isEdited: true, isRemoved: false } : offer
       );
     setManagedSubjectToOffers(updated);
     syncSubjectToOffersToDB(updated);
-    // Toast is handled by syncSubjectToOffersToDB
-  };
+  }, [managedSubjectToOffers, syncSubjectToOffersToDB]);
 
-  const handleToggleRemoveSubjectToOffer = (id: string) => {
+  const handleToggleRemoveSubjectToOffer = useCallback((id: string) => {
     let offerText = "";
     let isNowRemoved = false;
     const updated = managedSubjectToOffers.map(offer => {
@@ -235,24 +242,22 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     });
     setManagedSubjectToOffers(updated);
     syncSubjectToOffersToDB(updated);
-     // Toast is handled by syncSubjectToOffersToDB
-  };
+  }, [managedSubjectToOffers, syncSubjectToOffersToDB]);
 
-   const handleAddSubjectToOffer = (newOfferText: string) => {
+   const handleAddSubjectToOffer = useCallback((newOfferText: string) => {
     const newOffer: ManagedSubjectToOffer = {
       id: `sto-custom-${Date.now()}`,
       originalText: `User-added: ${newOfferText}`,
       currentText: newOfferText,
       isRemoved: false,
-      isEdited: false, // Or true if we consider adding as an edit from a blank state
+      isEdited: false, 
     };
     const updated = [...managedSubjectToOffers, newOffer];
     setManagedSubjectToOffers(updated);
     syncSubjectToOffersToDB(updated);
-    // Toast is handled by syncSubjectToOffersToDB
-  };
+  }, [managedSubjectToOffers, syncSubjectToOffersToDB]);
 
-  const handleUpdateInformationRequest = (id: string, newText: string) => {
+  const handleUpdateInformationRequest = useCallback((id: string, newText: string) => {
     setManagedInformationRequests(prevRequests => 
       prevRequests.map(req =>
         req.id === id ? { ...req, currentText: newText, isEdited: true, isRemoved: false } : req
@@ -263,9 +268,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
       description: `Request "${newText.substring(0,30)}..." has been modified.`,
       variant: "default"
     });
-  };
+  }, [toast]);
 
-  const handleToggleRemoveInformationRequest = (id: string) => {
+  const handleToggleRemoveInformationRequest = useCallback((id: string) => {
     setManagedInformationRequests(prevRequests => {
       let reqText = "";
       let isNowRemoved = false;
@@ -284,9 +289,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
       });
       return updatedRequests;
     });
-  };
+  }, [toast]);
 
-  const handleAddInformationRequest = (newRequestText: string) => {
+  const handleAddInformationRequest = useCallback((newRequestText: string) => {
     const newRequest: ManagedInformationRequest = {
       id: `ir-custom-${Date.now()}`,
       originalText: `User-added: ${newRequestText}`,
@@ -300,9 +305,9 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
       description: `New request "${newRequestText.substring(0,30)}..." added.`,
       variant: "default"
     });
-  };
+  }, [toast]);
   
-  const handleConfirmAndGenerateEmail = async () => {
+  const handleConfirmAndGenerateEmail = useCallback(async () => {
     if (!selectedDecision || !quoteDetails) return;
 
     setIsGeneratingEmail(true);
@@ -348,13 +353,13 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     } finally {
       setIsGeneratingEmail(false);
     }
-  };
+  }, [selectedDecision, quoteDetails, managedInformationRequests, managedSubjectToOffers, toast]);
 
   const handleEmailBodyChange = (newBody: string) => {
     setEmailState(prev => prev ? { ...prev, currentBody: newBody } : null);
   };
 
-  const handleSendEmail = async () => {
+  const handleSendEmail = useCallback(async () => {
     if (!emailState) return;
     setIsSendingEmail(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -368,8 +373,8 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     setIsEmailDialogOpen(false);
     setEmailState(null);
     setSelectedDecision(null);
-    router.push('/');
-  };
+    // router.push('/'); // Commented out to stay on page after sending
+  }, [emailState, quoteDetails, router, toast]);
 
   const handleShowGuidelineDetails = (guideline: Guideline) => {
     setActiveSheetItem({ type: 'guideline', data: guideline });
@@ -379,11 +384,7 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     setActiveSheetItem({ type: 'citation', data: citation });
   };
   
-  const handleShowAiMonitor = () => {
-     if (quoteDetails) {
-        setActiveSheetItem({ type: 'aiMonitor', submissionId: quoteDetails.id });
-     }
-  };
+  // handleShowAiMonitor removed
 
   const handleShowAttachment = (attachment: Attachment) => {
     setActiveSheetItem({ type: 'attachment', data: attachment, quoteId: quoteDetails?.id || "" });
@@ -411,17 +412,8 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
 
   const renderSheetContent = () => {
     if (!activeSheetItem) return null;
+    // 'aiMonitor' case removed
     switch (activeSheetItem.type) {
-      case 'aiMonitor':
-        return (
-          <AiProcessingMonitorContent
-            aiToolActions={aiProcessingData?.aiToolActions || []} 
-            submissionId={activeSheetItem.submissionId}
-            insuredName={quoteDetails.insuredName}
-            brokerName={quoteDetails.broker}
-            attachmentsList={quoteDetails.attachments.map(att => ({ fileName: att.fileName, fileType: att.fileType }))}
-          />
-        );
       case 'guideline':
         return <GuidelineDetailsContent guideline={activeSheetItem.data} />;
       case 'citation':
@@ -429,80 +421,85 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
       case 'attachment':
         return <AttachmentViewerContent attachment={activeSheetItem.data} />;
       default:
+        // This should ideally not be reached if types are correct
+        const exhaustiveCheck: never = activeSheetItem; 
         return null;
     }
   };
 
   const getSheetTitle = () => {
     if (!activeSheetItem) return "";
+    // 'aiMonitor' case removed
     switch (activeSheetItem.type) {
-      case 'aiMonitor': return "AI Processing Monitor & Chat";
       case 'guideline': return `Guideline: ${activeSheetItem.data.name}`;
       case 'citation': return `Citation: ${activeSheetItem.data.quickDescription}`;
       case 'attachment': return `Attachment: ${activeSheetItem.data.fileName}`;
-      default: return "";
+      default: 
+        const exhaustiveCheck: never = activeSheetItem;
+        return "";
     }
   };
 
    const getSheetDescription = () => {
     if (!activeSheetItem || !quoteDetails) return "";
+    // 'aiMonitor' case removed
     switch (activeSheetItem.type) {
-      case 'aiMonitor': return `Monitor AI actions for submission ${quoteDetails.id} and chat with the AI assistant.`;
       case 'guideline': return `Detailed information for guideline "${activeSheetItem.data.name}". Current status: ${activeSheetItem.data.status}.`;
       case 'citation': return `Details for citation: ${activeSheetItem.data.sourceType === 'web' ? activeSheetItem.data.sourceNameOrUrl : activeSheetItem.data.sourceNameOrUrl }`;
       case 'attachment': return `Details for attachment "${activeSheetItem.data.fileName}". Type: ${activeSheetItem.data.fileType.toUpperCase()}, Size: ${activeSheetItem.data.fileSize}`;
-      default: return "";
+      default: 
+        const exhaustiveCheck: never = activeSheetItem;
+        return "";
     }
   };
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
-      <div className="flex justify-between items-center mb-4">
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/quote-dashboard"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Quote Dashboard</Link>
-        </Button>
-        <Button variant="outline" className="h-9" onClick={handleShowAiMonitor}>
-          <Activity className="mr-2 h-4 w-4" /> AI Chat & Monitor
-        </Button>
-      </div>
+      {/* Header section with quote ID, insured, broker */}
+      {!hideHeader && (
+        <div className="flex justify-between items-start mb-6">
+            <div>
+                <h1 className="text-3xl font-bold font-headline mb-1">
+                    Quote: {quoteDetails.id}
+                </h1>
+                <p className="text-muted-foreground">
+                    Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}
+                </p>
+            </div>
+            {/* AI Chat & Monitor button removed from here */}
+        </div>
+      )}
 
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6 border">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-3xl font-bold font-headline mb-1">
-              Quote: {quoteDetails.id}
-            </h1>
-            <p className="text-muted-foreground">
-              Insured: {quoteDetails.insuredName} | Broker: {quoteDetails.broker}
-            </p>
-          </div>
-          <div className="flex items-center space-x-2 flex-shrink-0">
-            <Select
-              value={selectedDecision || ""}
-              onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
-            >
-              <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
-                <SelectValue placeholder="Select decision..." />
-              </SelectTrigger>
-              <SelectContent>
-                {decisionOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={handleConfirmAndGenerateEmail}
-              disabled={!selectedDecision || isGeneratingEmail}
-              size="sm"
-              className="h-9"
-            >
-              {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
-              Confirm & Generate Email
-            </Button>
-          </div>
+      {/* Decision making and AI Risk Assessment section - always visible */}
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md mb-6 border border-slate-200 dark:border-slate-700">
+        <div className="flex justify-end items-center mb-4">
+            <div className="flex items-center space-x-2 flex-shrink-0">
+                <Select
+                    value={selectedDecision || ""}
+                    onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
+                >
+                    <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
+                    <SelectValue placeholder="Select decision..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {decisionOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <Button
+                    onClick={handleConfirmAndGenerateEmail}
+                    disabled={!selectedDecision || isGeneratingEmail}
+                    size="sm"
+                    className="h-9"
+                >
+                    {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
+                    Confirm & Generate Email
+                </Button>
+            </div>
         </div>
         
-        <div className="mt-4 p-3 border rounded-md bg-muted/30 shadow-sm">
+        <div className="mt-4 p-3 border rounded-md bg-muted/30 dark:bg-slate-700/30 shadow-sm border-slate-200 dark:border-slate-600">
           <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
             <AiSparkleIcon className="h-4 w-4 mr-2" />
             AI Risk Assessment
@@ -513,10 +510,11 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : (
-            <p className="text-sm text-foreground/90 whitespace-pre-wrap">{aiOverallRiskStatement}</p>
+            <p className="text-sm text-foreground/90 dark:text-slate-300 whitespace-pre-wrap">{aiOverallRiskStatement}</p>
           )}
         </div>
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -583,4 +581,3 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiProcessingData, 
     </div>
   );
 }
-

@@ -18,9 +18,10 @@ import type {
   PriorityLevel,
   CaseType,
   CaseStatus,
-  NotificationItem, // Added NotificationItem
+  NotificationItem, 
+  NotificationType,
 } from '@/types';
-import { formatISO, addDays, addMinutes, subDays } from 'date-fns';
+import { formatISO, addMinutes, subDays, subHours } from 'date-fns'; 
 
 // Import the JSON data
 import mockCasesData from './mockData/cases.json';
@@ -166,74 +167,60 @@ export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
   { id: 'GUIDE-114', name: 'Supply Chain Risk Analysis' },
 ];
 
+const now = new Date();
+
 export const mockNotifications: NotificationItem[] = [
   {
-    id: 'notif-1',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'User1',
-    message: 'AhnaldT101 a mis en ligne: We need to talk about GL Ahsoka Tano... Was This a MASSIVE Failure?',
-    timestamp: '13 hours ago',
-    imageSrc: 'https://placehold.co/112x63.png',
-    imageAlt: 'Video thumbnail for Ahsoka Tano discussion',
+    id: 'notif-newcase-1',
+    type: 'newCase',
+    message: 'New case C-20240715-011 (TechServe Solutions) has been assigned to you.',
+    timestamp: formatISO(subHours(now, 2)),
     isRead: false,
     category: 'Important',
   },
   {
-    id: 'notif-2',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'User2',
-    message: 'Risk Assessment for Q-20240701-001 has been updated. Please review the changes.',
-    timestamp: '2 days ago',
-    isRead: true,
-    category: 'Important',
-  },
-  {
-    id: 'notif-3',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'User1',
-    message: 'AhnaldT101 a mis en ligne: One of the WORST Things SWGoH Has Done... What Are They Thinking?',
-    timestamp: '3 days ago',
-    imageSrc: 'https://placehold.co/112x63.png',
-    imageAlt: 'Video thumbnail for SWGoH discussion',
-    isRead: false,
-    category: 'More',
-  },
-  {
-    id: 'notif-4',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'System',
-    message: 'Policy P-20230915-002 is due for renewal in 14 days. Start renewal process for Synergy Group.',
-    timestamp: '4 days ago',
-    isRead: true,
-    category: 'More',
-  },
-  {
-    id: 'notif-5',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'User1',
-    message: "AhnaldT101 a mis en ligne: I can't believe this is not 100% trash...",
-    timestamp: '4 days ago',
-    imageSrc: 'https://placehold.co/112x63.png',
-    imageAlt: 'Video thumbnail for game critique',
-    isRead: true,
-    category: 'More',
-  },
-  {
-    id: 'notif-6',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'User3',
-    message: 'New case C-20240715-009 assigned: High priority submission from Innovate Corp.',
-    timestamp: '1 hour ago',
+    id: 'notif-broker-resp-1',
+    type: 'brokerResponse',
+    message: 'Broker (Marsh) responded with additional documents for Case C-20240701-001 (Innovate Corp).',
+    timestamp: formatISO(subHours(now, 5)),
     isRead: false,
     category: 'Important',
   },
   {
-    id: 'notif-7',
-    avatarSrc: 'https://placehold.co/40x40.png',
-    avatarAlt: 'AI Agent',
-    message: 'AI has completed initial analysis for Quote Q-20240710-004. Guideline evaluation is ready.',
-    timestamp: '5 hours ago',
+    id: 'notif-newcase-2',
+    type: 'newCase',
+    message: 'New case C-20240712-010 (Quick Eats Delivery) created and is in Triage.',
+    timestamp: formatISO(subDays(now, 1)),
     isRead: true,
     category: 'More',
   },
+  {
+    id: 'notif-broker-resp-2',
+    type: 'brokerResponse',
+    message: 'Information received from Broker (Aon) for Case C-20240709-007 (BuildRight Construction).',
+    timestamp: formatISO(subDays(now, 2)),
+    isRead: true,
+    category: 'More',
+  },
+  {
+    id: 'notif-newcase-3',
+    type: 'newCase',
+    message: 'New Business case C-20240708-006 (GreenTech Innovations) requires assignment.',
+    timestamp: formatISO(subDays(now, 3)),
+    isRead: false,
+    category: 'Important',
+  },
+   {
+    id: 'notif-broker-resp-3',
+    type: 'brokerResponse',
+    message: 'Broker (Gallagher) uploaded requested financials for Case C-20240704-004 (Apex Enterprises).',
+    timestamp: formatISO(subHours(now, 26)), // Just over a day ago
+    isRead: true,
+    category: 'More',
+  }
 ];
+
+// Ensure timestamps in mockNotifications are strings after formatISO
+mockNotifications.forEach(n => {
+  n.timestamp = n.timestamp; // Already a string from formatISO, but reinforces if logic changes
+});
