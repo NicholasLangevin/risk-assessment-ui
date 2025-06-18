@@ -20,23 +20,49 @@ import type {
   CaseStatus,
   NotificationItem, 
   NotificationType,
-  UserProfile, // Added UserProfile
+  UserProfile,
+  SkillSettings,
 } from '@/types';
 import { formatISO, addMinutes, subDays, subHours } from 'date-fns'; 
 
-// Import the JSON data
-import mockCasesData from './mockData/cases.json';
-import mockQuotesData from './mockData/quotes.json';
-import mockPoliciesData from './mockData/policies.json';
-import mockUserProfilesData from './mockData/userProfiles.json'; // Added UserProfiles import
+import initialMockCasesData from './mockData/cases.json';
+import initialMockQuotesData from './mockData/quotes.json';
+import initialMockPoliciesData from './mockData/policies.json';
+import initialMockUserProfilesData from './mockData/userProfiles.json';
 
-// Cast the imported JSON data to the defined types
-const allMockCases: Case[] = mockCasesData as Case[];
-export const allMockQuotes: QuoteDetails[] = mockQuotesData as QuoteDetails[]; // Export for generateStaticParams
-const allMockPolicies: Policy[] = mockPoliciesData as Policy[];
-const allMockUserProfiles: UserProfile[] = mockUserProfilesData as UserProfile[]; // Added UserProfiles data
+const USER_PROFILES_STORAGE_KEY = 'userProfilesData';
 
-// This will be used by the dashboard
+// Function to safely get data from localStorage
+const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
+  if (typeof window === 'undefined') {
+    return defaultValue;
+  }
+  try {
+    const item = window.localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.warn(`Error reading localStorage key "${key}":`, error);
+    return defaultValue;
+  }
+};
+
+// Function to safely set data to localStorage
+const setToLocalStorage = <T>(key: string, value: T): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Error setting localStorage key "${key}":`, error);
+  }
+};
+
+
+const allMockCases: Case[] = initialMockCasesData as Case[];
+export const allMockQuotes: QuoteDetails[] = initialMockQuotesData as QuoteDetails[];
+const allMockPolicies: Policy[] = initialMockPoliciesData as Policy[];
+
 export const mockCaseListItems: CaseListItem[] = allMockCases.map(c => ({
   id: c.id,
   caseType: c.caseType,
@@ -46,7 +72,7 @@ export const mockCaseListItems: CaseListItem[] = allMockCases.map(c => ({
   receivedDate: c.receivedDate, 
   priority: c.priority,
   relatedQuoteId: c.relatedQuoteId,
-  assignedTo: c.assignedTo, // Ensure assignedTo is mapped
+  assignedTo: c.assignedTo,
 }));
 
 
@@ -56,9 +82,6 @@ export const getMockQuoteDetails = (quoteId: string): QuoteDetails | null => {
     console.warn(`Mock quote with ID ${quoteId} not found in quotes.json.`);
     return null;
   }
-
-  // Ensure attachments and guidelines are present, even if empty arrays, to match type
-  // Also provide default empty arrays for optional fields if they are undefined in JSON
   return {
     ...quote,
     attachments: quote.attachments || [],
@@ -81,20 +104,35 @@ export const getMockCaseDetails = (caseId: string): Case | null => {
   return allMockCases.find(c => c.id === caseId) || null;
 }
 
-// User Profile Mock Data Functions
 export const getAllUserProfiles = (): UserProfile[] => {
-  return allMockUserProfiles;
+  let profiles = getFromLocalStorage<UserProfile[] | null>(USER_PROFILES_STORAGE_KEY, null);
+  if (!profiles || profiles.length === 0) {
+    profiles = initialMockUserProfilesData as UserProfile[];
+    setToLocalStorage(USER_PROFILES_STORAGE_KEY, profiles);
+  }
+  return profiles;
 };
 
 export const getUserProfileById = (userId: string): UserProfile | null => {
-  return allMockUserProfiles.find(p => p.id === userId) || null;
+  const profiles = getAllUserProfiles();
+  return profiles.find(p => p.id === userId) || null;
+};
+
+export const updateUserProfileInStorage = (updatedProfile: UserProfile): void => {
+  let profiles = getAllUserProfiles();
+  const index = profiles.findIndex(p => p.id === updatedProfile.id);
+  if (index !== -1) {
+    profiles[index] = updatedProfile;
+  } else {
+    // Optionally add if not found, though current use case is update
+    profiles.push(updatedProfile); 
+  }
+  setToLocalStorage(USER_PROFILES_STORAGE_KEY, profiles);
 };
 
 
-// Keep existing mock data for things not yet migrated to JSON or if needed as fallback
-const constantBaseDateForMocking = new Date(2024, 0, 1); // Jan 1, 2024
+const constantBaseDateForMocking = new Date(2024, 0, 1);
 
-// Default attachments (can be overridden by quote specific data if that quote is in quotes.json)
 export const mockAttachments: Attachment[] = [
   {
     id: 'attach-generic-pdf',
@@ -117,16 +155,14 @@ export const getMockAiToolActions = (idInput: string): AiToolAction[] => {
   if (numericIdPart === 0 && idInput.length > 0) { 
     numericIdPart = idInput.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   }
-
   const baseTime = addMinutes(constantBaseDateForMocking, numericIdPart % 1440); 
-
   const predeterminedActions: AiToolAction[] = [
     {
       id: `step-${numericIdPart}-1`,
       type: 'ReadingAttachment',
-      timestamp: formatISO(addMinutes(baseTime, (numericIdPart % 3) * 2)), // Vary timestamp slightly
+      timestamp: formatISO(addMinutes(baseTime, (numericIdPart % 3) * 2)),
       description: "AI analyzed the primary submission document for initial risk factors.",
-      details: { targetName: "Application.pdf" } // Generic name
+      details: { targetName: "Application.pdf" }
     },
     {
       id: `step-${numericIdPart}-2`,
@@ -157,8 +193,7 @@ export const getMockAiToolActions = (idInput: string): AiToolAction[] => {
       details: { targetName: "Loss_Runs.pdf" }
     },
   ];
-  // Return a deterministic slice of actions
-  return predeterminedActions.slice(0, (numericIdPart % 3) + 3); // Return 3 to 5 actions
+  return predeterminedActions.slice(0, (numericIdPart % 3) + 3);
 };
 
 export const mockAllPossibleGuidelines: { id: string; name: string }[] = [
@@ -226,14 +261,12 @@ export const mockNotifications: NotificationItem[] = [
     id: 'notif-broker-resp-3',
     type: 'brokerResponse',
     message: 'Broker (Gallagher) uploaded requested financials for Case C-20240704-004 (Apex Enterprises).',
-    timestamp: formatISO(subHours(now, 26)), // Just over a day ago
+    timestamp: formatISO(subHours(now, 26)),
     isRead: true,
     category: 'More',
   }
 ];
 
-// Ensure timestamps in mockNotifications are strings after formatISO
 mockNotifications.forEach(n => {
-  n.timestamp = n.timestamp; // Already a string from formatISO, but reinforces if logic changes
+  n.timestamp = n.timestamp;
 });
-

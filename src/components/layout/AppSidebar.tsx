@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation'; 
+import React, { useState, useEffect } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -11,11 +12,40 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { HomeIcon, UserCircle, FolderKanban, ListChecksIcon } from 'lucide-react'; // Added ListChecksIcon
+import { HomeIcon, UserCircle, FolderKanban, ListChecksIcon, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { UserProfile } from '@/types';
+import { getUserProfileById } from '@/lib/mockData';
+
+const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
 
 export function AppSidebar() {
   const pathname = usePathname(); 
+  const [currentUserRole, setCurrentUserRole] = useState<UserProfile['role'] | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      const storedProfileId = localStorage.getItem(LOCAL_STORAGE_PROFILE_KEY);
+      if (storedProfileId) {
+        const profile = getUserProfileById(storedProfileId);
+        if (profile) {
+          setCurrentUserRole(profile.role);
+        }
+      } else {
+        // Default to first profile if nothing stored (e.g. Alex Miller who is underwriter)
+        const defaultProfile = getUserProfileById("user-alex-uw");
+        if (defaultProfile) {
+          setCurrentUserRole(defaultProfile.role);
+        }
+      }
+    }
+  }, [isMounted]);
+
 
   return (
     <Sidebar collapsible="icon">
@@ -51,7 +81,18 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          {/* Add more navigation items here if needed */}
+          {isMounted && currentUserRole === 'manager' && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Manage Team" isActive={pathname === '/manage-team'}>
+                <Link href="/manage-team">
+                  <span className={cn("inline-flex items-center justify-center")}>
+                    <Users className="h-4 w-4" />
+                  </span>
+                  <span>Manage Team</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
