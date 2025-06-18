@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { UserCircle2, Edit3 } from 'lucide-react';
+import { UserCircle2, Save } from 'lucide-react'; // Changed Edit3 to Save
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 interface ProfilePageClientProps {
   profiles: UserProfile[];
@@ -19,6 +20,7 @@ const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
 export function ProfilePageClient({ profiles, initialProfile }: ProfilePageClientProps) {
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter(); // Initialize router
 
   useEffect(() => {
     setIsMounted(true);
@@ -32,14 +34,13 @@ export function ProfilePageClient({ profiles, initialProfile }: ProfilePageClien
       }
     }
     
-    // If no stored profile or initial profile, default to the first available if any.
     if (!profileToSet && profiles.length > 0) {
         profileToSet = profiles[0];
     }
     setSelectedProfile(profileToSet);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profiles]); // Rerun if profiles list changes, initialProfile is stable
+  }, [profiles]); 
 
   const handleProfileChange = (profileId: string) => {
     const newProfile = profiles.find(p => p.id === profileId);
@@ -47,6 +48,17 @@ export function ProfilePageClient({ profiles, initialProfile }: ProfilePageClien
       setSelectedProfile(newProfile);
       localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, newProfile.id);
     }
+  };
+
+  const handleSaveProfile = () => {
+    // The profile selection is already saved to localStorage by the Select's onValueChange.
+    // Navigating to the home page will trigger other components (like the sidebar)
+    // to re-evaluate based on the localStorage value.
+    if (selectedProfile) {
+        // Explicitly set it again just to be absolutely sure, though Select's onChange should handle it.
+        localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, selectedProfile.id);
+    }
+    router.push('/'); 
   };
 
   if (!isMounted || !selectedProfile) {
@@ -95,8 +107,8 @@ export function ProfilePageClient({ profiles, initialProfile }: ProfilePageClien
               </SelectContent>
             </Select>
           </div>
-          <Button className="w-full" variant="outline">
-            <Edit3 className="mr-2 h-4 w-4" /> Edit Profile (Placeholder)
+          <Button className="w-full" onClick={handleSaveProfile}>
+            <Save className="mr-2 h-4 w-4" /> Save Profile
           </Button>
         </CardContent>
       </Card>
