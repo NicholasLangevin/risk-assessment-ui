@@ -12,15 +12,15 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarSeparator,
-  // SidebarGroup and SidebarGroupLabel are no longer needed for open cases
 } from '@/components/ui/sidebar';
-import { HomeIcon, UserCircle, FolderKanban, ListChecksIcon, Users, X } from 'lucide-react'; // Archive icon removed
+import { HomeIcon, UserCircle, FolderKanban, ListChecksIcon, Users, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { UserProfile, OpenedCaseInfo } from '@/types';
 import { getUserProfileById } from '@/lib/mockData';
 import { useOpenedCases } from '@/contexts/OpenedCasesContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSidebar } from '@/components/ui/sidebar'; // Import useSidebar
 
 const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
 
@@ -29,7 +29,8 @@ export function AppSidebar() {
   const router = useRouter();
   const [currentUserRole, setCurrentUserRole] = useState<UserProfile['role'] | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const { openedCases, closeCase } = useOpenedCases(); // clearAllCases removed as button is removed
+  const { openedCases, closeCase } = useOpenedCases();
+  const { state: viewMode } = useSidebar(); // Get sidebar view mode
 
   useEffect(() => {
     setIsMounted(true);
@@ -53,20 +54,20 @@ export function AppSidebar() {
         const defaultProfile = getUserProfileById("user-alex-uw");
         if (defaultProfile) {
           setCurrentUserRole(defaultProfile.role);
+          // Optionally set the default in localStorage if it was missing/invalid
+          // localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, defaultProfile.id);
         } else {
-            setCurrentUserRole(null);
+            setCurrentUserRole(null); // Or some other fallback
         }
       }
     }
-  }, [isMounted, pathname]);
+  }, [isMounted, pathname]); // Re-check on navigation
 
   const handleCloseCaseTab = (e: React.MouseEvent, caseId: string) => {
     e.stopPropagation(); 
     e.preventDefault();
     closeCase(caseId, pathname);
   };
-
-  // handleClearAllTabs removed
 
   return (
     <Sidebar collapsible="icon">
@@ -95,10 +96,11 @@ export function AppSidebar() {
 
           {openedCases.length > 0 && (
             <>
-              {/* Optional: Add a separator if desired above the open cases list */}
-              {/* <SidebarSeparator className="my-1 mx-0" /> */}
-              <ScrollArea className="max-h-[200px] pl-1 pr-1 py-1"> {/* Adjusted padding for ScrollArea */}
-                <SidebarMenu className="pl-2 border-l border-border ml-1.5"> {/* Indented menu for open cases */}
+              <ScrollArea className="max-h-[200px] pl-1 pr-1 py-1">
+                <SidebarMenu className={cn(
+                  "border-l border-border",
+                  viewMode === 'expanded' ? "pl-2 ml-1.5" : "pl-1 ml-0.5" // Dynamic classes for indentation
+                )}>
                   {openedCases.map((caseInfo) => (
                     <SidebarMenuItem key={caseInfo.id} className="relative group/tab">
                       <SidebarMenuButton
@@ -127,7 +129,7 @@ export function AppSidebar() {
                   ))}
                 </SidebarMenu>
               </ScrollArea>
-              <SidebarSeparator className="my-1 mx-0" /> {/* Separator after open cases list */}
+              <SidebarSeparator className="my-1 mx-0" />
             </>
           )}
 
