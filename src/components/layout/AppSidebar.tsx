@@ -20,7 +20,7 @@ import { getUserProfileById } from '@/lib/mockData';
 import { useOpenedCases } from '@/contexts/OpenedCasesContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSidebar } from '@/components/ui/sidebar'; // Import useSidebar
+import { useSidebar } from '@/components/ui/sidebar';
 
 const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
 
@@ -30,7 +30,7 @@ export function AppSidebar() {
   const [currentUserRole, setCurrentUserRole] = useState<UserProfile['role'] | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const { openedCases, closeCase } = useOpenedCases();
-  const { state: viewMode } = useSidebar(); // Get sidebar view mode
+  const { state: viewMode } = useSidebar(); 
 
   useEffect(() => {
     setIsMounted(true);
@@ -54,14 +54,12 @@ export function AppSidebar() {
         const defaultProfile = getUserProfileById("user-alex-uw");
         if (defaultProfile) {
           setCurrentUserRole(defaultProfile.role);
-          // Optionally set the default in localStorage if it was missing/invalid
-          // localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, defaultProfile.id);
         } else {
-            setCurrentUserRole(null); // Or some other fallback
+            setCurrentUserRole(null); 
         }
       }
     }
-  }, [isMounted, pathname]); // Re-check on navigation
+  }, [isMounted, pathname]); 
 
   const handleCloseCaseTab = (e: React.MouseEvent, caseId: string) => {
     e.stopPropagation(); 
@@ -99,19 +97,19 @@ export function AppSidebar() {
               <ScrollArea className="max-h-[200px] pl-1 pr-1 py-1">
                 <SidebarMenu className={cn(
                   "border-l border-border",
-                  "pl-2 ml-1.5" // Always use expanded indentation when visible
+                  "pl-2 ml-1.5" 
                 )}>
                   {openedCases.map((caseInfo) => (
-                    <SidebarMenuItem key={caseInfo.id} className="relative group/tab">
+                    <SidebarMenuItem key={caseInfo.id} className="relative group/tab flex items-center">
                       <SidebarMenuButton
                         asChild
                         tooltip={`${caseInfo.insuredName} - ${caseInfo.broker}`}
                         isActive={pathname === `/case/${caseInfo.id}` || pathname.startsWith(`/case/${caseInfo.id}/`)}
-                        className="!py-1.5 !text-xs !h-auto !pl-1.5 !pr-6 w-full"
+                        className="!py-1.5 !text-xs !h-auto !pl-1.5 !pr-6 flex-1 min-w-0" 
                         size="sm"
                       >
-                        <Link href={`/case/${caseInfo.id}`} className="truncate">
-                          <span className="truncate w-full block" title={`${caseInfo.id}: ${caseInfo.insuredName}`}>
+                        <Link href={`/case/${caseInfo.id}`} className="truncate block">
+                          <span className="truncate" title={`${caseInfo.id}: ${caseInfo.insuredName}`}>
                               {caseInfo.id}
                           </span>
                         </Link>
