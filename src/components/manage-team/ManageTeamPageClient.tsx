@@ -15,9 +15,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
 
 // Mock data for skill options (can be moved to a constants file or fetched)
-export const mockLinesOfBusiness: string[] = ["Property", "Casualty", "Financial Lines", "Cyber", "Marine", "Aviation", "Energy"];
+export const mockLinesOfBusiness: string[] = ["Commercial Line", "Non Standard Risk", "E&O", "D&O"];
 export const mockBranches: string[] = ["New York", "London", "Chicago", "Singapore", "Zurich", "Toronto"];
-export const mockBrokerCodes: string[] = ["BRK001", "BRK002", "BRK003", "AON_GL", "MARSH_FIN", "WTW_PROP", "GALL_CYBER"];
+export const mockBrokerCodes: string[] = ["123456", "234567", "345678", "456789", "567890", "678901", "789012"];
 
 
 export function ManageTeamPageClient() {
@@ -200,3 +200,4 @@ export function ManageTeamPageClient() {
     </div>
   );
 }
+
