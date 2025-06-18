@@ -1,17 +1,71 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, ListChecks, UserCircle2 } from 'lucide-react'; // Changed to UserCircle2 for better visual
+import { BarChart, ListChecks, UserCircle2 } from 'lucide-react';
+import type { UserProfile } from '@/types';
+import { getUserProfileById, getAllUserProfiles } from '@/lib/mockData'; // Import functions
+
+const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
 
 export function UserHomePageClient() {
+  const [userName, setUserName] = useState<string>("User"); // Default name
+  const [isMounted, setIsMounted] = useState(false);
+
   // Placeholder data - in a real app, this would come from user session or API
-  const userName = "Alex Underwriter"; // Example user name
   const tasksDueToday = 3;
   const activeQuotes = 12;
   const recentActivity = "Reviewed Quote Q1000008";
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      const storedProfileId = localStorage.getItem(LOCAL_STORAGE_PROFILE_KEY);
+      let profileToSet: UserProfile | null = null;
+
+      if (storedProfileId) {
+        profileToSet = getUserProfileById(storedProfileId);
+      }
+      
+      if (profileToSet) {
+        setUserName(profileToSet.name);
+      } else {
+        // Fallback if no stored profile or if stored ID is invalid
+        const allProfiles = getAllUserProfiles();
+        if (allProfiles.length > 0) {
+          setUserName(allProfiles[0].name); // Default to the first profile in the list
+           // Optionally, also set this as the default in localStorage
+          localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, allProfiles[0].id);
+        } else {
+          setUserName("Alex Underwriter"); // Absolute fallback
+        }
+      }
+    }
+  }, [isMounted]);
+
+
+  if (!isMounted) {
+    // Render a loading state or null to avoid hydration mismatch
+    // For simplicity, we can show a generic loading message or a skeleton
+    return (
+        <>
+        <div className="flex items-center mb-8">
+            <UserCircle2 className="h-12 w-12 mr-4 text-primary" />
+            <div>
+            <h1 className="text-3xl font-bold font-headline">Welcome back!</h1>
+            <p className="text-muted-foreground">Loading your workflow overview...</p>
+            </div>
+        </div>
+        {/* Skeletons for cards can be added here if desired */}
+        </>
+    );
+  }
 
   return (
     <>
