@@ -31,20 +31,32 @@ export function AppSidebar() {
   useEffect(() => {
     if (isMounted) {
       const storedProfileId = localStorage.getItem(LOCAL_STORAGE_PROFILE_KEY);
+      let profileToSet: UserProfile | null = null;
+
       if (storedProfileId) {
-        const profile = getUserProfileById(storedProfileId);
-        if (profile) {
-          setCurrentUserRole(profile.role);
-        }
+        profileToSet = getUserProfileById(storedProfileId);
+      }
+      
+      if (profileToSet) {
+        setCurrentUserRole(profileToSet.role);
       } else {
-        // Default to first profile if nothing stored (e.g. Alex Miller who is underwriter)
-        const defaultProfile = getUserProfileById("user-alex-uw");
+        // If storedProfileId was invalid or not found, or if no storedProfileId
+        if (storedProfileId) {
+            // Clear invalid ID
+            localStorage.removeItem(LOCAL_STORAGE_PROFILE_KEY);
+        }
+        // Default to Alex Miller
+        const defaultProfile = getUserProfileById("user-alex-uw"); // Alex Miller's ID
         if (defaultProfile) {
           setCurrentUserRole(defaultProfile.role);
+          // Optionally, set this default in localStorage if it was empty/invalid and you want to ensure a default is set
+          // localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, defaultProfile.id); 
+        } else {
+            setCurrentUserRole(null); // Should not happen with current mock data setup
         }
       }
     }
-  }, [isMounted]);
+  }, [isMounted, pathname]); // Added pathname to dependency array
 
 
   return (
