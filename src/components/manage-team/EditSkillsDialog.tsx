@@ -133,14 +133,14 @@ export function EditSkillsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Edit Skills for {userProfileToEdit.name}</DialogTitle>
           <DialogDescription>
             Select applicable skills. Choosing "ALL" will override individual selections for that category.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-grow min-h-0"> {/* Added min-h-0 here */}
+        <ScrollArea className="flex-grow overflow-y-auto">
           <div className="space-y-4 p-4">
             {renderSkillSection("Transaction Types", "transactionTypes", allCaseTypes)}
             {renderSkillSection("Lines of Business", "linesOfBusiness", allLinesOfBusiness)}
