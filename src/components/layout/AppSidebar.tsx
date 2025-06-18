@@ -94,12 +94,12 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {openedCases.length > 0 && (
+          {viewMode === 'expanded' && openedCases.length > 0 && (
             <>
               <ScrollArea className="max-h-[200px] pl-1 pr-1 py-1">
                 <SidebarMenu className={cn(
                   "border-l border-border",
-                  viewMode === 'expanded' ? "pl-2 ml-1.5" : "pl-1 ml-0.5" // Dynamic classes for indentation
+                  "pl-2 ml-1.5" // Always use expanded indentation when visible
                 )}>
                   {openedCases.map((caseInfo) => (
                     <SidebarMenuItem key={caseInfo.id} className="relative group/tab">
@@ -119,7 +119,7 @@ export function AppSidebar() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 opacity-50 group-hover/tab:opacity-100 focus:opacity-100"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5 opacity-50 group-hover/tab:opacity-100 focus:opacity-100"
                         onClick={(e) => handleCloseCaseTab(e, caseInfo.id)}
                       >
                         <X className="h-3 w-3" />
