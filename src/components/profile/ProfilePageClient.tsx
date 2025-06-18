@@ -7,37 +7,49 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { UserCircle2, Edit3 } from 'lucide-react'; // Using UserCircle2 for better visual
+import { UserCircle2, Edit3 } from 'lucide-react';
 
 interface ProfilePageClientProps {
   profiles: UserProfile[];
   initialProfile: UserProfile | null;
 }
 
+const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
+
 export function ProfilePageClient({ profiles, initialProfile }: ProfilePageClientProps) {
-  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(initialProfile);
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    // If no initial profile (e.g., profiles list was empty server-side, unlikely with mock)
-    // or if the initialProfile is not in the list (also unlikely with mock),
-    // default to the first available profile if any.
-    if (!selectedProfile && profiles.length > 0) {
-      setSelectedProfile(profiles[0]);
+    let profileToSet = initialProfile;
+
+    const storedProfileId = localStorage.getItem(LOCAL_STORAGE_PROFILE_KEY);
+    if (storedProfileId) {
+      const foundProfile = profiles.find(p => p.id === storedProfileId);
+      if (foundProfile) {
+        profileToSet = foundProfile;
+      }
     }
-  }, [profiles, selectedProfile]);
+    
+    // If no stored profile or initial profile, default to the first available if any.
+    if (!profileToSet && profiles.length > 0) {
+        profileToSet = profiles[0];
+    }
+    setSelectedProfile(profileToSet);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profiles]); // Rerun if profiles list changes, initialProfile is stable
 
   const handleProfileChange = (profileId: string) => {
     const newProfile = profiles.find(p => p.id === profileId);
     if (newProfile) {
       setSelectedProfile(newProfile);
+      localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, newProfile.id);
     }
   };
 
   if (!isMounted || !selectedProfile) {
-    // Basic loading state or placeholder until client-side hydration completes
-    // and selectedProfile is confirmed.
     return (
       <div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
         <Card className="max-w-md mx-auto">
@@ -47,8 +59,10 @@ export function ProfilePageClient({ profiles, initialProfile }: ProfilePageClien
           </CardHeader>
           <CardContent>
             <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-muted rounded w-3/4"></div>
-              <div className="h-6 bg-muted rounded w-1/2"></div>
+              <div className="h-20 w-20 mx-auto bg-muted rounded-full mb-4"></div>
+              <div className="h-8 bg-muted rounded w-3/4 mx-auto"></div>
+              <div className="h-6 bg-muted rounded w-1/2 mx-auto"></div>
+              <div className="h-10 bg-muted rounded w-full mt-6"></div>
               <div className="h-10 bg-muted rounded w-full"></div>
             </div>
           </CardContent>
