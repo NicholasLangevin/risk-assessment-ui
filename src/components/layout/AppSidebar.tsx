@@ -12,10 +12,9 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarSeparator,
-  SidebarGroup,
-  SidebarGroupLabel,
+  // SidebarGroup and SidebarGroupLabel are no longer needed for open cases
 } from '@/components/ui/sidebar';
-import { HomeIcon, UserCircle, FolderKanban, ListChecksIcon, Users, X, Archive } from 'lucide-react';
+import { HomeIcon, UserCircle, FolderKanban, ListChecksIcon, Users, X } from 'lucide-react'; // Archive icon removed
 import { cn } from '@/lib/utils';
 import type { UserProfile, OpenedCaseInfo } from '@/types';
 import { getUserProfileById } from '@/lib/mockData';
@@ -30,7 +29,7 @@ export function AppSidebar() {
   const router = useRouter();
   const [currentUserRole, setCurrentUserRole] = useState<UserProfile['role'] | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const { openedCases, closeCase, clearAllCases } = useOpenedCases();
+  const { openedCases, closeCase } = useOpenedCases(); // clearAllCases removed as button is removed
 
   useEffect(() => {
     setIsMounted(true);
@@ -62,16 +61,12 @@ export function AppSidebar() {
   }, [isMounted, pathname]);
 
   const handleCloseCaseTab = (e: React.MouseEvent, caseId: string) => {
-    e.stopPropagation(); // Prevent navigation if clicking on X within a link
+    e.stopPropagation(); 
     e.preventDefault();
     closeCase(caseId, pathname);
   };
 
-  const handleClearAllTabs = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    clearAllCases();
-  }
+  // handleClearAllTabs removed
 
   return (
     <Sidebar collapsible="icon">
@@ -100,47 +95,39 @@ export function AppSidebar() {
 
           {openedCases.length > 0 && (
             <>
-              <SidebarSeparator className="my-1 mx-0" />
-              <SidebarGroup className="!p-0">
-                <div className="flex justify-between items-center px-2 pt-1">
-                    <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground !p-0 !h-auto">Open Cases</SidebarGroupLabel>
-                    <Button variant="ghost" size="icon" onClick={handleClearAllTabs} className="h-6 w-6" tooltip="Close All Tabs">
-                        <Archive className="h-3.5 w-3.5" />
-                        <span className="sr-only">Close All Tabs</span>
-                    </Button>
-                </div>
-                 <ScrollArea className="max-h-[200px] pl-2 pr-1 py-1"> {/* Adjust max-h as needed */}
-                  <SidebarMenu className="pl-2 border-l border-border ml-1">
-                    {openedCases.map((caseInfo) => (
-                      <SidebarMenuItem key={caseInfo.id} className="relative group/tab">
-                        <SidebarMenuButton
-                          asChild
-                          tooltip={`${caseInfo.insuredName} - ${caseInfo.broker}`}
-                          isActive={pathname === `/case/${caseInfo.id}` || pathname.startsWith(`/case/${caseInfo.id}/`)}
-                          className="!py-1.5 !text-xs !h-auto !pl-1.5 !pr-6 w-full"
-                          size="sm"
-                        >
-                          <Link href={`/case/${caseInfo.id}`} className="truncate">
-                            <span className="truncate w-full block" title={`${caseInfo.id}: ${caseInfo.insuredName}`}>
-                                {caseInfo.id}
-                            </span>
-                          </Link>
-                        </SidebarMenuButton>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 opacity-50 group-hover/tab:opacity-100 focus:opacity-100"
-                          onClick={(e) => handleCloseCaseTab(e, caseInfo.id)}
-                        >
-                          <X className="h-3 w-3" />
-                          <span className="sr-only">Close tab {caseInfo.id}</span>
-                        </Button>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </ScrollArea>
-              </SidebarGroup>
-              <SidebarSeparator className="my-1 mx-0" />
+              {/* Optional: Add a separator if desired above the open cases list */}
+              {/* <SidebarSeparator className="my-1 mx-0" /> */}
+              <ScrollArea className="max-h-[200px] pl-1 pr-1 py-1"> {/* Adjusted padding for ScrollArea */}
+                <SidebarMenu className="pl-2 border-l border-border ml-1.5"> {/* Indented menu for open cases */}
+                  {openedCases.map((caseInfo) => (
+                    <SidebarMenuItem key={caseInfo.id} className="relative group/tab">
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={`${caseInfo.insuredName} - ${caseInfo.broker}`}
+                        isActive={pathname === `/case/${caseInfo.id}` || pathname.startsWith(`/case/${caseInfo.id}/`)}
+                        className="!py-1.5 !text-xs !h-auto !pl-1.5 !pr-6 w-full"
+                        size="sm"
+                      >
+                        <Link href={`/case/${caseInfo.id}`} className="truncate">
+                          <span className="truncate w-full block" title={`${caseInfo.id}: ${caseInfo.insuredName}`}>
+                              {caseInfo.id}
+                          </span>
+                        </Link>
+                      </SidebarMenuButton>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 opacity-50 group-hover/tab:opacity-100 focus:opacity-100"
+                        onClick={(e) => handleCloseCaseTab(e, caseInfo.id)}
+                      >
+                        <X className="h-3 w-3" />
+                        <span className="sr-only">Close tab {caseInfo.id}</span>
+                      </Button>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </ScrollArea>
+              <SidebarSeparator className="my-1 mx-0" /> {/* Separator after open cases list */}
             </>
           )}
 
