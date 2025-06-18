@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 // General Application Types
@@ -208,14 +207,14 @@ export const ChatUnderwritingAssistantInputSchema = z.object({
   insuredName: z.string().min(1).describe('The name of the insured party. Must be non-empty.'),
   brokerName: z.string().min(1).describe('The name of the broker. Must be non-empty.'),
   attachments: z.array(ChatAttachmentInfoSchema).describe('A list of attachments available for this submission.'),
-  userQuery: z.string().describe('The user’s current question or message.'),
+  userQuery: z.string().describe('The user's current question or message.'),
   chatHistory: z.array(ChatHistoryItemSchema).optional().describe('The history of the conversation so far.') // Added optional chatHistory
 });
 export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
 
 
 export const ChatUnderwritingAssistantOutputSchema = z.object({
-  aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),
+  aiResponse: z.string().describe('The AI assistant's response to the user's query.'),
 });
 export type ChatUnderwritingAssistantOutput = z.infer<typeof ChatUnderwritingAssistantOutputSchema>;
 
@@ -251,4 +250,22 @@ export interface NotificationItem {
   timestamp: string; // e.g., "13 hours ago", "3 days ago"
   isRead: boolean;
   category: 'Important' | 'More';
+}
+
+// --- Type for Email Exchange ---
+export type EmailDirection = 'inbound' | 'outbound';
+
+export interface Email {
+  id: string;
+  caseId: string; // Link to the case
+  quoteId?: string; // Optional link to quote if applicable
+  direction: EmailDirection;
+  from: string; // Sender name/email
+  to: string; // Recipient name/email
+  subject: string;
+  body: string;
+  timestamp: string; // ISO date string
+  attachments?: Attachment[]; // Optional attachments
+  isRead: boolean;
+  threadId?: string; // For grouping related emails
 }

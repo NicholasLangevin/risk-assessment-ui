@@ -1,0 +1,134 @@
+[
+  {
+    "id": "email-001",
+    "caseId": "C-20240701-001",
+    "quoteId": "Q-20240701-001",
+    "direction": "inbound",
+    "from": "Marsh",
+    "to": "Alex Underwriter",
+    "subject": "New Business Submission - Innovate Corp",
+    "body": "Dear Alex,\n\nPlease find attached the new business submission for Innovate Corp. They are seeking General Liability and Property coverage for their tech company operations.\n\nKey details:\n- Software development services\n- 5-story office building\n- Revenue: $15M annually\n- 75 employees\n\nPlease review and let us know if you need any additional information.\n\nBest regards,\nMarsh Team",
+    "timestamp": "2024-07-01T10:00:00Z",
+    "attachments": [
+      {
+        "id": "attach-email-001-1",
+        "fileName": "InnovateCorp_Application.pdf",
+        "fileType": "pdf",
+        "fileSize": "2.1MB",
+        "mockContent": "Application form for Innovate Corp with company details, operations description, and coverage requirements."
+      }
+    ],
+    "isRead": true,
+    "threadId": "thread-001"
+  },
+  {
+    "id": "email-002",
+    "caseId": "C-20240701-001",
+    "quoteId": "Q-20240701-001",
+    "direction": "outbound",
+    "from": "Alex Underwriter",
+    "to": "Marsh",
+    "subject": "Re: New Business Submission - Innovate Corp - Information Request",
+    "body": "Dear Marsh Team,\n\nThank you for the submission for Innovate Corp. I've reviewed the application and need some additional information to proceed with the quote:\n\n1. Please provide the loss run for the past 3 years\n2. We need details on their cyber security practices and any existing cyber insurance\n3. Please confirm the building construction details and fire protection systems\n\nOnce I receive this information, I'll be able to provide a comprehensive quote.\n\nBest regards,\nAlex Underwriter",
+    "timestamp": "2024-07-02T14:30:00Z",
+    "isRead": true,
+    "threadId": "thread-001"
+  },
+  {
+    "id": "email-003",
+    "caseId": "C-20240701-001",
+    "quoteId": "Q-20240701-001",
+    "direction": "inbound",
+    "from": "Marsh",
+    "to": "Alex Underwriter",
+    "subject": "Re: New Business Submission - Innovate Corp - Additional Information",
+    "body": "Hi Alex,\n\nThank you for the quick response. Please find the requested information attached:\n\n1. Loss run for 2021-2023 (clean record)\n2. Cyber security policy document\n3. Building specifications and fire protection details\n\nLet me know if you need anything else.\n\nRegards,\nMarsh Team",
+    "timestamp": "2024-07-03T09:15:00Z",
+    "attachments": [
+      {
+        "id": "attach-email-003-1",
+        "fileName": "InnovateCorp_LossRun_2021-2023.pdf",
+        "fileType": "pdf",
+        "fileSize": "850KB",
+        "mockContent": "Loss run showing no claims for the past 3 years."
+      },
+      {
+        "id": "attach-email-003-2",
+        "fileName": "InnovateCorp_CyberPolicy.pdf",
+        "fileType": "pdf",
+        "fileSize": "1.2MB",
+        "mockContent": "Detailed cyber security policy and procedures document."
+      }
+    ],
+    "isRead": false,
+    "threadId": "thread-001"
+  },
+  {
+    "id": "email-004",
+    "caseId": "C-20240704-004",
+    "quoteId": "Q-20240704-002",
+    "direction": "inbound",
+    "from": "Gallagher",
+    "to": "Alex Underwriter",
+    "subject": "Cyber & E&O Quote Request - Apex Enterprises",
+    "body": "Hello,\n\nWe have a new client, Apex Enterprises, seeking Cyber Liability and E&O coverage. They are an e-commerce platform provider handling sensitive client data.\n\nKey risk factors:\n- PCI-DSS compliance (self-attested)\n- Handles PII and payment data\n- Multiple client platforms\n\nPlease review and provide terms.\n\nThanks,\nGallagher Team",
+    "timestamp": "2024-07-04T11:00:00Z",
+    "attachments": [
+      {
+        "id": "attach-email-004-1",
+        "fileName": "ApexEnterprises_Application.pdf",
+        "fileType": "pdf",
+        "fileSize": "1.8MB",
+        "mockContent": "Application form for Apex Enterprises with detailed operations and risk information."
+      }
+    ],
+    "isRead": true,
+    "threadId": "thread-002"
+  },
+  {
+    "id": "email-005",
+    "caseId": "C-20240704-004",
+    "quoteId": "Q-20240704-002",
+    "direction": "outbound",
+    "from": "Alex Underwriter",
+    "to": "Gallagher",
+    "subject": "Re: Cyber & E&O Quote Request - Apex Enterprises - Subject to Conditions",
+    "body": "Dear Gallagher Team,\n\nThank you for the submission for Apex Enterprises. After reviewing the application, I can provide terms subject to the following conditions:\n\n1. Full MFA implementation on all admin accounts within 30 days\n2. Third-party PCI-DSS compliance validation\n3. Details on CCPA/CPRA compliance approach\n\nPremium: $75,000\n\nPlease confirm if these terms are acceptable.\n\nBest regards,\nAlex Underwriter",
+    "timestamp": "2024-07-05T16:45:00Z",
+    "isRead": true,
+    "threadId": "thread-002"
+  },
+  {
+    "id": "email-006",
+    "caseId": "C-20240702-002",
+    "direction": "inbound",
+    "from": "Aon",
+    "to": "Support Team",
+    "subject": "Endorsement Request - Future Solutions Ltd.",
+    "body": "Hi Support Team,\n\nWe need to add a new vehicle to the existing commercial auto policy for Future Solutions Ltd.\n\nVehicle details:\n- 2024 Ford Transit\n- VIN: 1FTNE2EW4PDA12345\n- Use: Delivery services\n\nPlease process this endorsement.\n\nThanks,\nAon Team",
+    "timestamp": "2024-07-02T14:30:00Z",
+    "isRead": true,
+    "threadId": "thread-003"
+  },
+  {
+    "id": "email-007",
+    "caseId": "C-20240703-003",
+    "direction": "inbound",
+    "from": "Willis Towers Watson",
+    "to": "Sarah Miller",
+    "subject": "Renewal Application - Synergy Group",
+    "body": "Dear Sarah,\n\nPlease find the renewal application for Synergy Group. They've had some changes in their operations and revenue.\n\nKey updates:\n- Revenue increased to $25M (from $18M)\n- New office location added\n- Additional employees (now 150 total)\n\nPlease review and provide renewal terms.\n\nBest regards,\nWTW Team",
+    "timestamp": "2024-07-03T09:15:00Z",
+    "attachments": [
+      {
+        "id": "attach-email-007-1",
+        "fileName": "SynergyGroup_Renewal_2024.pdf",
+        "fileType": "pdf",
+        "fileSize": "3.2MB",
+        "mockContent": "Renewal application with updated company information and operations details."
+      }
+    ],
+    "isRead": false,
+    "threadId": "thread-004"
+  }
+] 

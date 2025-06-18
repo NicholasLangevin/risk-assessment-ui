@@ -1,4 +1,3 @@
-
 import type {
   Case,
   CaseListItem,
@@ -20,6 +19,7 @@ import type {
   CaseStatus,
   NotificationItem, 
   NotificationType,
+  Email,
 } from '@/types';
 import { formatISO, addMinutes, subDays, subHours } from 'date-fns'; 
 
@@ -27,11 +27,13 @@ import { formatISO, addMinutes, subDays, subHours } from 'date-fns';
 import mockCasesData from './mockData/cases.json';
 import mockQuotesData from './mockData/quotes.json';
 import mockPoliciesData from './mockData/policies.json';
+import mockEmailsData from './mockData/emails.json';
 
 // Cast the imported JSON data to the defined types
 const allMockCases: Case[] = mockCasesData as Case[];
 export const allMockQuotes: QuoteDetails[] = mockQuotesData as QuoteDetails[]; // Export for generateStaticParams
 const allMockPolicies: Policy[] = mockPoliciesData as Policy[];
+const allMockEmails: Email[] = mockEmailsData as Email[];
 
 // This will be used by the dashboard
 export const mockCaseListItems: CaseListItem[] = allMockCases.map(c => ({
@@ -224,3 +226,7 @@ export const mockNotifications: NotificationItem[] = [
 mockNotifications.forEach(n => {
   n.timestamp = n.timestamp; // Already a string from formatISO, but reinforces if logic changes
 });
+
+export const getMockEmailsForCase = (caseId: string) => {
+  return allMockEmails.filter(email => email.caseId === caseId);
+};
