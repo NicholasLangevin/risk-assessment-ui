@@ -51,7 +51,7 @@ const useSidebarView = () => React.useContext(SidebarViewContext);
 
 export function SidebarProvider({
   children,
-  defaultOpen = false, // Default changed to false
+  defaultOpen = true, // Default changed to true
   open: openProp,
   onOpenChange: setOpenProp,
 }: {
@@ -360,7 +360,7 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "flex-1 bg-background h-full overflow-y-auto min-h-0",
-        "px-4 sm:px-6 lg:px-8 pt-0 pb-8", // Changed py-8 to pt-0 pb-8
+        "pl-4 sm:pl-6 lg:pl-8 pt-0 pb-8 pr-0", // Adjusted padding: px to pl, and added pr-0
         "max-w-screen-2xl mx-auto w-full",
         className
       )}
