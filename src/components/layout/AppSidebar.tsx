@@ -116,7 +116,7 @@ export function AppSidebar() {
                         <SidebarMenuButton
                           asChild
                           tooltip={`${caseInfo.insuredName} - ${caseInfo.broker}`}
-                          isActive={pathname === `/case/${caseInfo.id}`}
+                          isActive={pathname === `/case/${caseInfo.id}` || pathname.startsWith(`/case/${caseInfo.id}/`)}
                           className="!py-1.5 !text-xs !h-auto !pl-1.5 !pr-6 w-full"
                           size="sm"
                         >
