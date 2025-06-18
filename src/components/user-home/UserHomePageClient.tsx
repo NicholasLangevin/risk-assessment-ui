@@ -8,12 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BarChart, ListChecks, UserCircle2 } from 'lucide-react';
 import type { UserProfile } from '@/types';
 import { getUserProfileById, getAllUserProfiles } from '@/lib/mockData'; // Import functions
+import { usePathname } from 'next/navigation'; // Import usePathname
 
 const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
 
 export function UserHomePageClient() {
   const [userName, setUserName] = useState<string>("User"); // Default name
   const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname(); // Get current pathname
 
   // Placeholder data - in a real app, this would come from user session or API
   const tasksDueToday = 3;
@@ -39,20 +41,19 @@ export function UserHomePageClient() {
         // Fallback if no stored profile or if stored ID is invalid
         const allProfiles = getAllUserProfiles();
         if (allProfiles.length > 0) {
-          setUserName(allProfiles[0].name); // Default to the first profile in the list
-           // Optionally, also set this as the default in localStorage
-          localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, allProfiles[0].id);
+          const defaultProfile = allProfiles.find(p => p.id === "user-alex-uw") || allProfiles[0];
+          setUserName(defaultProfile.name); 
+          localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, defaultProfile.id);
         } else {
           setUserName("Alex Miller"); // Absolute fallback
         }
       }
     }
-  }, [isMounted]);
+  }, [isMounted, pathname]); // Add pathname to dependency array
 
 
   if (!isMounted) {
     // Render a loading state or null to avoid hydration mismatch
-    // For simplicity, we can show a generic loading message or a skeleton
     return (
         <>
         <div className="flex items-center mb-8">
@@ -62,7 +63,6 @@ export function UserHomePageClient() {
             <p className="text-muted-foreground">Loading your workflow overview...</p>
             </div>
         </div>
-        {/* Skeletons for cards can be added here if desired */}
         </>
     );
   }
