@@ -140,8 +140,8 @@ export function EditSkillsDialog({
             Select applicable skills. Choosing "ALL" will override individual selections for that category.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-grow py-4 pr-3">
-          <div className="space-y-4">
+        <ScrollArea className="flex-grow"> {/* Padding removed from here */}
+          <div className="space-y-4 p-4"> {/* Padding added here */}
             {renderSkillSection("Transaction Types", "transactionTypes", allCaseTypes)}
             {renderSkillSection("Lines of Business", "linesOfBusiness", allLinesOfBusiness)}
             {renderSkillSection("Branches", "branches", allBranches)}
