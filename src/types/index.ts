@@ -252,3 +252,12 @@ export interface NotificationItem {
   isRead: boolean;
   category: 'Important' | 'More';
 }
+
+// --- Type for User Profile ---
+export type UserRole = 'underwriter' | 'manager';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  role: UserRole;
+}

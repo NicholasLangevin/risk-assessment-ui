@@ -57,9 +57,8 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
            <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="User Profile">
-              {/* In a real app, this might link to /profile or open a user menu popover */}
-              <Link href="#"> 
+            <SidebarMenuButton asChild tooltip="User Profile" isActive={pathname === '/profile'}>
+              <Link href="/profile"> 
                 <span className={cn("inline-flex items-center justify-center")}>
                   <UserCircle className="h-4 w-4" />
                 </span>

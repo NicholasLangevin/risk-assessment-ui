@@ -20,6 +20,7 @@ import type {
   CaseStatus,
   NotificationItem, 
   NotificationType,
+  UserProfile, // Added UserProfile
 } from '@/types';
 import { formatISO, addMinutes, subDays, subHours } from 'date-fns'; 
 
@@ -27,11 +28,13 @@ import { formatISO, addMinutes, subDays, subHours } from 'date-fns';
 import mockCasesData from './mockData/cases.json';
 import mockQuotesData from './mockData/quotes.json';
 import mockPoliciesData from './mockData/policies.json';
+import mockUserProfilesData from './mockData/userProfiles.json'; // Added UserProfiles import
 
 // Cast the imported JSON data to the defined types
 const allMockCases: Case[] = mockCasesData as Case[];
 export const allMockQuotes: QuoteDetails[] = mockQuotesData as QuoteDetails[]; // Export for generateStaticParams
 const allMockPolicies: Policy[] = mockPoliciesData as Policy[];
+const allMockUserProfiles: UserProfile[] = mockUserProfilesData as UserProfile[]; // Added UserProfiles data
 
 // This will be used by the dashboard
 export const mockCaseListItems: CaseListItem[] = allMockCases.map(c => ({
@@ -77,6 +80,15 @@ export const getMockPolicyDetails = (policyId: string): Policy | null => {
 export const getMockCaseDetails = (caseId: string): Case | null => {
   return allMockCases.find(c => c.id === caseId) || null;
 }
+
+// User Profile Mock Data Functions
+export const getAllUserProfiles = (): UserProfile[] => {
+  return allMockUserProfiles;
+};
+
+export const getUserProfileById = (userId: string): UserProfile | null => {
+  return allMockUserProfiles.find(p => p.id === userId) || null;
+};
 
 
 // Keep existing mock data for things not yet migrated to JSON or if needed as fallback
@@ -173,7 +185,7 @@ export const mockNotifications: NotificationItem[] = [
   {
     id: 'notif-newcase-1',
     type: 'newCase',
-    message: 'New case C-20240715-011 (TechServe Solutions) has been assigned to you.',
+    message: 'New case C-20240715-011 (TechServe Solutions) has been assigned to Alex Underwriter.',
     timestamp: formatISO(subHours(now, 2)),
     isRead: false,
     category: 'Important',
@@ -224,3 +236,4 @@ export const mockNotifications: NotificationItem[] = [
 mockNotifications.forEach(n => {
   n.timestamp = n.timestamp; // Already a string from formatISO, but reinforces if logic changes
 });
+

@@ -1,0 +1,23 @@
+
+[
+  {
+    "id": "user-alex-uw",
+    "name": "Alex Underwriter",
+    "role": "underwriter"
+  },
+  {
+    "id": "user-sarah-mgr",
+    "name": "Sarah Manager",
+    "role": "manager"
+  },
+  {
+    "id": "user-john-uw",
+    "name": "John Davis",
+    "role": "underwriter"
+  },
+  {
+    "id": "user-emily-uw",
+    "name": "Emily Carter",
+    "role": "underwriter"
+  }
+]
