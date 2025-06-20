@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, ListChecks, UserCircle2 } from 'lucide-react';
 import type { UserProfile } from '@/types';
@@ -14,6 +14,7 @@ const LOCAL_STORAGE_PROFILE_KEY = 'selectedUserProfileId';
 
 export function UserHomePageClient() {
   const [userName, setUserName] = useState<string>("User"); // Default name
+  const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname(); // Get current pathname
 
@@ -50,6 +51,10 @@ export function UserHomePageClient() {
       }
     }
   }, [isMounted, pathname]); // Add pathname to dependency array
+
+  const handleActiveQuotesClick = () => {
+    router.push('/working-list');
+  };
 
 
   if (!isMounted) {
@@ -93,7 +98,7 @@ export function UserHomePageClient() {
             <CardTitle className="text-sm font-medium">Active Quotes</CardTitle>
             <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent onClick={handleActiveQuotesClick} className="cursor-pointer">
             <div className="text-2xl font-bold">{activeQuotes}</div>
             <p className="text-xs text-muted-foreground">Total quotes currently in progress.</p>
           </CardContent>

@@ -86,3 +86,30 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.notification-popup {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: block; /* Ensure it's displayed when content is added */
+  min-width: 250px;
+  max-width: 350px;
+  word-wrap: break-word;
+}
+.notification-popup-content {
+  margin-bottom: 10px;
+}
+.notification-popup-close {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-weight: bold;
+}
