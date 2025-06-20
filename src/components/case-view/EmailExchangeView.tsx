@@ -39,7 +39,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const [sortedEmails, setSortedEmails] = useState<Email[]>([]);
   const [isNewEmailDialogOpen, setIsNewEmailDialogOpen] = useState(false);
-  const [emailMode, setEmailMode] = useState<'manual' | 'ai'>('manual');
+  const [emailMode, setEmailMode] = useState<'manual' | 'ai'>('ai');
   const [isSending, setIsSending] = useState(false);
   const [newEmail, setNewEmail] = useState({
     subject: '',
@@ -225,7 +225,6 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
           <Button
             size="sm"
             onClick={() => {
-              setEmailMode('manual');
               setIsNewEmailDialogOpen(true);
             }}
             className="flex items-center space-x-1"
@@ -344,8 +343,11 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
             {/* Segmented control for mode selection */}
             <Tabs value={emailMode} onValueChange={v => setEmailMode(v as 'manual' | 'ai')} className="mt-2">
               <TabsList>
-                <TabsTrigger value="manual">Manual</TabsTrigger>
-                <TabsTrigger value="ai">AI Generated</TabsTrigger>
+                <TabsTrigger value="ai">
+                  <Sparkles className="inline-block mr-1 h-4 w-4 text-primary" />
+                  Generate
+                </TabsTrigger>
+                <TabsTrigger value="manual">Custom</TabsTrigger>
               </TabsList>
             </Tabs>
           </DialogHeader>
