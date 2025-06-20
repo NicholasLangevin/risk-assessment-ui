@@ -254,7 +254,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
                 <div className="p-3">
                   {/* Header row: only this is clickable for expand/collapse */}
                   <div
-                    className="flex items-start justify-between hover:bg-muted/50 transition-colors cursor-pointer rounded-md px-1 -mx-1 py-1"
+                    className="flex items-start justify-between hover:bg-muted/50 transition-colors cursor-pointer rounded-md px-1 py-1"
                     onClick={() => toggleEmailExpansion(email.id)}
                   >
                     <div className="flex items-start space-x-3">
