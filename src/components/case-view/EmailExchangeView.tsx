@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
-import { MailIcon, ChevronDown, Paperclip, Clock, ArrowDown, ArrowUp, ChevronRight, Plus, Loader2, Sparkles, Send as SendIcon } from 'lucide-react';
+import { MailIcon, ChevronDown, Paperclip, Clock, ArrowDown, ArrowUp, ChevronRight, Plus, Loader2, Sparkles, Send as SendIcon, FileText, FileSpreadsheet, FileImage, FileArchive } from 'lucide-react';
 import { ClientFormattedDate } from '@/components/common/ClientFormattedDate';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -199,6 +199,27 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
     setEmailState(null);
   };
 
+  // Add getFileIcon helper (copied from AttachmentsCard)
+  const getFileIcon = (fileType: Attachment['fileType']) => {
+    const iconClass = "h-4 w-4 flex-shrink-0";
+    switch (fileType) {
+      case 'pdf':
+        return <FileText className={`${iconClass} text-red-500`} />;
+      case 'docx':
+        return <FileText className={`${iconClass} text-blue-500`} />;
+      case 'xlsx':
+        return <FileSpreadsheet className={`${iconClass} text-green-500`} />;
+      case 'jpg':
+        return <FileImage className={`${iconClass} text-purple-500`} />;
+      case 'zip':
+        return <FileArchive className={`${iconClass} text-yellow-500`} />;
+      case 'txt':
+        return <FileText className={`${iconClass} text-muted-foreground`} />;
+      default:
+        return <Paperclip className={`${iconClass} text-muted-foreground`} />;
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header with controls */}
@@ -318,7 +339,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
                                     handleViewAttachment(attachment);
                                   }}
                                 >
-                                  <Paperclip className="h-4 w-4 text-muted-foreground" />
+                                  {getFileIcon((attachment as Attachment).fileType || 'other')}
                                   <span className="text-sm">{attachment.fileName}</span>
                                   <span className="text-xs text-muted-foreground">({attachment.fileSize})</span>
                                 </div>
@@ -401,7 +422,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
                           className="flex items-center justify-between p-2 border rounded-md"
                         >
                           <div className="flex items-center space-x-2">
-                            <Paperclip className="h-4 w-4 text-muted-foreground" />
+                            {getFileIcon((attachment as Attachment).fileType || 'other')}
                             <span className="text-sm">{attachment.fileName}</span>
                             <span className="text-xs text-muted-foreground">({attachment.fileSize})</span>
                           </div>
