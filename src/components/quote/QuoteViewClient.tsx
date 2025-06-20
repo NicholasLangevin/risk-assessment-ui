@@ -20,8 +20,7 @@ import { updateSubjectToOffersInDB } from '@/app/actions/updateSubjectToOffers';
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Activity, ChevronLeft, Mail, AlertTriangle, Loader2, Info, Edit, ThumbsUp, ThumbsDown, MailWarning, Wrench, Database } from 'lucide-react';
+import { Activity, ChevronLeft, AlertTriangle, Loader2, Info, Edit, ThumbsUp, ThumbsDown, MailWarning, Wrench, Database } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,7 +59,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
   const { toast } = useToast();
   const router = useRouter();
 
-  const [selectedDecision, setSelectedDecision] = useState<UnderwritingDecision | null>('OfferWithSubjectTos');
   const [isSavingToDB, setIsSavingToDB] = useState(false);
 
   const [activeSheetItem, setActiveSheetItem] = useState<QuoteViewActiveSheetItem | null>(null); // Updated type
@@ -324,12 +322,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
     );
   }
 
-  const decisionOptions: { value: UnderwritingDecision; label: string }[] = [
-    { value: 'OfferWithSubjectTos', label: 'Offer with Subject-Tos' },
-    { value: 'InformationRequired', label: 'Request Information' },
-    { value: 'Decline', label: 'Decline Quote' },
-  ];
-
   const renderSheetContent = () => {
     if (!activeSheetItem) return null;
     // 'aiMonitor' case removed
@@ -392,32 +384,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
 
       {/* Decision making and AI Risk Assessment section - always visible */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md mb-6 border border-slate-200 dark:border-slate-700">
-        <div className="flex justify-end items-center mb-4">
-            <div className="flex items-center space-x-2 flex-shrink-0">
-                <Select
-                    value={selectedDecision || ""}
-                    onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
-                >
-                    <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
-                    <SelectValue placeholder="Select decision..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                    {decisionOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <Button
-                    onClick={() => router.push(`/case/${quoteDetails.caseId}/emails`)}
-                    size="sm"
-                    className="h-9"
-                >
-                    <Mail className="mr-2 h-4 w-4" />
-                    View Email Exchange
-                </Button>
-            </div>
-        </div>
-        
         <div className="mt-4 p-3 border rounded-md bg-muted/30 dark:bg-slate-700/30 shadow-sm border-slate-200 dark:border-slate-600">
           <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
             <AiSparkleIcon className="h-4 w-4 mr-2" />
