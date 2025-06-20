@@ -26,6 +26,7 @@ import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flow
 import { useToast } from '@/hooks/use-toast';
 import { getMockQuoteDetails } from '@/lib/mockData';
 import { DiffDisplay } from '@/components/common/DiffDisplay';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface EmailExchangeViewProps {
   emails: Email[];
@@ -38,12 +39,13 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const [sortedEmails, setSortedEmails] = useState<Email[]>([]);
   const [isNewEmailDialogOpen, setIsNewEmailDialogOpen] = useState(false);
+  const [emailMode, setEmailMode] = useState<'manual' | 'ai'>('manual');
   const [isSending, setIsSending] = useState(false);
   const [newEmail, setNewEmail] = useState({
     subject: '',
     body: '',
     to: '',
-    from: '', // This would typically be pre-filled with the current user's email
+    from: '',
     attachments: [] as { id: string; fileName: string; fileSize: string }[]
   });
   const [openAttachment, setOpenAttachment] = useState<Attachment | null>(null);
@@ -52,15 +54,14 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
   // New state for AI email generation
   const [quoteDetails, setQuoteDetails] = useState<QuoteDetails | null>(null);
   const [aiUnderwritingActions, setAiUnderwritingActions] = useState<AiUnderwritingActions | null>(null);
-  const [selectedDecision, setSelectedDecision] = useState<UnderwritingDecision | null>(null);
-  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [emailState, setEmailState] = useState<{
     subject: string;
     originalBody: string;
     currentBody: string;
   } | null>(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [aiEmailDecision, setAiEmailDecision] = useState<UnderwritingDecision | null>(null);
+  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
 
   const { toast } = useToast();
 
@@ -72,13 +73,23 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
         setQuoteDetails(quote);
         // Generate AI actions from quote data
         setAiUnderwritingActions({
-          suggestedActions: quote.managedInformationRequests?.length > 0 ? ["Review provided information"] : ["Assess overall risk"],
+          suggestedActions: quote.managedInformationRequests && quote.managedInformationRequests.length > 0 ? ["Review provided information"] : ["Assess overall risk"],
           informationRequests: quote.managedInformationRequests?.map(ir => ir.currentText) || [],
           potentialSubjectToOffers: quote.managedSubjectToOffers?.map(sto => sto.currentText) || []
         });
       }
     }
   }, [quoteId]);
+
+  // Set the 'to' field when quoteDetails is loaded
+  useEffect(() => {
+    if (quoteDetails) {
+      setNewEmail(email => ({
+        ...email,
+        to: quoteDetails.broker ? `${quoteDetails.broker.replace(/\s/g, '').toLowerCase()}@broker.com` : 'broker@example.com',
+      }));
+    }
+  }, [quoteDetails]);
 
   useEffect(() => {
     const sorted = [...emails].sort((a, b) => {
@@ -132,8 +143,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
 
   // New AI email generation functions
   const handleConfirmAndGenerateEmail = async () => {
-    if (!selectedDecision || !quoteDetails) return;
-
+    if (!aiEmailDecision || !quoteDetails) return;
     setIsGeneratingEmail(true);
     setEmailState(null);
 
@@ -146,17 +156,12 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
       .map(offer => offer.currentText) || [];
 
     const emailInput: EmailGenerationInput = {
-      decision: selectedDecision,
+      decision: 'OfferWithSubjectTos',
       quoteId: quoteDetails.id,
       insuredName: quoteDetails.insuredName,
       brokerName: quoteDetails.broker,
-      ...(selectedDecision === 'OfferWithSubjectTos' && {
-        premium: quoteDetails.premiumSummary.recommendedPremium, 
-        subjectToOffers: activeSubjectToOffers,
-      }),
-      ...(selectedDecision === 'InformationRequired' && {
-        informationRequests: activeInformationRequests,
-      }),
+      premium: quoteDetails.premiumSummary.recommendedPremium, 
+      subjectToOffers: activeSubjectToOffers,
     };
 
     try {
@@ -166,7 +171,6 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
         originalBody: result.emailBody,
         currentBody: result.emailBody,
       });
-      setIsEmailDialogOpen(true);
     } catch (error) {
       console.error("Error generating email:", error);
       toast({
@@ -174,8 +178,6 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
         description: "Could not generate the email. Please try again or draft manually.",
         variant: "destructive",
       });
-    } finally {
-      setIsGeneratingEmail(false);
     }
   };
 
@@ -194,16 +196,8 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
       variant: "default",
     });
     setIsSendingEmail(false);
-    setIsEmailDialogOpen(false);
     setEmailState(null);
-    setSelectedDecision(null);
   };
-
-  const decisionOptions: { value: UnderwritingDecision; label: string }[] = [
-    { value: 'OfferWithSubjectTos', label: 'Offer with Subject-Tos' },
-    { value: 'InformationRequired', label: 'Request Information' },
-    { value: 'Decline', label: 'Decline Quote' },
-  ];
 
   return (
     <div className="space-y-4">
@@ -228,38 +222,12 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
             <Clock className="h-4 w-4 mr-1" />
             {sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}
           </Button>
-          
-          {/* AI Email Generation Section - Only show if quote data is available */}
-          {quoteDetails && (
-            <div className="flex items-center space-x-2">
-              <Select
-                value={selectedDecision || ""}
-                onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
-              >
-                <SelectTrigger className="w-[200px] h-9" aria-label="Underwriting Decision">
-                  <SelectValue placeholder="Select decision..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {decisionOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleConfirmAndGenerateEmail}
-                disabled={!selectedDecision || isGeneratingEmail}
-                size="sm"
-                className="h-9"
-              >
-                {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
-                Generate AI Email
-              </Button>
-            </div>
-          )}
-          
           <Button
             size="sm"
-            onClick={() => setIsNewEmailDialogOpen(true)}
+            onClick={() => {
+              setEmailMode('manual');
+              setIsNewEmailDialogOpen(true);
+            }}
             className="flex items-center space-x-1"
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -372,151 +340,174 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
         )}
       </ScrollArea>
 
-      {/* New Email Dialog */}
+      {/* Unified Email Dialog */}
       <Dialog open={isNewEmailDialogOpen} onOpenChange={setIsNewEmailDialogOpen}>
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-2xl md:max-w-4xl flex flex-col max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>New Email</DialogTitle>
+            {/* Segmented control for mode selection */}
+            <Tabs value={emailMode} onValueChange={v => setEmailMode(v as 'manual' | 'ai')} className="mt-2">
+              <TabsList>
+                <TabsTrigger value="manual">Manual</TabsTrigger>
+                <TabsTrigger value="ai">AI Generated</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="from">From</Label>
-              <Input
-                id="from"
-                value={newEmail.from}
-                onChange={(e) => setNewEmail({ ...newEmail, from: e.target.value })}
-                placeholder="your@email.com"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="to">To</Label>
-              <Input
-                id="to"
-                value={newEmail.to}
-                onChange={(e) => setNewEmail({ ...newEmail, to: e.target.value })}
-                placeholder="recipient@email.com"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                value={newEmail.subject}
-                onChange={(e) => setNewEmail({ ...newEmail, subject: e.target.value })}
-                placeholder="Email subject"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="body">Body</Label>
-              <Textarea
-                id="body"
-                value={newEmail.body}
-                onChange={(e) => setNewEmail({ ...newEmail, body: e.target.value })}
-                placeholder="Write your message here..."
-                className="min-h-[200px]"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Attachments</Label>
-              <div className="flex items-center space-x-2">
-                <Button type="button" variant="outline" className="w-full" onClick={() => {}}>
-                  <Paperclip className="h-4 w-4 mr-2" />
-                  Add Attachment
+          {/* Dynamic content area */}
+          {emailMode === 'manual' && (
+            <>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="to">To</Label>
+                  <Input
+                    id="to"
+                    value={newEmail.to}
+                    onChange={(e) => setNewEmail({ ...newEmail, to: e.target.value })}
+                    placeholder="recipient@email.com"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input
+                    id="subject"
+                    value={newEmail.subject}
+                    onChange={(e) => setNewEmail({ ...newEmail, subject: e.target.value })}
+                    placeholder="Email subject"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="body">Body</Label>
+                  <Textarea
+                    id="body"
+                    value={newEmail.body}
+                    onChange={(e) => setNewEmail({ ...newEmail, body: e.target.value })}
+                    placeholder="Write your message here..."
+                    className="min-h-[200px]"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Attachments</Label>
+                  <div className="flex items-center space-x-2">
+                    <Button type="button" variant="outline" className="w-full" onClick={() => {}}>
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      Add Attachment
+                    </Button>
+                  </div>
+                  {newEmail.attachments.length > 0 && (
+                    <div className="space-y-2 mt-2">
+                      {newEmail.attachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="flex items-center justify-between p-2 border rounded-md"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Paperclip className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{attachment.fileName}</span>
+                            <span className="text-xs text-muted-foreground">({attachment.fileSize})</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <DialogFooter className="flex flex-row justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setIsNewEmailDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSendEmail}
+                  disabled={isSending || !newEmail.to || !newEmail.subject || !newEmail.body}
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send'
+                  )}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+          {emailMode === 'ai' && (
+            <>
+              {/* Decision dropdown and AI generation trigger */}
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="ai-decision">Decision</Label>
+                  <Select
+                    value={aiEmailDecision || ''}
+                    onValueChange={v => setAiEmailDecision(v as UnderwritingDecision)}
+                  >
+                    <SelectTrigger id="ai-decision" className="w-full">
+                      <SelectValue placeholder="Select decision..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="OfferWithSubjectTos">Offer with Subject-Tos</SelectItem>
+                      <SelectItem value="InformationRequired">Request Information</SelectItem>
+                      <SelectItem value="Decline">Decline Quote</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={async () => {
+                    await handleConfirmAndGenerateEmail();
+                  }}
+                  disabled={!aiEmailDecision || isGeneratingEmail}
+                >
+                  {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  Generate AI Email
                 </Button>
               </div>
-              {newEmail.attachments.length > 0 && (
-                <div className="space-y-2 mt-2">
-                  {newEmail.attachments.map((attachment) => (
-                    <div
-                      key={attachment.id}
-                      className="flex items-center justify-between p-2 border rounded-md"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Paperclip className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{attachment.fileName}</span>
-                        <span className="text-xs text-muted-foreground">({attachment.fileSize})</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewEmailDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSendEmail}
-              disabled={isSending || !newEmail.to || !newEmail.subject || !newEmail.body}
-            >
-              {isSending ? (
+              {/* AI-generated email preview and diff */}
+              {emailState && (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  <div className="flex flex-col md:flex-row gap-4 py-4 flex-grow min-h-0">
+                    {/* Email Body Section */}
+                    <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-h-0">
+                      <Label htmlFor="email-body">Email Body</Label>
+                      <Textarea
+                        id="email-body"
+                        value={emailState.currentBody}
+                        onChange={(e) => handleEmailBodyChange(e.target.value)}
+                        className="flex-grow resize-none"
+                        placeholder="Enter email content..."
+                      />
+                    </div>
+                    {/* Changes Preview Section */}
+                    <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-h-0">
+                      <Label>Changes Preview (from AI original)</Label>
+                      <ScrollArea className="flex-grow border rounded-md p-3 text-sm bg-muted/30">
+                        <DiffDisplay originalText={emailState.originalBody} currentText={emailState.currentBody} />
+                      </ScrollArea>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsNewEmailDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSendGeneratedEmail}
+                      disabled={isSendingEmail}
+                    >
+                      {isSendingEmail ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        'Send Email'
+                      )}
+                    </Button>
+                  </DialogFooter>
                 </>
-              ) : (
-                'Send'
               )}
-            </Button>
-          </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
-
-      {/* AI Generated Email Preview Dialog */}
-      {emailState && (
-        <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-          <DialogContent className="sm:max-w-2xl md:max-w-4xl flex flex-col max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle>AI Generated Email Preview & Edit</DialogTitle>
-              <DialogFooter>
-                Review and edit the AI-generated email before sending. Subject: "{emailState.subject}"
-              </DialogFooter>
-            </DialogHeader>
-            
-            <div className="flex flex-col md:flex-row gap-4 py-4 flex-grow min-h-0">
-              {/* Email Body Section */}
-              <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-h-0">
-                <Label htmlFor="email-body">Email Body</Label>
-                <Textarea
-                  id="email-body"
-                  value={emailState.currentBody}
-                  onChange={(e) => handleEmailBodyChange(e.target.value)}
-                  className="flex-grow resize-none"
-                  placeholder="Enter email content..."
-                />
-              </div>
-              
-              {/* Changes Preview Section */}
-              <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-h-0">
-                <Label>Changes Preview (from AI original)</Label>
-                <ScrollArea className="flex-grow border rounded-md p-3 text-sm bg-muted/30">
-                  <DiffDisplay originalText={emailState.originalBody} currentText={emailState.currentBody} />
-                </ScrollArea>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSendGeneratedEmail}
-                disabled={isSendingEmail}
-              >
-                {isSendingEmail ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  'Send Email'
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* Attachment Sheet */}
       <Sheet open={!!openAttachment} onOpenChange={isOpen => !isOpen && setOpenAttachment(null)}>
