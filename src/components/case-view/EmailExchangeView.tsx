@@ -171,6 +171,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
         originalBody: result.emailBody,
         currentBody: result.emailBody,
       });
+      setIsGeneratingEmail(false);
     } catch (error) {
       console.error("Error generating email:", error);
       toast({
@@ -178,6 +179,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
         description: "Could not generate the email. Please try again or draft manually.",
         variant: "destructive",
       });
+      setIsGeneratingEmail(false);
     }
   };
 
@@ -360,7 +362,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
 
       {/* Unified Email Dialog */}
       <Dialog open={isNewEmailDialogOpen} onOpenChange={setIsNewEmailDialogOpen}>
-        <DialogContent className="sm:max-w-2xl md:max-w-4xl flex flex-col max-h-[90vh]">
+        <DialogContent className="sm:max-w-2xl md:max-w-4xl max-h-[90vh] overflow-auto flex flex-col">
           <DialogHeader>
             <DialogTitle>New Email</DialogTitle>
             {/* Segmented control for mode selection */}
@@ -374,158 +376,157 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
               </TabsList>
             </Tabs>
           </DialogHeader>
-          {/* Dynamic content area */}
-          {emailMode === 'manual' && (
-            <>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="to">To</Label>
-                  <Input
-                    id="to"
-                    value={newEmail.to}
-                    onChange={(e) => setNewEmail({ ...newEmail, to: e.target.value })}
-                    placeholder="recipient@email.com"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="subject">Subject</Label>
-                  <Input
-                    id="subject"
-                    value={newEmail.subject}
-                    onChange={(e) => setNewEmail({ ...newEmail, subject: e.target.value })}
-                    placeholder="Email subject"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="body">Body</Label>
-                  <Textarea
-                    id="body"
-                    value={newEmail.body}
-                    onChange={(e) => setNewEmail({ ...newEmail, body: e.target.value })}
-                    placeholder="Write your message here..."
-                    className="min-h-[200px]"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Attachments</Label>
-                  <div className="flex items-center space-x-2">
-                    <Button type="button" variant="outline" className="w-full" onClick={() => {}}>
-                      <Paperclip className="h-4 w-4 mr-2" />
-                      Add Attachment
-                    </Button>
+          <div className="flex flex-col min-h-0 h-full">
+            {/* Dynamic content area */}
+            {emailMode === 'manual' && (
+              <>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="to">To</Label>
+                    <Input
+                      id="to"
+                      value={newEmail.to}
+                      onChange={(e) => setNewEmail({ ...newEmail, to: e.target.value })}
+                      placeholder="recipient@email.com"
+                    />
                   </div>
-                  {newEmail.attachments.length > 0 && (
-                    <div className="space-y-2 mt-2">
-                      {newEmail.attachments.map((attachment) => (
-                        <div
-                          key={attachment.id}
-                          className="flex items-center justify-between p-2 border rounded-md"
-                        >
-                          <div className="flex items-center space-x-2">
-                            {getFileIcon((attachment as Attachment).fileType || 'other')}
-                            <span className="text-sm">{attachment.fileName}</span>
-                            <span className="text-xs text-muted-foreground">({attachment.fileSize})</span>
+                  <div className="grid gap-2">
+                    <Label htmlFor="subject">Subject</Label>
+                    <Input
+                      id="subject"
+                      value={newEmail.subject}
+                      onChange={(e) => setNewEmail({ ...newEmail, subject: e.target.value })}
+                      placeholder="Email subject"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="body">Body</Label>
+                    <Textarea
+                      id="body"
+                      value={newEmail.body}
+                      onChange={(e) => setNewEmail({ ...newEmail, body: e.target.value })}
+                      placeholder="Write your message here..."
+                      className="min-h-[200px]"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Attachments</Label>
+                    <div className="flex items-center space-x-2">
+                      <Button type="button" variant="outline" className="w-full" onClick={() => {}}>
+                        <Paperclip className="h-4 w-4 mr-2" />
+                        Add Attachment
+                      </Button>
+                    </div>
+                    {newEmail.attachments.length > 0 && (
+                      <div className="space-y-2 mt-2">
+                        {newEmail.attachments.map((attachment) => (
+                          <div
+                            key={attachment.id}
+                            className="flex items-center justify-between p-2 border rounded-md"
+                          >
+                            <div className="flex items-center space-x-2">
+                              {getFileIcon((attachment as Attachment).fileType || 'other')}
+                              <span className="text-sm">{attachment.fileName}</span>
+                              <span className="text-xs text-muted-foreground">({attachment.fileSize})</span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <DialogFooter className="flex flex-row justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setIsNewEmailDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleSendEmail}
-                  disabled={isSending || !newEmail.to || !newEmail.subject || !newEmail.body}
-                >
-                  {isSending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    'Send'
-                  )}
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-          {emailMode === 'ai' && (
-            <>
-              {/* Decision dropdown and AI generation trigger */}
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="ai-decision">Decision</Label>
-                  <Select
-                    value={aiEmailDecision || ''}
-                    onValueChange={v => setAiEmailDecision(v as UnderwritingDecision)}
+                <DialogFooter className="flex flex-row justify-end gap-2 pt-4">
+                  <Button variant="outline" onClick={() => setIsNewEmailDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSendEmail}
+                    disabled={isSending || !newEmail.to || !newEmail.subject || !newEmail.body}
                   >
-                    <SelectTrigger id="ai-decision" className="w-full">
-                      <SelectValue placeholder="Select decision..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="OfferWithSubjectTos">Offer with Subject-Tos</SelectItem>
-                      <SelectItem value="InformationRequired">Request Information</SelectItem>
-                      <SelectItem value="Decline">Decline Quote</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    {isSending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send'
+                    )}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+            {emailMode === 'ai' && (
+              <>
+                {/* Decision dropdown and AI generation trigger */}
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="ai-decision">Decision</Label>
+                    <Select
+                      value={aiEmailDecision || ''}
+                      onValueChange={v => setAiEmailDecision(v as UnderwritingDecision)}
+                    >
+                      <SelectTrigger id="ai-decision" className="w-full">
+                        <SelectValue placeholder="Select decision..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="OfferWithSubjectTos">Offer with Subject-Tos</SelectItem>
+                        <SelectItem value="InformationRequired">Request Information</SelectItem>
+                        <SelectItem value="Decline">Decline Quote</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    onClick={async () => {
+                      await handleConfirmAndGenerateEmail();
+                    }}
+                    disabled={!aiEmailDecision || isGeneratingEmail}
+                  >
+                    {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Generate AI Email
+                  </Button>
                 </div>
-                <Button
-                  onClick={async () => {
-                    await handleConfirmAndGenerateEmail();
-                  }}
-                  disabled={!aiEmailDecision || isGeneratingEmail}
-                >
-                  {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  Generate AI Email
-                </Button>
-              </div>
-              {/* AI-generated email preview and diff */}
-              {emailState && (
-                <>
-                  <div className="grid gap-4 py-4 overflow-auto max-h-[65vh]">
-                    <div className="grid gap-2">
-                      <Label htmlFor="to">To</Label>
-                      <Input
-                        id="to"
-                        value={newEmail.to}
-                        onChange={(e) => setNewEmail({ ...newEmail, to: e.target.value })}
-                        placeholder="recipient@email.com"
-                      />
+                {/* AI-generated email preview and diff */}
+                {emailState && (
+                  <>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="to">To</Label>
+                        <Input
+                          id="to"
+                          value={newEmail.to}
+                          onChange={(e) => setNewEmail({ ...newEmail, to: e.target.value })}
+                          placeholder="recipient@email.com"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="subject">Subject</Label>
+                        <Input
+                          id="subject"
+                          value={newEmail.subject || emailState.subject}
+                          onChange={(e) => setNewEmail({ ...newEmail, subject: e.target.value })}
+                          placeholder="Email subject"
+                        />
+                      </div>
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="subject">Subject</Label>
-                      <Input
-                        id="subject"
-                        value={newEmail.subject || emailState.subject}
-                        onChange={(e) => setNewEmail({ ...newEmail, subject: e.target.value })}
-                        placeholder="Email subject"
-                      />
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-4 min-h-0">
-                      {/* Editable Body Section */}
-                      <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-w-0 max-h-[50vh]">
-                        <Label htmlFor="email-body">Body</Label>
+                    <div className="flex flex-row gap-4 min-h-0 h-[40vh] w-full">
+                      <div className="flex flex-col min-h-0 h-full w-1/2">
+                        <Label htmlFor="email-body" className="mb-2">Body</Label>
                         <Textarea
                           id="email-body"
                           value={emailState.currentBody}
                           onChange={(e) => handleEmailBodyChange(e.target.value)}
-                          className="flex-grow resize-none min-h-[200px] overflow-auto"
+                          className="flex-1 min-h-0 h-full resize-none overflow-auto"
                           placeholder="Enter email content..."
-                          style={{ maxHeight: '40vh' }}
                         />
                       </div>
-                      {/* Diff Preview Section */}
-                      <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-w-0 max-h-[50vh]">
-                        <Label>Changes Preview (from AI original)</Label>
-                        <ScrollArea className="flex-grow border rounded-md p-3 text-sm bg-muted/30 overflow-auto max-h-[40vh]">
+                      <div className="flex flex-col min-h-0 h-full w-1/2">
+                        <Label className="mb-2">Changes Preview (from AI original)</Label>
+                        <ScrollArea className="flex-1 min-h-0 h-full border rounded-md p-3 text-sm bg-muted/30 overflow-auto">
                           <DiffDisplay originalText={emailState.originalBody} currentText={emailState.currentBody} />
                         </ScrollArea>
                       </div>
                     </div>
-                    <div className="grid gap-2">
+                    <div className="grid gap-2 mt-4 mb-4">
                       <Label>Attachments</Label>
                       <div className="flex items-center space-x-2">
                         <Button type="button" variant="outline" className="w-full" onClick={() => {}}>
@@ -550,29 +551,29 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
                         </div>
                       )}
                     </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsNewEmailDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleSendGeneratedEmail}
-                      disabled={isSendingEmail}
-                    >
-                      {isSendingEmail ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        'Send Email'
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </>
-              )}
-            </>
-          )}
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsNewEmailDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleSendGeneratedEmail}
+                        disabled={isSendingEmail}
+                      >
+                        {isSendingEmail ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          'Send'
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
