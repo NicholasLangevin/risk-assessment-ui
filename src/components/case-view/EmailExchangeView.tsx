@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Email } from '@/types';
+import type { Email, Attachment } from '@/types';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -19,6 +19,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { AttachmentViewerContent } from '@/components/quote/AttachmentViewerContent';
+import { AttachmentsCard } from '@/components/quote/AttachmentsCard';
 
 interface EmailExchangeViewProps {
   emails: Email[];
@@ -37,6 +40,8 @@ export function EmailExchangeView({ emails }: EmailExchangeViewProps) {
     from: '', // This would typically be pre-filled with the current user's email
     attachments: [] as { id: string; fileName: string; fileSize: string }[]
   });
+  const [openAttachment, setOpenAttachment] = useState<Attachment | null>(null);
+  const [allAttachments, setAllAttachments] = useState<Attachment[]>([]);
 
   useEffect(() => {
     const sorted = [...emails].sort((a, b) => {
@@ -44,6 +49,9 @@ export function EmailExchangeView({ emails }: EmailExchangeViewProps) {
       return sortOrder === 'desc' ? comparison : -comparison;
     });
     setSortedEmails(sorted);
+
+    const attachments = emails.flatMap(email => email.attachments || []);
+    setAllAttachments(attachments);
   }, [emails, sortOrder]);
 
   const toggleSortOrder = () => {
@@ -81,6 +89,10 @@ export function EmailExchangeView({ emails }: EmailExchangeViewProps) {
     }
   };
 
+  const handleViewAttachment = (attachment: Attachment) => {
+    setOpenAttachment(attachment);
+  };
+
   return (
     <div className="space-y-4">
       {/* Header with controls */}
@@ -110,6 +122,8 @@ export function EmailExchangeView({ emails }: EmailExchangeViewProps) {
         </div>
       </div>
 
+      <AttachmentsCard attachments={allAttachments} onViewAttachment={handleViewAttachment} />
+
       {/* Email List */}
       <ScrollArea className="h-[500px]">
         {sortedEmails.length === 0 ? (
@@ -121,30 +135,31 @@ export function EmailExchangeView({ emails }: EmailExchangeViewProps) {
             {sortedEmails.map((email) => (
               <Card
                 key={email.id}
-                className={`hover:bg-muted/50 transition-colors cursor-pointer ${
-                  !email.isRead ? 'bg-primary/5' : 'bg-background'
-                }`}
-                onClick={() => toggleEmailExpansion(email.id)}
+                className={`${!email.isRead ? 'bg-primary/5' : 'bg-background'}`}
               >
                 <div className="p-3">
-                  <div className="flex items-start justify-between">
+                  {/* Header row: only this is clickable for expand/collapse */}
+                  <div
+                    className="flex items-start justify-between hover:bg-muted/50 transition-colors cursor-pointer rounded-md px-1 -mx-1 py-1"
+                    onClick={() => toggleEmailExpansion(email.id)}
+                  >
                     <div className="flex items-start space-x-3">
                       {getInboxIcon(email)}
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium">{email.direction === 'inbound' ? email.from : email.to}</span>
+                          <span className="font-normal text-sm">{email.direction === 'inbound' ? email.from : email.to}</span>
                           {email.attachments && email.attachments.length > 0 && (
-                            <Paperclip className="h-4 w-4 text-muted-foreground" />
+                            <Paperclip className="h-3 w-3 text-muted-foreground" />
                           )}
                         </div>
-                        <div className="text-sm text-muted-foreground">{email.subject}</div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs text-muted-foreground leading-tight">{email.subject}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
                           <ClientFormattedDate isoDateString={email.timestamp} />
                         </div>
                       </div>
                     </div>
                     <ChevronRight 
-                      className={`h-4 w-4 text-muted-foreground transition-transform ${
+                      className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
                         expandedEmailId === email.id ? 'rotate-90' : ''
                       }`}
                     />
@@ -188,6 +203,10 @@ export function EmailExchangeView({ emails }: EmailExchangeViewProps) {
                                 <div
                                   key={attachment.id}
                                   className="flex items-center space-x-2 p-2 border rounded-md hover:bg-muted/50 cursor-pointer"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    handleViewAttachment(attachment);
+                                  }}
                                 >
                                   <Paperclip className="h-4 w-4 text-muted-foreground" />
                                   <span className="text-sm">{attachment.fileName}</span>
@@ -297,6 +316,22 @@ export function EmailExchangeView({ emails }: EmailExchangeViewProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Attachment Sheet */}
+      <Sheet open={!!openAttachment} onOpenChange={isOpen => !isOpen && setOpenAttachment(null)}>
+        <SheetContent side="right" className="w-full max-w-md sm:max-w-xl lg:max-w-2xl p-0 flex flex-col">
+          <SheetHeader className="p-6 border-b flex-shrink-0">
+            <SheetTitle>
+              {openAttachment ? `Attachment: ${openAttachment.fileName}` : ''}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-grow overflow-y-auto">
+            {openAttachment && (
+              <AttachmentViewerContent attachment={openAttachment} />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 } 
