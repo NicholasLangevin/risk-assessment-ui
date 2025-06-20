@@ -13,7 +13,6 @@ import { InformationRequestsCard } from './InformationRequestsCard';
 import { CoverageRequestedCard } from './CoverageRequestedCard';
 import { GuidelineDetailsContent } from './GuidelineDetailsContent';
 import { CitationViewerContent } from './CitationViewerContent';
-import { AttachmentsCard } from './AttachmentsCard';
 import { AttachmentViewerContent } from './AttachmentViewerContent';
 import { updateSubjectToOffersInDB } from '@/app/actions/updateSubjectToOffers';
 
@@ -304,11 +303,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
   
   // handleShowAiMonitor removed
 
-  const handleShowAttachment = (attachment: Attachment) => {
-    setActiveSheetItem({ type: 'attachment', data: attachment, quoteId: quoteDetails?.id || "" });
-  };
-
-
   if (!quoteDetails) {
     return (
       <div className="container mx-auto py-8 text-center">
@@ -420,10 +414,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
         <div className="lg:col-span-1 space-y-6">
           <PremiumSummaryCard summary={quoteDetails.premiumSummary} />
           <CapacityCheckCard capacity={quoteDetails.capacityCheck} />
-           <AttachmentsCard
-            attachments={quoteDetails.attachments || []}
-            onViewAttachment={handleShowAttachment}
-          />
           <InformationRequestsCard
             requests={managedInformationRequests}
             onUpdateInfoRequest={handleUpdateInformationRequest}
