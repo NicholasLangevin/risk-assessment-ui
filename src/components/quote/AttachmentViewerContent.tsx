@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Attachment } from '@/types';
@@ -48,7 +47,7 @@ export function AttachmentViewerContent({ attachment }: AttachmentViewerContentP
       <ScrollArea className="flex-grow p-4">
         <div className="prose prose-sm dark:prose-invert max-w-none">
           <h4 className="font-semibold mb-2 text-base">Mock Document Preview:</h4>
-          <pre className="whitespace-pre-wrap text-sm bg-muted/50 p-3 rounded-md border">
+          <pre className="whitespace-pre-wrap text-sm bg-muted/50 p-3 rounded-md border text-foreground dark:text-white">
             {attachment.mockContent || 'No preview content available for this attachment.'}
           </pre>
         </div>
