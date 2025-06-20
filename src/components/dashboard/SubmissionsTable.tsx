@@ -1,7 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
+import Link from 'next/link'; // Still used for View Quote
 import {
   Table,
   TableBody,
@@ -12,16 +12,35 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { CaseListItem, PriorityLevel, CaseStatus } from '@/types';
+import type { CaseListItem, PriorityLevel, CaseStatus, OpenedCaseInfo } from '@/types';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { useOpenedCases } from '@/contexts/OpenedCasesContext';
 
 interface SubmissionsTableProps {
   caseListItems: CaseListItem[];
 }
 
 export function SubmissionsTable({ caseListItems }: SubmissionsTableProps) {
+  const router = useRouter();
+  const { openCase } = useOpenedCases();
+
+  const handleOpenCase = (caseItem: CaseListItem) => {
+    const caseInfo: OpenedCaseInfo = {
+      id: caseItem.id,
+      insuredName: caseItem.insuredName,
+      broker: caseItem.broker,
+    };
+    openCase(caseInfo);
+    if (caseItem.relatedQuoteId) {
+      router.push(`/quote/${caseItem.relatedQuoteId}`);
+    } else {
+      router.push(`/case/${caseItem.id}`);
+    }
+  };
+
   const getStatusVariant = (status: CaseStatus): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (status) {
       case 'Open':
@@ -104,17 +123,10 @@ export function SubmissionsTable({ caseListItems }: SubmissionsTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {caseItem.relatedQuoteId ? (
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/quote/${caseItem.relatedQuoteId}`}>
-                          View Quote <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" size="sm" disabled>
-                        View Case {/* Placeholder for future Case Detail View */}
-                      </Button>
-                    )}
+                    <Button variant="ghost" size="sm" onClick={() => handleOpenCase(caseItem)}>
+                      {caseItem.relatedQuoteId ? "View Quote" : "View Case"}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

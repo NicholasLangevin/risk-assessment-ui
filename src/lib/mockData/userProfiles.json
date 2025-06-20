@@ -1,0 +1,50 @@
+
+[
+  {
+    "id": "user-alex-uw",
+    "name": "Alex Miller",
+    "role": "underwriter",
+    "managerId": "user-sarah-mgr",
+    "skills": {
+      "transactionTypes": ["New Business", "Renewal"],
+      "linesOfBusiness": ["Property", "Cyber"],
+      "branches": ["New York"],
+      "brokerCodes": ["BRK001", "AON_GL"]
+    }
+  },
+  {
+    "id": "user-sarah-mgr",
+    "name": "Sarah Miller",
+    "role": "manager",
+    "skills": {
+      "transactionTypes": "ALL",
+      "linesOfBusiness": "ALL",
+      "branches": "ALL",
+      "brokerCodes": "ALL"
+    }
+  },
+  {
+    "id": "user-john-uw",
+    "name": "John Davis",
+    "role": "underwriter",
+    "managerId": "user-sarah-mgr",
+    "skills": {
+      "transactionTypes": ["Endorsement"],
+      "linesOfBusiness": ["Casualty", "Marine"],
+      "branches": ["Chicago", "London"],
+      "brokerCodes": ["BRK002", "MARSH_FIN"]
+    }
+  },
+  {
+    "id": "user-emily-uw",
+    "name": "Emily Carter",
+    "role": "underwriter",
+    "managerId": "user-sarah-mgr",
+    "skills": {
+      "transactionTypes": "ALL",
+      "linesOfBusiness": ["Financial Lines"],
+      "branches": ["New York"],
+      "brokerCodes": ["BRK003"]
+    }
+  }
+]

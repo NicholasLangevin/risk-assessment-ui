@@ -4,7 +4,9 @@ import { z } from 'zod';
 export type PriorityLevel = 'High' | 'Medium' | 'Low';
 
 export type CaseType = 'New Business' | 'Endorsement' | 'Renewal' | 'Cancellation';
-// Updated CaseStatus to include 'Untouched' and 'Triage'
+// Array for iterating over CaseType values
+export const AllCaseTypes: CaseType[] = ['New Business', 'Endorsement', 'Renewal', 'Cancellation'];
+
 export type CaseStatus = 'Open' | 'In Progress' | 'Pending Information' | 'Action Required' | 'Completed' | 'Closed' | 'Untouched' | 'Triage';
 
 export interface Case {
@@ -18,7 +20,7 @@ export interface Case {
   relatedQuoteId?: string; // Link to a Quote if CaseType is New Business or leads to a new quote
   relatedPolicyId?: string; // Link to a Policy if CaseType is Endorsement, Renewal, Cancellation
   priority: PriorityLevel;
-  assignedTo: string; // Added assignedTo
+  assignedTo: string;
 }
 
 export type PolicyStatus = 'Active' | 'Pending Endorsement' | 'Expired' | 'Cancelled' | 'Pending Renewal';
@@ -33,22 +35,25 @@ export interface Policy {
   expirationDate: string; // ISO date string
   totalPremium: number;
   originalQuoteId: string; // The quote that originated this policy
-  // Potentially add a list of endorsement case IDs or renewal case IDs if needed for history
 }
 
-// CaseListItem replaces the old Submission type for the dashboard
 export interface CaseListItem {
-  id: string; // This will be the Case ID
+  id: string;
   caseType: CaseType;
   insuredName: string;
   broker: string;
-  status: CaseStatus; // Uses updated CaseStatus
-  receivedDate: string; // ISO date string
+  status: CaseStatus;
+  receivedDate: string;
   priority: PriorityLevel;
-  relatedQuoteId?: string; // Link to a specific quote if applicable
-  assignedTo: string; // Added assignedTo
+  relatedQuoteId?: string;
+  assignedTo: string;
 }
 
+export interface OpenedCaseInfo {
+  id: string;
+  insuredName: string;
+  broker: string;
+}
 
 export type RiskLevel = 'Very Low' | 'Low' | 'Normal' | 'High' | 'Very High' | 'Loading';
 
@@ -74,7 +79,7 @@ export interface TextSegment {
 export interface CitationLinkSegment {
   type: 'citationLink';
   citationId: string;
-  markerText?: string; // e.g., "[1]", "[INFO]"
+  markerText?: string;
 }
 
 export type RichTextSegment = TextSegment | CitationLinkSegment;
@@ -87,11 +92,11 @@ export interface BusinessSummaryDetails {
 }
 
 export interface Citation {
-  id: string; // e.g., "building-spec-2015"
+  id: string;
   sourceType: 'attachment' | 'web';
-  quickDescription: string; // e.g., "Building Specifications (2015)" or "Industry Report on Cyber Trends"
-  sourceNameOrUrl: string; // Filename for attachment, URL for web
-  attachmentMockContent?: string; // Only for 'attachment' type
+  quickDescription: string;
+  sourceNameOrUrl: string;
+  attachmentMockContent?: string;
 }
 
 export interface Attachment {
@@ -114,17 +119,17 @@ export interface AiToolActionDetails {
 export interface AiToolAction {
   id: string;
   type: AiToolActionType;
-  timestamp: string; // ISO 8601 string
+  timestamp: string;
   description: string;
   details: AiToolActionDetails;
 }
 
 export interface QuoteDetails {
-  id: string; // Quote ID, e.g., Q-YYYYMMDD-001
-  caseId: string; // The parent Case ID
+  id: string;
+  caseId: string;
   insuredName: string;
   broker: string;
-  submissionDate: string; // ISO date string (when the quote process started, from case receivedDate)
+  submissionDate: string;
   premiumSummary: {
     recommendedPremium: number;
     status: 'Pass' | 'Missing Information from policy system';
@@ -144,7 +149,7 @@ export interface QuoteDetails {
   attachments: Attachment[];
   aiOverallRiskStatement?: string;
   rawSubmissionData: string;
-  subjectToOffers?: string[]; // These are the final chosen ones
+  subjectToOffers?: string[];
   subjectToOffersUpdatedAt?: string;
 }
 
@@ -178,13 +183,12 @@ export interface ManagedInformationRequest {
 export type UnderwritingDecision = 'Decline' | 'OfferWithSubjectTos' | 'InformationRequired';
 
 export type ActiveSheetItem =
-  | { type: 'aiMonitor'; submissionId: string } // submissionId could be a caseId or quoteId depending on context
+  | { type: 'aiMonitor'; submissionId: string }
   | { type: 'guideline'; data: Guideline }
   | { type: 'citation'; data: Citation }
   | { type: 'attachment'; data: Attachment; quoteId: string };
 
 
-// --- Types and Schemas for Chat Underwriting Assistant (from chat-underwriting-assistant.ts) ---
 export const MessagePartSchema = z.object({
   text: z.string().min(1).describe('The text content of the message part. Must be non-empty.'),
 });
@@ -207,8 +211,8 @@ export const ChatUnderwritingAssistantInputSchema = z.object({
   insuredName: z.string().min(1).describe('The name of the insured party. Must be non-empty.'),
   brokerName: z.string().min(1).describe('The name of the broker. Must be non-empty.'),
   attachments: z.array(ChatAttachmentInfoSchema).describe('A list of attachments available for this submission.'),
-  userQuery: z.string().describe('The user's current question or message.'),
-  chatHistory: z.array(ChatHistoryItemSchema).optional().describe('The history of the conversation so far.') // Added optional chatHistory
+  userQuery: z.string().describe('The user’s current question or message.'),
+  chatHistory: z.array(ChatHistoryItemSchema).optional().describe('The history of the conversation so far.')
 });
 export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssistantInputSchema>;
 
@@ -219,7 +223,6 @@ export const ChatUnderwritingAssistantOutputSchema = z.object({
 export type ChatUnderwritingAssistantOutput = z.infer<typeof ChatUnderwritingAssistantOutputSchema>;
 
 
-// --- Types for Email Generation (from generate-underwriting-email.ts) ---
 const UnderwritingDecisionEnum = z.enum(['Decline', 'OfferWithSubjectTos', 'InformationRequired']);
 
 export const EmailGenerationInputSchema = z.object({
@@ -240,14 +243,13 @@ export const EmailGenerationOutputSchema = z.object({
 });
 export type EmailGenerationOutput = z.infer<typeof EmailGenerationOutputSchema>;
 
-// --- Type for Notifications Popover ---
 export type NotificationType = 'newCase' | 'brokerResponse' | 'systemUpdate' | 'generic';
 
 export interface NotificationItem {
   id: string;
   type: NotificationType;
   message: string;
-  timestamp: string; // e.g., "13 hours ago", "3 days ago"
+  timestamp: string;
   isRead: boolean;
   category: 'Important' | 'More';
 }
@@ -268,4 +270,21 @@ export interface Email {
   attachments?: Attachment[]; // Optional attachments
   isRead: boolean;
   threadId?: string; // For grouping related emails
+}
+
+export type UserRole = 'underwriter' | 'manager';
+
+export interface SkillSettings {
+  transactionTypes: CaseType[] | 'ALL';
+  linesOfBusiness: string[] | 'ALL';
+  branches: string[] | 'ALL';
+  brokerCodes: string[] | 'ALL';
+}
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  role: UserRole;
+  managerId?: string; // ID of the manager, if this user is an underwriter
+  skills?: SkillSettings;
 }

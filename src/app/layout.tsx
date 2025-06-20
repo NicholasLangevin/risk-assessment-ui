@@ -37,7 +37,7 @@ export default function RootLayout({
             } as React.CSSProperties
           }
         >
-          <SidebarProvider defaultOpen={false}>
+          <SidebarProvider defaultOpen={true}>
             <Header />
             {/* This div now handles the offset for the header and takes remaining space */}
             <div className="flex-1 pt-1 overflow-hidden"> {/* pt-14 for header, flex-1 to grow */}
@@ -50,4 +50,3 @@ export default function RootLayout({
     </html>
   );
 }
-
