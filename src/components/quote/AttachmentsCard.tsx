@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Attachment } from '@/types';
@@ -35,11 +34,11 @@ export function AttachmentsCard({ attachments, onViewAttachment }: AttachmentsCa
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center">
+        <CardTitle className="flex items-center text-base">
           <Paperclip className="h-5 w-5 mr-2" />
           Attachments
         </CardTitle>
-        <CardDescription>Documents attached to this submission. Click to view details.</CardDescription>
+        <CardDescription className="text-sm">Documents attached to this submission. Click to view details.</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         {(!attachments || attachments.length === 0) ? (

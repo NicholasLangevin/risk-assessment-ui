@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Email, Attachment, QuoteDetails, AiUnderwritingActions, UnderwritingDecision, EmailGenerationInput, ManagedSubjectToOffer, ManagedInformationRequest } from '@/types';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -245,11 +245,11 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
             <p className="text-sm text-muted-foreground">No emails found</p>
           </div>
         ) : (
-          <div className="space-y-1 px-1 py-1">
-            {sortedEmails.map((email) => (
+          <div>
+            {sortedEmails.map((email, idx) => (
               <Card
                 key={email.id}
-                className={`${!email.isRead ? 'bg-primary/5' : 'bg-background'}`}
+                className={`$${!email.isRead ? 'bg-primary/5' : 'bg-background'} ${idx === 0 ? 'mt-4' : 'mt-2'}`}
               >
                 <div className="p-3">
                   {/* Header row: only this is clickable for expand/collapse */}
@@ -278,7 +278,6 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
                       }`}
                     />
                   </div>
-                  
                   {/* AI Summary */}
                   <div className={cn(
                     "mt-2 text-sm text-muted-foreground bg-muted/30 rounded-md p-2",
@@ -294,7 +293,6 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
                         "Response providing detailed explanation of policy terms and confirmation of coverage scope."}
                     </p>
                   </div>
-                  
                   {/* Expanded Email Content */}
                   {expandedEmailId === email.id && (
                     <div className="mt-4 pt-4 border-t">
@@ -304,11 +302,9 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
                           <strong>To:</strong> {email.to}<br />
                           <strong>Date:</strong> <ClientFormattedDate isoDateString={email.timestamp} />
                         </div>
-                        
                         <div className="prose prose-sm dark:prose-invert max-w-none">
                           <div className="whitespace-pre-wrap text-sm">{email.body}</div>
                         </div>
-                        
                         {email.attachments && email.attachments.length > 0 && (
                           <div>
                             <h4 className="text-sm font-medium mb-2">Attachments</h4>
