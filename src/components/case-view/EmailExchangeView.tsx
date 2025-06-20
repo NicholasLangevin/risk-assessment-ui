@@ -485,24 +485,70 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
               {/* AI-generated email preview and diff */}
               {emailState && (
                 <>
-                  <div className="flex flex-col md:flex-row gap-4 py-4 flex-grow min-h-0">
-                    {/* Email Body Section */}
-                    <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-h-0">
-                      <Label htmlFor="email-body">Email Body</Label>
-                      <Textarea
-                        id="email-body"
-                        value={emailState.currentBody}
-                        onChange={(e) => handleEmailBodyChange(e.target.value)}
-                        className="flex-grow resize-none"
-                        placeholder="Enter email content..."
+                  <div className="grid gap-4 py-4 overflow-auto max-h-[65vh]">
+                    <div className="grid gap-2">
+                      <Label htmlFor="to">To</Label>
+                      <Input
+                        id="to"
+                        value={newEmail.to}
+                        onChange={(e) => setNewEmail({ ...newEmail, to: e.target.value })}
+                        placeholder="recipient@email.com"
                       />
                     </div>
-                    {/* Changes Preview Section */}
-                    <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-h-0">
-                      <Label>Changes Preview (from AI original)</Label>
-                      <ScrollArea className="flex-grow border rounded-md p-3 text-sm bg-muted/30">
-                        <DiffDisplay originalText={emailState.originalBody} currentText={emailState.currentBody} />
-                      </ScrollArea>
+                    <div className="grid gap-2">
+                      <Label htmlFor="subject">Subject</Label>
+                      <Input
+                        id="subject"
+                        value={newEmail.subject || emailState.subject}
+                        onChange={(e) => setNewEmail({ ...newEmail, subject: e.target.value })}
+                        placeholder="Email subject"
+                      />
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-4 min-h-0">
+                      {/* Editable Body Section */}
+                      <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-w-0 max-h-[50vh]">
+                        <Label htmlFor="email-body">Body</Label>
+                        <Textarea
+                          id="email-body"
+                          value={emailState.currentBody}
+                          onChange={(e) => handleEmailBodyChange(e.target.value)}
+                          className="flex-grow resize-none min-h-[200px] overflow-auto"
+                          placeholder="Enter email content..."
+                          style={{ maxHeight: '40vh' }}
+                        />
+                      </div>
+                      {/* Diff Preview Section */}
+                      <div className="flex flex-col gap-2 md:w-1/2 flex-grow min-w-0 max-h-[50vh]">
+                        <Label>Changes Preview (from AI original)</Label>
+                        <ScrollArea className="flex-grow border rounded-md p-3 text-sm bg-muted/30 overflow-auto max-h-[40vh]">
+                          <DiffDisplay originalText={emailState.originalBody} currentText={emailState.currentBody} />
+                        </ScrollArea>
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Attachments</Label>
+                      <div className="flex items-center space-x-2">
+                        <Button type="button" variant="outline" className="w-full" onClick={() => {}}>
+                          <Paperclip className="h-4 w-4 mr-2" />
+                          Add Attachment
+                        </Button>
+                      </div>
+                      {newEmail.attachments.length > 0 && (
+                        <div className="space-y-2 mt-2">
+                          {newEmail.attachments.map((attachment) => (
+                            <div
+                              key={attachment.id}
+                              className="flex items-center justify-between p-2 border rounded-md"
+                            >
+                              <div className="flex items-center space-x-2">
+                                {getFileIcon((attachment as Attachment).fileType || 'other')}
+                                <span className="text-sm">{attachment.fileName}</span>
+                                <span className="text-xs text-muted-foreground">({attachment.fileSize})</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <DialogFooter>
