@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 // General Application Types
@@ -219,7 +218,7 @@ export type ChatUnderwritingAssistantInput = z.infer<typeof ChatUnderwritingAssi
 
 
 export const ChatUnderwritingAssistantOutputSchema = z.object({
-  aiResponse: z.string().describe('The AI assistant’s response to the user’s query.'),
+  aiResponse: z.string().describe('The AI assistant's response to the user's query.'),
 });
 export type ChatUnderwritingAssistantOutput = z.infer<typeof ChatUnderwritingAssistantOutputSchema>;
 
@@ -253,6 +252,24 @@ export interface NotificationItem {
   timestamp: string;
   isRead: boolean;
   category: 'Important' | 'More';
+}
+
+// --- Type for Email Exchange ---
+export type EmailDirection = 'inbound' | 'outbound';
+
+export interface Email {
+  id: string;
+  caseId: string; // Link to the case
+  quoteId?: string; // Optional link to quote if applicable
+  direction: EmailDirection;
+  from: string; // Sender name/email
+  to: string; // Recipient name/email
+  subject: string;
+  body: string;
+  timestamp: string; // ISO date string
+  attachments?: Attachment[]; // Optional attachments
+  isRead: boolean;
+  threadId?: string; // For grouping related emails
 }
 
 export type UserRole = 'underwriter' | 'manager';

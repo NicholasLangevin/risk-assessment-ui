@@ -1,11 +1,10 @@
-
 'use client';
 
+import { useState } from 'react';
 import type { Attachment } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Paperclip, FileText, FileSpreadsheet, FileImage, FileArchive } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { ChevronRight, Paperclip, FileText, FileSpreadsheet, FileImage, FileArchive } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AttachmentsCardProps {
   attachments: Attachment[];
@@ -14,60 +13,74 @@ interface AttachmentsCardProps {
 
 export function AttachmentsCard({ attachments, onViewAttachment }: AttachmentsCardProps) {
   const getFileIcon = (fileType: Attachment['fileType']) => {
+    const iconClass = "h-4 w-4 flex-shrink-0";
     switch (fileType) {
       case 'pdf':
-        return <FileText className="h-5 w-5 text-red-500 flex-shrink-0" />;
+        return <FileText className={`${iconClass} text-red-500`} />;
       case 'docx':
-        return <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />;
+        return <FileText className={`${iconClass} text-blue-500`} />;
       case 'xlsx':
-        return <FileSpreadsheet className="h-5 w-5 text-green-500 flex-shrink-0" />;
+        return <FileSpreadsheet className={`${iconClass} text-green-500`} />;
       case 'jpg':
-        return <FileImage className="h-5 w-5 text-purple-500 flex-shrink-0" />;
+        return <FileImage className={`${iconClass} text-purple-500`} />;
       case 'zip':
-        return <FileArchive className="h-5 w-5 text-yellow-500 flex-shrink-0" />;
+        return <FileArchive className={`${iconClass} text-yellow-500`} />;
       case 'txt':
-         return <FileText className="h-5 w-5 text-gray-500 flex-shrink-0" />;
+        return <FileText className={`${iconClass} text-muted-foreground`} />;
       default:
-        return <Paperclip className="h-5 w-5 text-muted-foreground flex-shrink-0" />;
+        return <Paperclip className={`${iconClass} text-muted-foreground`} />;
     }
   };
 
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  if (!attachments || attachments.length === 0) return null;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Paperclip className="h-5 w-5 mr-2" />
-          Attachments
-        </CardTitle>
-        <CardDescription>Documents attached to this submission. Click to view details.</CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        {(!attachments || attachments.length === 0) ? (
-          <p className="text-sm text-muted-foreground text-center px-6 py-4">No attachments for this submission.</p>
-        ) : (
-          <ScrollArea className="h-[200px] w-full"> {/* Adjust height as needed */}
-            <div className="divide-y divide-border">
+    <Card className="bg-background mt-2">
+      <div className="p-3">
+        <div 
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex items-center space-x-2">
+            <Paperclip className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-medium">All Attachments ({attachments.length})</h3>
+          </div>
+          <ChevronRight 
+            className={cn(
+              "h-3.5 w-3.5 text-muted-foreground transition-transform",
+              isExpanded ? "rotate-90" : ""
+            )} 
+          />
+        </div>
+        
+        {isExpanded && (
+          <div className="mt-2 space-y-2">
             {attachments.map((attachment) => (
-              <Button
+              <div
                 key={attachment.id}
-                variant="ghost"
-                className="w-full justify-start h-auto py-3 px-4 text-left rounded-none border-b-0"
-                onClick={() => onViewAttachment(attachment)}
+                className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewAttachment(attachment);
+                }}
                 title={`View ${attachment.fileName}`}
               >
-                <div className="flex items-center space-x-3 w-full overflow-hidden">
-                  {getFileIcon(attachment.fileType)}
-                  <div className="flex flex-col overflow-hidden">
-                    <span className="text-sm font-medium truncate" title={attachment.fileName}>{attachment.fileName}</span>
-                    <span className="text-xs text-muted-foreground">{attachment.fileSize}</span>
-                  </div>
+                {getFileIcon(attachment.fileType)}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate" title={attachment.fileName}>
+                    {attachment.fileName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {attachment.fileSize}
+                  </p>
                 </div>
-              </Button>
+              </div>
             ))}
-            </div>
-          </ScrollArea>
+          </div>
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 }

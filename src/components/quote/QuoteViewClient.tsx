@@ -1,9 +1,8 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { QuoteDetails, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, EmailGenerationInput, Citation, ActiveSheetItem, Attachment, RiskLevel } from '@/types';
+import type { QuoteDetails, AiUnderwritingActions, Guideline, ManagedSubjectToOffer, ManagedInformationRequest, CoverageItem, UnderwritingDecision, Citation, ActiveSheetItem, Attachment, RiskLevel } from '@/types';
 import { PremiumSummaryCard } from './PremiumSummaryCard';
 import { CapacityCheckCard } from './CapacityCheckCard';
 import { BusinessSummaryCard } from './BusinessSummaryCard';
@@ -12,19 +11,15 @@ import { GuidelineStatusList } from './GuidelineStatusList';
 import { SubjectToOffersCard } from './SubjectToOffersCard';
 import { InformationRequestsCard } from './InformationRequestsCard';
 import { CoverageRequestedCard } from './CoverageRequestedCard';
-import { EmailPreviewDialog } from './EmailPreviewDialog';
 import { GuidelineDetailsContent } from './GuidelineDetailsContent';
 import { CitationViewerContent } from './CitationViewerContent';
-import { AttachmentsCard } from './AttachmentsCard';
 import { AttachmentViewerContent } from './AttachmentViewerContent';
-import { generateUnderwritingEmail, type EmailGenerationOutput } from '@/ai/flows/generate-underwriting-email';
 import { updateSubjectToOffersInDB } from '@/app/actions/updateSubjectToOffers';
 
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Activity, ChevronLeft, Send as SendIcon, AlertTriangle, Loader2, Info, Edit, ThumbsUp, ThumbsDown, MailWarning, Wrench, Database } from 'lucide-react';
+import { Activity, ChevronLeft, AlertTriangle, Loader2, Info, Edit, ThumbsUp, ThumbsDown, MailWarning, Wrench, Database } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -63,15 +58,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
   const { toast } = useToast();
   const router = useRouter();
 
-  const [selectedDecision, setSelectedDecision] = useState<UnderwritingDecision | null>('OfferWithSubjectTos');
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
-  const [emailState, setEmailState] = useState<{
-    subject: string;
-    originalBody: string;
-    currentBody: string;
-  } | null>(null);
-  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSavingToDB, setIsSavingToDB] = useState(false);
 
   const [activeSheetItem, setActiveSheetItem] = useState<QuoteViewActiveSheetItem | null>(null); // Updated type
@@ -307,75 +293,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
     });
   }, [toast]);
   
-  const handleConfirmAndGenerateEmail = useCallback(async () => {
-    if (!selectedDecision || !quoteDetails) return;
-
-    setIsGeneratingEmail(true);
-    setEmailState(null);
-
-    const activeInformationRequests = managedInformationRequests
-      .filter(req => !req.isRemoved)
-      .map(req => req.currentText);
-
-    const activeSubjectToOffers = managedSubjectToOffers
-      .filter(offer => !offer.isRemoved)
-      .map(offer => offer.currentText);
-
-    const emailInput: EmailGenerationInput = {
-      decision: selectedDecision,
-      quoteId: quoteDetails.id,
-      insuredName: quoteDetails.insuredName,
-      brokerName: quoteDetails.broker,
-      ...(selectedDecision === 'OfferWithSubjectTos' && {
-        premium: quoteDetails.premiumSummary.recommendedPremium, 
-        subjectToOffers: activeSubjectToOffers,
-      }),
-      ...(selectedDecision === 'InformationRequired' && {
-        informationRequests: activeInformationRequests,
-      }),
-    };
-
-    try {
-      const result = await generateUnderwritingEmail(emailInput);
-      setEmailState({
-        subject: result.emailSubject,
-        originalBody: result.emailBody,
-        currentBody: result.emailBody,
-      });
-      setIsEmailDialogOpen(true);
-    } catch (error) {
-      console.error("Error generating email:", error);
-      toast({
-        title: "Email Generation Failed",
-        description: "Could not generate the email. Please try again or draft manually.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingEmail(false);
-    }
-  }, [selectedDecision, quoteDetails, managedInformationRequests, managedSubjectToOffers, toast]);
-
-  const handleEmailBodyChange = (newBody: string) => {
-    setEmailState(prev => prev ? { ...prev, currentBody: newBody } : null);
-  };
-
-  const handleSendEmail = useCallback(async () => {
-    if (!emailState) return;
-    setIsSendingEmail(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    toast({
-      title: "Email Sent (Simulated)",
-      description: `Email regarding quote ${quoteDetails?.id} has been 'sent' to ${quoteDetails?.broker}.`,
-      variant: "default",
-    });
-    setIsSendingEmail(false);
-    setIsEmailDialogOpen(false);
-    setEmailState(null);
-    setSelectedDecision(null);
-    // router.push('/'); // Commented out to stay on page after sending
-  }, [emailState, quoteDetails, router, toast]);
-
   const handleShowGuidelineDetails = (guideline: Guideline) => {
     setActiveSheetItem({ type: 'guideline', data: guideline });
   };
@@ -385,11 +302,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
   };
   
   // handleShowAiMonitor removed
-
-  const handleShowAttachment = (attachment: Attachment) => {
-    setActiveSheetItem({ type: 'attachment', data: attachment, quoteId: quoteDetails?.id || "" });
-  };
-
 
   if (!quoteDetails) {
     return (
@@ -403,12 +315,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
       </div>
     );
   }
-
-  const decisionOptions: { value: UnderwritingDecision; label: string }[] = [
-    { value: 'OfferWithSubjectTos', label: 'Offer with Subject-Tos' },
-    { value: 'InformationRequired', label: 'Request Information' },
-    { value: 'Decline', label: 'Decline Quote' },
-  ];
 
   const renderSheetContent = () => {
     if (!activeSheetItem) return null;
@@ -472,33 +378,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
 
       {/* Decision making and AI Risk Assessment section - always visible */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md mb-6 border border-slate-200 dark:border-slate-700">
-        <div className="flex justify-end items-center mb-4">
-            <div className="flex items-center space-x-2 flex-shrink-0">
-                <Select
-                    value={selectedDecision || ""}
-                    onValueChange={(value) => setSelectedDecision(value as UnderwritingDecision)}
-                >
-                    <SelectTrigger className="w-[230px] h-9" id="decision-select-trigger" aria-label="Underwriting Decision">
-                    <SelectValue placeholder="Select decision..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                    {decisionOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <Button
-                    onClick={handleConfirmAndGenerateEmail}
-                    disabled={!selectedDecision || isGeneratingEmail}
-                    size="sm"
-                    className="h-9"
-                >
-                    {isGeneratingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <SendIcon className="mr-2 h-4 w-4" />}
-                    Confirm & Generate Email
-                </Button>
-            </div>
-        </div>
-        
         <div className="mt-4 p-3 border rounded-md bg-muted/30 dark:bg-slate-700/30 shadow-sm border-slate-200 dark:border-slate-600">
           <h4 className="text-sm font-semibold mb-1 flex items-center text-primary">
             <AiSparkleIcon className="h-4 w-4 mr-2" />
@@ -535,10 +414,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
         <div className="lg:col-span-1 space-y-6">
           <PremiumSummaryCard summary={quoteDetails.premiumSummary} />
           <CapacityCheckCard capacity={quoteDetails.capacityCheck} />
-           <AttachmentsCard
-            attachments={quoteDetails.attachments || []}
-            onViewAttachment={handleShowAttachment}
-          />
           <InformationRequestsCard
             requests={managedInformationRequests}
             onUpdateInfoRequest={handleUpdateInformationRequest}
@@ -567,17 +442,6 @@ export function QuoteViewClient({ initialQuoteDetails, initialAiUnderwritingActi
           </div>
         </SheetContent>
       </Sheet>
-
-      {emailState && (
-        <EmailPreviewDialog
-          isOpen={isEmailDialogOpen}
-          onOpenChange={setIsEmailDialogOpen}
-          emailContent={emailState}
-          onEmailBodyChange={handleEmailBodyChange}
-          onSend={handleSendEmail}
-          isSending={isSendingEmail}
-        />
-      )}
     </div>
   );
 }

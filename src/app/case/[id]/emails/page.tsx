@@ -1,27 +1,25 @@
+'use client';
 
-import { getMockCaseDetails } from '@/lib/mockData';
-import type { Case } from '@/types';
-import { notFound } from 'next/navigation';
+import { EmailExchangeView } from '@/components/case-view/EmailExchangeView';
+import { getMockEmailsForCase, getMockCaseDetails } from '@/lib/mockData';
 
-interface CaseEmailsPageProps {
+interface EmailsPageProps {
   params: {
     id: string;
   };
 }
 
-export default async function CaseEmailsPage({ params }: CaseEmailsPageProps) {
-  const { id: caseId } = params;
-  const caseDetails: Case | null = getMockCaseDetails(caseId);
-
-  if (!caseDetails) {
-    notFound();
-  }
+export default function EmailsPage({ params: { id } }: EmailsPageProps) {
+  const emails = getMockEmailsForCase(id);
+  const caseDetails = getMockCaseDetails(id);
 
   return (
-    <div>
-      <h3 className="text-xl font-semibold mb-3 text-primary">Emails Exchange</h3>
-      <p className="text-muted-foreground">Placeholder: Content for Emails Exchange associated with case {caseDetails.id} will go here.</p>
-      {/* For example, a list of emails or an embedded email client view */}
+    <div className="container mx-auto px-4 py-6">
+      <EmailExchangeView 
+        emails={emails} 
+        caseId={id}
+        quoteId={caseDetails?.relatedQuoteId}
+      />
     </div>
-  );
+  )
 }

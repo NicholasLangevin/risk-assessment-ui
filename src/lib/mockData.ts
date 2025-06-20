@@ -1,4 +1,3 @@
-
 import type {
   Case,
   CaseListItem,
@@ -20,14 +19,18 @@ import type {
   CaseStatus,
   NotificationItem, 
   NotificationType,
+  Email,
   UserProfile,
   SkillSettings,
 } from '@/types';
+
+
 import { formatISO, addMinutes, subDays, subHours } from 'date-fns'; 
 
 import initialMockCasesData from './mockData/cases.json';
 import initialMockQuotesData from './mockData/quotes.json';
 import initialMockPoliciesData from './mockData/policies.json';
+import initialMockEmailsData from './mockData/emails.json';
 import initialMockUserProfilesData from './mockData/userProfiles.json';
 
 const USER_PROFILES_STORAGE_KEY = 'userProfilesData';
@@ -62,6 +65,8 @@ const setToLocalStorage = <T>(key: string, value: T): void => {
 const allMockCases: Case[] = initialMockCasesData as Case[];
 export const allMockQuotes: QuoteDetails[] = initialMockQuotesData as QuoteDetails[];
 const allMockPolicies: Policy[] = initialMockPoliciesData as Policy[];
+const allMockEmails: Email[] = initialMockEmailsData as Email[];
+
 
 export const mockCaseListItems: CaseListItem[] = allMockCases.map(c => ({
   id: c.id,
@@ -270,3 +275,7 @@ export const mockNotifications: NotificationItem[] = [
 mockNotifications.forEach(n => {
   n.timestamp = n.timestamp;
 });
+
+export const getMockEmailsForCase = (caseId: string) => {
+  return allMockEmails.filter(email => email.caseId === caseId);
+};
