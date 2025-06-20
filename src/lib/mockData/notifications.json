@@ -2,26 +2,26 @@
   {
     "id": "notif-1",
     "title": "New Case Assigned",
-    "message": "Case #1001 has been assigned to you."
+    "message": "Case #C-20240701-001 has been assigned to you."
   },
   {
     "id": "notif-2",
     "title": "Underwriting Action Required",
-    "message": "Case #1005 requires your attention for underwriting actions."
+    "message": "Case #C-20240701-001 requires your attention for underwriting actions."
   },
   {
     "id": "notif-3",
     "title": "Policy Renewal Due",
-    "message": "Policy #POL9876 is due for renewal soon."
+    "message": "Case #C-20240704-004 (Renewal) is due for review soon."
   },
   {
     "id": "notif-4",
     "title": "Information Request Received",
-    "message": "New information request received for Case #1010."
+    "message": "New information request received for Case #C-20240701-001."
   },
   {
     "id": "notif-5",
     "title": "Coverage Updated",
-    "message": "Coverage details updated for Policy #POL1234."
+    "message": "Coverage details updated for Case #C-20240704-004 (Endorsement)."
   }
 ]
