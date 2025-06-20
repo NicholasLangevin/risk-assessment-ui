@@ -235,11 +235,12 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
         </div>
       </div>
 
-      <AttachmentsCard attachments={allAttachments} onViewAttachment={handleViewAttachment} />
-
-      {/* Email List */}
+      {/* Email and Attachments List */}
       <ScrollArea className="h-[500px]">
-        {sortedEmails.length === 0 ? (
+        <div className="space-y-2">
+          <AttachmentsCard attachments={allAttachments} onViewAttachment={handleViewAttachment} />
+          
+          {sortedEmails.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-sm text-muted-foreground">No emails found</p>
           </div>
@@ -248,7 +249,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
             {sortedEmails.map((email, idx) => (
               <Card
                 key={email.id}
-                className={`$${!email.isRead ? 'bg-primary/5' : 'bg-background'} ${idx === 0 ? 'mt-4' : 'mt-2'}`}
+                className={`${!email.isRead ? 'bg-primary/5' : 'bg-background'} mt-2`}
               >
                 <div className="p-3">
                   {/* Header row: only this is clickable for expand/collapse */}
@@ -333,6 +334,7 @@ export function EmailExchangeView({ emails, caseId, quoteId }: EmailExchangeView
             ))}
           </div>
         )}
+        </div>
       </ScrollArea>
 
       {/* Unified Email Dialog */}
