@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { UserHomePageClient } from '@/components/user-home/UserHomePageClient';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { RefreshCcw } from 'lucide-react';
 import notifications from '@/lib/mockData/notifications.json'; // Import the JSON data directly
 
 export default function UserPersonalHomePage() {
@@ -50,7 +51,9 @@ export default function UserPersonalHomePage() {
   return (
     <div>
       <UserHomePageClient />
-      <Button onClick={fetchNotification}>Show Random Notification</Button>
+      <Button onClick={fetchNotification}>
+        <RefreshCcw className="h-4 w-4" />
+      </Button>
       {showNotification && (
         <div className="notification-popup fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg cursor-pointer" onClick={handleNotificationClick}>
           <div className="notification-title font-bold mb-1">
